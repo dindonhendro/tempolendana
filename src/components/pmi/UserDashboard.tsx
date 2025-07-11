@@ -11,7 +11,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import { supabase, getCurrentUserId } from "@/lib/supabase";
+import { supabase, getCurrentUserId, getCurrentUser } from "@/lib/supabase";
 import { Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
 import LoanApplicationTimeline from "./LoanApplicationTimeline";
@@ -30,10 +30,34 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
     useState<LoanApplication | null>(null);
   const [editingApplication, setEditingApplication] =
     useState<LoanApplication | null>(null);
+  const [preSelectedAgentId, setPreSelectedAgentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     fetchApplications();
+    checkSpecialUser();
   }, []);
+
+  const checkSpecialUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser && currentUser.email === "hersu@lendana.id") {
+        // Find the agent company for hersu
+        const { data: agentCompanies, error } = await supabase
+          .from("agent_companies")
+          .select("id")
+          .eq("code", "hersu")
+          .single();
+
+        if (!error && agentCompanies) {
+          setPreSelectedAgentId(agentCompanies.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking special user:", error);
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -149,6 +173,7 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
             setActiveTab("overview");
             fetchApplications();
           }}
+          preSelectedAgentId={preSelectedAgentId || undefined}
         />
       </div>
     );
@@ -176,6 +201,7 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
             setEditingApplication(null);
             fetchApplications();
           }}
+          preSelectedAgentId={preSelectedAgentId || undefined}
         />
       </div>
     );

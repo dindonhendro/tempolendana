@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Database } from "@/types/supabase";
+import { Database, Tables } from "@/types/supabase";
 
 type LoanApplicationInsert =
   Database["public"]["Tables"]["loan_applications"]["Insert"];
@@ -22,15 +22,24 @@ type LoanApplicationInsert =
 interface LoanApplicationFormProps {
   onSubmit?: (data: LoanApplicationInsert) => void;
   editData?: Tables<"loan_applications"> | null;
+  preSelectedAgentId?: string;
 }
 
 export default function LoanApplicationForm({
   onSubmit,
   editData,
+  preSelectedAgentId,
 }: LoanApplicationFormProps = {}) {
   const [currentTab, setCurrentTab] = useState("personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agentCompanies, setAgentCompanies] = useState<any[]>([]);
+  const [banks, setBanks] = useState<Tables<"banks">[]>([]);
+  const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>(
+    [],
+  );
+  const [selectedBankId, setSelectedBankId] = useState<string>("");
+  const [selectedBankProductId, setSelectedBankProductId] =
+    useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
@@ -67,7 +76,8 @@ export default function LoanApplicationForm({
           alamat_pemberi_kerja: editData.alamat_pemberi_kerja || "",
           loan_amount: editData.loan_amount || null,
           tenor_months: editData.tenor_months || null,
-          assigned_agent_id: editData.assigned_agent_id || "",
+          assigned_agent_id:
+            editData.assigned_agent_id || preSelectedAgentId || "",
           status: editData.status || "Submitted",
           submission_type: editData.submission_type || "PMI",
         }
@@ -95,6 +105,7 @@ export default function LoanApplicationForm({
           alamat_pemberi_kerja: "123 Main Street, Singapore",
           loan_amount: 50000000,
           tenor_months: 12,
+          assigned_agent_id: preSelectedAgentId || "",
           status: "Submitted",
           submission_type: "PMI",
         },
@@ -107,7 +118,17 @@ export default function LoanApplicationForm({
 
   useEffect(() => {
     loadAgentCompanies();
+    loadBanks();
   }, []);
+
+  useEffect(() => {
+    if (selectedBankId) {
+      loadBankProducts(selectedBankId);
+    } else {
+      setBankProducts([]);
+      setSelectedBankProductId("");
+    }
+  }, [selectedBankId]);
 
   const loadAgentCompanies = async () => {
     try {
@@ -119,6 +140,30 @@ export default function LoanApplicationForm({
     } catch (error) {
       console.error("Error loading agent companies:", error);
       setAgentCompanies([]);
+    }
+  };
+
+  const loadBanks = async () => {
+    try {
+      const { data } = await supabase.from("banks").select("*").order("name");
+      setBanks(data || []);
+    } catch (error) {
+      console.error("Error loading banks:", error);
+      setBanks([]);
+    }
+  };
+
+  const loadBankProducts = async (bankId: string) => {
+    try {
+      const { data } = await supabase
+        .from("bank_products")
+        .select("*")
+        .eq("bank_id", bankId)
+        .order("name");
+      setBankProducts(data || []);
+    } catch (error) {
+      console.error("Error loading bank products:", error);
+      setBankProducts([]);
     }
   };
 
@@ -537,9 +582,16 @@ export default function LoanApplicationForm({
                   onValueChange={(value) =>
                     updateFormData("assigned_agent_id", value)
                   }
+                  disabled={!!preSelectedAgentId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose an agent company" />
+                    <SelectValue
+                      placeholder={
+                        preSelectedAgentId
+                          ? "Agent pre-selected"
+                          : "Choose an agent company"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {agentCompanies.map((company) => (
@@ -549,6 +601,11 @@ export default function LoanApplicationForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {preSelectedAgentId && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Agent has been automatically assigned for your account.
+                  </p>
+                )}
               </div>
             </TabsContent>
 
@@ -747,39 +804,54 @@ export default function LoanApplicationForm({
               </div>
 
               <div>
-                <Label htmlFor="bank_product">
-                  Bank Product (Preview Only)
-                </Label>
-                <Select disabled>
+                <Label htmlFor="bank_selection">Select Bank</Label>
+                <Select
+                  value={selectedBankId}
+                  onValueChange={(value) => {
+                    setSelectedBankId(value);
+                    setSelectedBankProductId(""); // Reset product selection when bank changes
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Available bank products will be shown here" />
+                    <SelectValue placeholder="Choose a bank" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="bni-kur">
-                      BNI - KUR Mikro (2.5% - Rp 50,000,000)
-                    </SelectItem>
-                    <SelectItem value="mandiri-kur">
-                      Mandiri - KUR Kecil (3.0% - Rp 100,000,000)
-                    </SelectItem>
-                    <SelectItem value="bri-kur">
-                      BRI - KUR TKI (2.8% - Rp 75,000,000)
-                    </SelectItem>
-                    <SelectItem value="btn-kpr">
-                      BTN - KPR Subsidi (5.0% - Rp 200,000,000)
-                    </SelectItem>
-                    <SelectItem value="nano-mikro">
-                      Bank Nano - Kredit Mikro (4.5% - Rp 25,000,000)
-                    </SelectItem>
-                    <SelectItem value="bpr-umkm">
-                      BPR - Kredit UMKM (6.0% - Rp 150,000,000)
-                    </SelectItem>
+                    {banks.map((bank) => (
+                      <SelectItem key={bank.id} value={bank.id}>
+                        {bank.name} ({bank.code})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-gray-500 mt-1">
-                  Note: This is a preview of available bank products. Final
-                  product selection will be done by your assigned agent.
-                </p>
               </div>
+
+              {selectedBankId && (
+                <div>
+                  <Label htmlFor="bank_product">Select Bank Product</Label>
+                  <Select
+                    value={selectedBankProductId}
+                    onValueChange={setSelectedBankProductId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankProducts.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name} ({product.interest_rate}% - Rp{" "}
+                          {product.min_amount.toLocaleString()} - Rp{" "}
+                          {product.max_amount.toLocaleString()})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {bankProducts.length === 0 && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      No products available for this bank.
+                    </p>
+                  )}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
