@@ -19,6 +19,7 @@ import {
   Eye,
   Send,
   Download,
+  FileText,
 } from "lucide-react";
 import {
   supabase,
@@ -27,7 +28,7 @@ import {
   getBankProducts,
   assignApplicationToBranch,
 } from "@/lib/supabase";
-import { LoanApplication } from "@/types/supabase";
+import { LoanApplication, Tables } from "@/types/supabase";
 
 interface AgentDashboardProps {
   agentId?: string;
@@ -55,6 +56,12 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     string | null
   >(null);
   const [downloadingReport, setDownloadingReport] = useState(false);
+  const [downloadingForm, setDownloadingForm] = useState<string | null>(null);
+
+  // Bank product information for selected application
+  const [applicationBankProduct, setApplicationBankProduct] =
+    useState<any>(null);
+  const [loadingBankProduct, setLoadingBankProduct] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -378,6 +385,183 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     return csvContent;
   };
 
+  const generateKURApplicationForm = (application: any) => {
+    const formatDate = (dateString: string | null) => {
+      if (!dateString) return "";
+      return new Date(dateString).toLocaleDateString("id-ID");
+    };
+
+    const formatCurrency = (amount: number | null) => {
+      if (!amount) return "0";
+      return amount.toLocaleString("id-ID");
+    };
+
+    const htmlTemplate = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulir Permohonan KUR PMI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    td {
+      padding: 6px;
+      vertical-align: top;
+    }
+    .section-title {
+      background-color: black;
+      color: white;
+      font-weight: bold;
+      padding: 5px;
+    }
+    .signature-box {
+      width: 45%;
+      height: 100px;
+      border: 1px solid black;
+      text-align: center;
+      padding-top: 40px;
+      margin-top: 20px;
+    }
+    .checkbox {
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>FORMULIR PERMOHONAN</h2>
+<h3>KREDIT USAHA RAKYAT (KUR) PENEMPATAN PMI</h3>
+
+<p><b>Lampiran 1 - Formulir Permohonan KUR PMI BNI</b></p>
+
+<!-- INFORMASI PRIBADI PEMOHON -->
+<div class="section-title">INFORMASI PRIBADI PEMOHON</div>
+<table>
+  <tr><td>Nama Lengkap</td><td>: ${application.full_name || ""}</td></tr>
+  <tr><td>Tempat/Tanggal Lahir</td><td>: ${application.birth_place || ""}, ${formatDate(application.birth_date)}</td></tr>
+  <tr><td>Nomor Kartu Penduduk</td><td>: ${application.nik_ktp || ""}</td></tr>
+  <tr><td>Nomor Sisko PMI</td><td>: ${application.nomor_sisko || ""}</td></tr>
+  <tr><td>Jenis Kelamin</td><td>: ${application.gender || ""}</td></tr>
+  <tr><td>Pendidikan Terakhir</td><td>: ${application.last_education || ""}</td></tr>
+  <tr><td>Alamat KTP</td><td>: ${application.address_ktp || ""}</td></tr>
+  <tr><td>Alamat Domisili</td><td>: ${application.address_domicile || ""}</td></tr>
+  <tr><td>Nomor Telepon</td><td>: ${application.phone_number || ""}</td></tr>
+  <tr><td>Email</td><td>: ${application.email || ""}</td></tr>
+  <tr><td>Nama Ibu Kandung</td><td>: ${application.nama_ibu_kandung || ""}</td></tr>
+</table>
+
+<!-- INFORMASI PASANGAN / ORANG TUA -->
+<div class="section-title">INFORMASI PASANGAN (Apabila Menikah) / ORANG TUA (Apabila Lajang atau Janda/Duda)</div>
+<table>
+  <tr><td>Nama Lengkap</td><td>: ${application.nama_pasangan || ""}</td></tr>
+  <tr><td>Nomor Kartu Penduduk</td><td>: ${application.ktp_pasangan || ""}</td></tr>
+  <tr><td>Alamat</td><td>: ${application.alamat_pasangan || ""}</td></tr>
+  <tr><td>Nomor Telepon</td><td>: ${application.telp_pasangan || ""}</td></tr>
+</table>
+
+<!-- PERMOHONAN KREDIT -->
+<div class="section-title">PERMOHONAN KREDIT</div>
+<table>
+  <tr><td>Maksimum Permohonan</td><td>: Rp ${formatCurrency(application.loan_amount)}</td></tr>
+  <tr><td>Keperluan Kredit</td><td>: Biaya Penempatan PMI</td></tr>
+  <tr><td>Jangka Waktu Pembayaran</td><td>: ${application.tenor_months || ""} bulan</td></tr>
+  <tr><td>Jenis Kredit</td><td>: KUR Penempatan PMI</td></tr>
+</table>
+
+<!-- INFORMASI PEKERJAAN -->
+<div class="section-title">INFORMASI PEKERJAAN PEMOHON</div>
+<table>
+  <tr><td>Negara Tujuan</td><td>: ${application.work_location || ""}</td></tr>
+  <tr><td>Nama Pemberi Kerja</td><td>: ${application.nama_pemberi_kerja || ""}</td></tr>
+  <tr><td>Alamat Pemberi Kerja</td><td>: ${application.alamat_pemberi_kerja || ""}</td></tr>
+  <tr><td>No. Telp. Pemberi Kerja</td><td>: ${application.telp_pemberi_kerja || ""}</td></tr>
+  <tr><td>Tanggal Rencana Pemberangkatan</td><td>: ${formatDate(application.tanggal_keberangkatan)}</td></tr>
+  <tr><td>Institusi/Lembaga Pelatihan</td><td>: ${application.institution || ""}</td></tr>
+  <tr><td>Jurusan/Bidang Keahlian</td><td>: ${application.major || ""}</td></tr>
+  <tr><td>Pengalaman Kerja</td><td>: ${application.work_experience || ""}</td></tr>
+</table>
+
+<!-- PERNYATAAN -->
+<div class="section-title">PERNYATAAN PEMOHON</div>
+<ol>
+  <li>Semua data yang disampaikan kepada Bank telah lengkap dan benar</li>
+  <li>Bank telah memberikan informasi yang jelas dan memadai kepada Pemohon perihal prosedur, syarat dan ketentuan tentang KUR Penempatan PMI</li>
+  <li>Pemohon telah membaca dan memahami ketentuan KUR Penempatan PMI dan setuju untuk terikat dan tunduk pada ketentuan KUR Penempatan PMI dari Bank</li>
+  <li>Pemohon memahami maksimum kredit yang diajukan Pemohon tidak mengikat dan Bank memiliki kewenangan penuh untuk menetapkan maksimum kredit yang diberikan berdasarkan hasil analisa Bank</li>
+  <li>Bank berhak menolak permohonan KUR Penempatan PMI yang diajukan Pemohon apabila Pemohon tidak memenuhi persyaratan untuk memperoleh Fasilitas KUR Penempatan PMI</li>
+</ol>
+
+<!-- TANDA TANGAN -->
+<div class="section-title">TANDA TANGAN PEMOHON</div>
+<table>
+  <tr>
+    <td style="text-align:center">
+      ....................................................<br/>
+      Tanda tangan Pemohon KUR sesuai dengan KTP<br/>
+      (wajib diisi) sesuai KTP
+    </td>
+    <td style="text-align:center">
+      ....................................................<br/>
+      Tanda tangan Pasangan / Orang Tua Pemohon KUR<br/>
+      (sesuai KTP)
+    </td>
+  </tr>
+  <tr>
+    <td class="signature-box">${application.full_name || ""}</td>
+    <td class="signature-box">${application.nama_pasangan || ""}</td>
+  </tr>
+</table>
+
+<p style="text-align: right; margin-top: 30px;">
+  Tanggal: ${formatDate(application.created_at)}
+</p>
+
+</body>
+</html>`;
+
+    return htmlTemplate;
+  };
+
+  const handleDownloadKURForm = async (application: any) => {
+    setDownloadingForm(application.id);
+    try {
+      const htmlContent = generateKURApplicationForm(application);
+
+      // Create and download the file
+      const blob = new Blob([htmlContent], {
+        type: "text/html;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `KUR_Application_Form_${application.full_name.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.html`,
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert("KUR Application Form downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating KUR form:", error);
+      alert("Error generating KUR form. Please try again.");
+    } finally {
+      setDownloadingForm(null);
+    }
+  };
+
   const handleDownloadReport = async () => {
     setDownloadingReport(true);
     try {
@@ -415,6 +599,55 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     }
   };
 
+  const fetchApplicationBankProduct = async (applicationId: string) => {
+    setLoadingBankProduct(true);
+    try {
+      // Get branch application with bank product details
+      const { data, error } = await supabase
+        .from("branch_applications")
+        .select(
+          `
+          id,
+          bank_products!inner(
+            id,
+            name,
+            interest_rate,
+            min_amount,
+            max_amount,
+            min_tenor,
+            max_tenor,
+            type,
+            banks!inner(
+              id,
+              name,
+              code
+            )
+          ),
+          bank_branches!inner(
+            id,
+            name,
+            city,
+            province
+          )
+        `,
+        )
+        .eq("loan_application_id", applicationId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching bank product:", error);
+        setApplicationBankProduct(null);
+      } else {
+        setApplicationBankProduct(data);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setApplicationBankProduct(null);
+    } finally {
+      setLoadingBankProduct(false);
+    }
+  };
+
   const handleApplicationAction = async (
     applicationId: string,
     action: "approve" | "reject",
@@ -449,13 +682,23 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     }
   };
 
+  // Fetch bank product information when application is selected
+  React.useEffect(() => {
+    if (selectedApplication) {
+      fetchApplicationBankProduct(selectedApplication.id);
+    }
+  }, [selectedApplication?.id]);
+
   if (selectedApplication) {
     return (
       <div className="min-h-screen bg-white p-4">
         <div className="max-w-4xl mx-auto">
           <Button
             variant="outline"
-            onClick={() => setSelectedApplication(null)}
+            onClick={() => {
+              setSelectedApplication(null);
+              setApplicationBankProduct(null);
+            }}
             className="mb-4"
           >
             ← Back to Applications
@@ -666,21 +909,87 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                     </p>
                   </div>
                 </div>
+
+                {/* Bank Product Information */}
+                {loadingBankProduct ? (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600">
+                      Loading bank product information...
+                    </p>
+                  </div>
+                ) : applicationBankProduct ? (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold text-blue-800 mb-3">
+                      Assigned Bank Product
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <Label className="text-blue-700">Bank</Label>
+                        <p className="font-medium text-blue-900">
+                          {applicationBankProduct.bank_products.banks.name}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-blue-700">Product Name</Label>
+                        <p className="font-medium text-blue-900">
+                          {applicationBankProduct.bank_products.name}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-blue-700">Interest Rate</Label>
+                        <p className="font-medium text-blue-900">
+                          {applicationBankProduct.bank_products.interest_rate}%
+                          per year
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-blue-700">Loan Range</Label>
+                        <p className="font-medium text-blue-900">
+                          Rp{" "}
+                          {applicationBankProduct.bank_products.min_amount?.toLocaleString()}{" "}
+                          - Rp{" "}
+                          {applicationBankProduct.bank_products.max_amount?.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-blue-700">Tenor Range</Label>
+                        <p className="font-medium text-blue-900">
+                          {applicationBankProduct.bank_products.min_tenor} -{" "}
+                          {applicationBankProduct.bank_products.max_tenor}{" "}
+                          months
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-blue-700">Assigned Branch</Label>
+                        <p className="font-medium text-blue-900">
+                          {applicationBankProduct.bank_branches.name},{" "}
+                          {applicationBankProduct.bank_branches.city}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p className="text-yellow-700 text-sm">
+                      <strong>Note:</strong> This application has not been
+                      assigned to a bank product yet. Use the assignment section
+                      below to assign it to a bank.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
               <div className="flex justify-center space-x-4 pt-6 border-t">
                 <Button
-                  onClick={() =>
-                    handleApplicationAction(selectedApplication.id, "approve")
-                  }
-                  disabled={processing === selectedApplication.id}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => handleDownloadKURForm(selectedApplication)}
+                  disabled={downloadingForm === selectedApplication.id}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {processing === selectedApplication.id
-                    ? "Processing..."
-                    : "Approve Application"}
+                  <FileText className="h-4 w-4 mr-2" />
+                  {downloadingForm === selectedApplication.id
+                    ? "Generating..."
+                    : "Download KUR Form"}
                 </Button>
                 <Button
                   onClick={() =>
@@ -971,6 +1280,18 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                           </Button>
 
                           <Button
+                            onClick={() => handleDownloadKURForm(application)}
+                            disabled={downloadingForm === application.id}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            {downloadingForm === application.id
+                              ? "Generating..."
+                              : "KUR Form"}
+                          </Button>
+
+                          <Button
                             onClick={() =>
                               handleAssignApplication(application.id)
                             }
@@ -1002,17 +1323,6 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                               : "Assign"}
                           </Button>
 
-                          <Button
-                            onClick={() =>
-                              handleApplicationAction(application.id, "approve")
-                            }
-                            disabled={processing === application.id}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve
-                          </Button>
                           <Button
                             onClick={() =>
                               handleApplicationAction(application.id, "reject")
