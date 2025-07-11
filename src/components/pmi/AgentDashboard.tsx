@@ -20,6 +20,7 @@ import {
   Send,
   Download,
   FileText,
+  Plus,
 } from "lucide-react";
 import {
   supabase,
@@ -29,6 +30,7 @@ import {
   assignApplicationToBranch,
 } from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
+import LoanApplicationForm from "./LoanApplicationForm";
 
 interface AgentDashboardProps {
   agentId?: string;
@@ -44,6 +46,10 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
   const [selectedApplication, setSelectedApplication] =
     useState<LoanApplication | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [showNewApplicationForm, setShowNewApplicationForm] = useState(false);
+  const [currentAgentCompanyId, setCurrentAgentCompanyId] = useState<
+    string | null
+  >(null);
 
   // Assignment states
   const [banks, setBanks] = useState<any[]>([]);
@@ -101,6 +107,7 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
       }
 
       console.log("Agent company ID:", agentStaff.agent_company_id);
+      setCurrentAgentCompanyId(agentStaff.agent_company_id);
 
       // First, let's check all applications to see what's available
       const { data: allApps, error: allAppsError } = await supabase
@@ -689,6 +696,30 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     }
   }, [selectedApplication?.id]);
 
+  // Handle new application form
+  if (showNewApplicationForm) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="p-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowNewApplicationForm(false)}
+            className="mb-4"
+          >
+            ← Back to Agent Dashboard
+          </Button>
+        </div>
+        <LoanApplicationForm
+          onSubmit={() => {
+            setShowNewApplicationForm(false);
+            fetchApplications();
+          }}
+          preSelectedAgentId={currentAgentCompanyId || undefined}
+        />
+      </div>
+    );
+  }
+
   if (selectedApplication) {
     return (
       <div className="min-h-screen bg-white p-4">
@@ -1049,6 +1080,31 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
 
         <Card className="mb-6">
           <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4">
+              <Button
+                onClick={() => setShowNewApplicationForm(true)}
+                className="bg-[#5680E9] hover:bg-[#5680E9]/90 text-white flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Submit New Application
+              </Button>
+              <Button
+                onClick={handleDownloadReport}
+                disabled={downloadingReport}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {downloadingReport ? "Generating..." : "Download Report"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
             <CardTitle>Application Filters</CardTitle>
           </CardHeader>
           <CardContent>
@@ -1070,14 +1126,6 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                 <Button variant="outline">
                   <Filter className="h-4 w-4 mr-2" />
                   More Filters
-                </Button>
-                <Button
-                  onClick={handleDownloadReport}
-                  disabled={downloadingReport}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {downloadingReport ? "Generating..." : "Download Report"}
                 </Button>
               </div>
             </div>
