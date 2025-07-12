@@ -354,6 +354,143 @@ export const deleteAllLoanData = async () => {
   }
 };
 
+// Bulk upload applications from CSV
+export const processBulkApplications = async (
+  csvData: any[],
+  agentCompanyId: string,
+  fileMap: Map<string, { ktpFile: File; selfPhotoFile: File }>,
+) => {
+  const results = {
+    successful: [] as any[],
+    failed: [] as any[],
+    totalProcessed: 0,
+  };
+
+  console.log(`Processing ${csvData.length} applications...`);
+
+  for (const row of csvData) {
+    results.totalProcessed++;
+
+    try {
+      // Validate required fields
+      if (!row.full_name || !row.email || !row.phone_number) {
+        throw new Error(
+          "Missing required fields: full_name, email, or phone_number",
+        );
+      }
+
+      // Get files for this row (using email as identifier)
+      const files = fileMap.get(row.email);
+      if (!files) {
+        throw new Error(`Files not found for email: ${row.email}`);
+      }
+
+      // Upload KTP photo
+      const ktpUpload = await uploadFileToStorage(files.ktpFile, "ktp_photos");
+      if (ktpUpload.error) {
+        throw new Error(`KTP upload failed: ${ktpUpload.error}`);
+      }
+
+      // Upload self photo
+      const selfPhotoUpload = await uploadFileToStorage(
+        files.selfPhotoFile,
+        "self_photos",
+      );
+      if (selfPhotoUpload.error) {
+        throw new Error(`Self photo upload failed: ${selfPhotoUpload.error}`);
+      }
+
+      // Create loan application
+      const applicationData = {
+        full_name: row.full_name,
+        email: row.email,
+        phone_number: row.phone_number,
+        gender: row.gender || null,
+        age: row.age ? parseInt(row.age) : null,
+        birth_place: row.birth_place || null,
+        birth_date: row.birth_date || null,
+        nik_ktp: row.nik_ktp || null,
+        address_ktp: row.address_ktp || null,
+        address_domicile: row.address_domicile || null,
+        last_education: row.last_education || null,
+        nomor_sisko: row.nomor_sisko || null,
+        nama_ibu_kandung: row.nama_ibu_kandung || null,
+        nama_pasangan: row.nama_pasangan || null,
+        ktp_pasangan: row.ktp_pasangan || null,
+        alamat_pasangan: row.alamat_pasangan || null,
+        telp_pasangan: row.telp_pasangan || null,
+        institution: row.institution || null,
+        major: row.major || null,
+        work_experience: row.work_experience || null,
+        work_location: row.work_location || null,
+        nama_pemberi_kerja: row.nama_pemberi_kerja || null,
+        alamat_pemberi_kerja: row.alamat_pemberi_kerja || null,
+        telp_pemberi_kerja: row.telp_pemberi_kerja || null,
+        tanggal_keberangkatan: row.tanggal_keberangkatan || null,
+        loan_amount: row.loan_amount ? parseInt(row.loan_amount) : null,
+        tenor_months: row.tenor_months ? parseInt(row.tenor_months) : null,
+        other_certifications: row.other_certifications || null,
+        ktp_photo_url: ktpUpload.url,
+        self_photo_url: selfPhotoUpload.url,
+        assigned_agent_id: agentCompanyId,
+        status: "Submitted",
+        submission_type: "bulk_upload",
+      };
+
+      const { data: application, error: appError } = await supabase
+        .from("loan_applications")
+        .insert(applicationData)
+        .select()
+        .single();
+
+      if (appError) {
+        throw new Error(`Database insert failed: ${appError.message}`);
+      }
+
+      results.successful.push({
+        email: row.email,
+        name: row.full_name,
+        applicationId: application.id,
+      });
+
+      console.log(`Successfully processed: ${row.full_name} (${row.email})`);
+    } catch (error: any) {
+      console.error(`Failed to process ${row.email}:`, error);
+      results.failed.push({
+        email: row.email || "Unknown",
+        name: row.full_name || "Unknown",
+        error: error.message,
+      });
+    }
+  }
+
+  return results;
+};
+
+// Parse CSV content
+export const parseCSVContent = (csvContent: string): any[] => {
+  const lines = csvContent.split("\n").filter((line) => line.trim());
+  if (lines.length < 2) {
+    throw new Error("CSV must have at least a header row and one data row");
+  }
+
+  const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+  const data = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""));
+    const row: any = {};
+
+    headers.forEach((header, index) => {
+      row[header] = values[index] || null;
+    });
+
+    data.push(row);
+  }
+
+  return data;
+};
+
 // Assign application to bank branch
 export const assignApplicationToBranch = async (
   applicationId: string,

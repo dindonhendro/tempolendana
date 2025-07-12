@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
   Download,
   FileText,
   Plus,
+  Upload,
 } from "lucide-react";
 import {
   supabase,
@@ -28,6 +30,8 @@ import {
   getBankBranches,
   getBankProducts,
   assignApplicationToBranch,
+  processBulkApplications,
+  parseCSVContent,
 } from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
@@ -63,6 +67,14 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
   >(null);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [downloadingForm, setDownloadingForm] = useState<string | null>(null);
+
+  // Bulk upload states
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
+  const [bulkUploadProgress, setBulkUploadProgress] = useState<string>("");
+  const [processingBulk, setProcessingBulk] = useState(false);
+  const [bulkResults, setBulkResults] = useState<any>(null);
 
   // Bank product information for selected application
   const [applicationBankProduct, setApplicationBankProduct] =
@@ -696,6 +708,331 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     }
   }, [selectedApplication?.id]);
 
+  // Handle bulk upload
+  const handleBulkUpload = async () => {
+    if (!csvFile || !imageFiles || !currentAgentCompanyId) {
+      alert("Please select CSV file and image files");
+      return;
+    }
+
+    setProcessingBulk(true);
+    setBulkUploadProgress("Reading CSV file...");
+    setBulkResults(null);
+
+    try {
+      // Read CSV file
+      const csvContent = await csvFile.text();
+      const csvData = parseCSVContent(csvContent);
+
+      setBulkUploadProgress(
+        `Found ${csvData.length} records in CSV. Processing files...`,
+      );
+
+      // Create file map based on naming convention
+      // Expected naming: email_ktp.jpg, email_selfie.jpg
+      const fileMap = new Map<string, { ktpFile: File; selfPhotoFile: File }>();
+
+      // Group files by email
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        const fileName = file.name;
+
+        // Extract email from filename (before _ktp or _selfie)
+        const match = fileName.match(/^(.+)_(ktp|selfie)\.(jpg|jpeg|png)$/i);
+        if (match) {
+          const email = match[1];
+          const type = match[2].toLowerCase();
+
+          if (!fileMap.has(email)) {
+            fileMap.set(email, {
+              ktpFile: null as any,
+              selfPhotoFile: null as any,
+            });
+          }
+
+          const fileEntry = fileMap.get(email)!;
+          if (type === "ktp") {
+            fileEntry.ktpFile = file;
+          } else if (type === "selfie") {
+            fileEntry.selfPhotoFile = file;
+          }
+        }
+      }
+
+      setBulkUploadProgress(
+        `Mapped ${fileMap.size} email addresses with files. Starting upload...`,
+      );
+
+      // Process bulk applications
+      const results = await processBulkApplications(
+        csvData,
+        currentAgentCompanyId,
+        fileMap,
+      );
+
+      setBulkResults(results);
+      setBulkUploadProgress(
+        `Completed! ${results.successful.length} successful, ${results.failed.length} failed.`,
+      );
+
+      // Refresh applications list
+      await fetchApplications();
+    } catch (error: any) {
+      console.error("Bulk upload error:", error);
+      setBulkUploadProgress(`Error: ${error.message}`);
+    } finally {
+      setProcessingBulk(false);
+    }
+  };
+
+  const resetBulkUpload = () => {
+    setCsvFile(null);
+    setImageFiles(null);
+    setBulkUploadProgress("");
+    setBulkResults(null);
+    setShowBulkUpload(false);
+  };
+
+  const generateCSVTemplate = () => {
+    const headers = [
+      "full_name",
+      "email",
+      "phone_number",
+      "gender",
+      "age",
+      "birth_place",
+      "birth_date",
+      "nik_ktp",
+      "address_ktp",
+      "address_domicile",
+      "last_education",
+      "nomor_sisko",
+      "nama_ibu_kandung",
+      "nama_pasangan",
+      "ktp_pasangan",
+      "alamat_pasangan",
+      "telp_pasangan",
+      "institution",
+      "major",
+      "work_experience",
+      "work_location",
+      "nama_pemberi_kerja",
+      "alamat_pemberi_kerja",
+      "telp_pemberi_kerja",
+      "tanggal_keberangkatan",
+      "loan_amount",
+      "tenor_months",
+      "other_certifications",
+    ];
+
+    const sampleData = [
+      "John Doe",
+      "john.doe@email.com",
+      "081234567890",
+      "Male",
+      "25",
+      "Jakarta",
+      "1998-01-15",
+      "1234567890123456",
+      "Jl. Contoh No. 123, Jakarta",
+      "Jl. Contoh No. 123, Jakarta",
+      "SMA",
+      "PMI123456",
+      "Jane Doe",
+      "Mary Doe",
+      "1234567890123457",
+      "Jl. Pasangan No. 456, Jakarta",
+      "081234567891",
+      "LPK Sukses",
+      "Perawat",
+      "2 tahun",
+      "Saudi Arabia",
+      "Al-Rashid Hospital",
+      "King Fahd Road, Riyadh",
+      "+966123456789",
+      "2024-06-01",
+      "25000000",
+      "24",
+      "Sertifikat Perawat",
+    ];
+
+    const csvContent = [headers.join(","), sampleData.join(",")].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "bulk_application_template.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Handle bulk upload form
+  if (showBulkUpload) {
+    return (
+      <div className="min-h-screen bg-white p-4">
+        <div className="max-w-4xl mx-auto">
+          <Button variant="outline" onClick={resetBulkUpload} className="mb-4">
+            ← Back to Agent Dashboard
+          </Button>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-[#5680E9]">
+                Bulk Application Upload
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Instructions */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-800 mb-2">
+                  Upload Instructions:
+                </h3>
+                <ol className="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                  <li>
+                    Download the CSV template and fill in the borrower data
+                  </li>
+                  <li>
+                    Prepare image files with naming convention:{" "}
+                    <code>email_ktp.jpg</code> and <code>email_selfie.jpg</code>
+                  </li>
+                  <li>
+                    Example: <code>john.doe@email.com_ktp.jpg</code> and{" "}
+                    <code>john.doe@email.com_selfie.jpg</code>
+                  </li>
+                  <li>Upload the CSV file and all image files together</li>
+                  <li>
+                    The system will match files to records using the email
+                    address
+                  </li>
+                </ol>
+              </div>
+
+              {/* Template Download */}
+              <div>
+                <Button
+                  onClick={generateCSVTemplate}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV Template
+                </Button>
+              </div>
+
+              {/* CSV File Upload */}
+              <div>
+                <Label htmlFor="csv-file">CSV File *</Label>
+                <Input
+                  id="csv-file"
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                  className="mt-1"
+                />
+                {csvFile && (
+                  <p className="text-sm text-green-600 mt-1">
+                    Selected: {csvFile.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Image Files Upload */}
+              <div>
+                <Label htmlFor="image-files">
+                  Image Files (KTP & Selfie) *
+                </Label>
+                <Input
+                  id="image-files"
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  multiple
+                  onChange={(e) => setImageFiles(e.target.files)}
+                  className="mt-1"
+                />
+                {imageFiles && (
+                  <p className="text-sm text-green-600 mt-1">
+                    Selected: {imageFiles.length} files
+                  </p>
+                )}
+              </div>
+
+              {/* Progress */}
+              {bulkUploadProgress && (
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <p className="text-yellow-800">{bulkUploadProgress}</p>
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkResults && (
+                <div className="space-y-4">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h4 className="font-semibold text-green-800 mb-2">
+                      Upload Results
+                    </h4>
+                    <p className="text-green-700">
+                      Total Processed: {bulkResults.totalProcessed}
+                      <br />
+                      Successful: {bulkResults.successful.length}
+                      <br />
+                      Failed: {bulkResults.failed.length}
+                    </p>
+                  </div>
+
+                  {bulkResults.successful.length > 0 && (
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-semibold text-green-800 mb-2">
+                        Successful Applications:
+                      </h4>
+                      <div className="max-h-40 overflow-y-auto">
+                        {bulkResults.successful.map(
+                          (item: any, index: number) => (
+                            <p key={index} className="text-sm text-green-700">
+                              {item.name} ({item.email}) - ID:{" "}
+                              {item.applicationId}
+                            </p>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {bulkResults.failed.length > 0 && (
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-semibold text-red-800 mb-2">
+                        Failed Applications:
+                      </h4>
+                      <div className="max-h-40 overflow-y-auto">
+                        {bulkResults.failed.map((item: any, index: number) => (
+                          <p key={index} className="text-sm text-red-700">
+                            {item.name} ({item.email}) - Error: {item.error}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleBulkUpload}
+                  disabled={!csvFile || !imageFiles || processingBulk}
+                  className="bg-[#5680E9] hover:bg-[#5680E9]/90 text-white px-8"
+                >
+                  {processingBulk ? "Processing..." : "Upload Applications"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   // Handle new application form
   if (showNewApplicationForm) {
     return (
@@ -1090,6 +1427,13 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Submit New Application
+              </Button>
+              <Button
+                onClick={() => setShowBulkUpload(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Upload Applications
               </Button>
               <Button
                 onClick={handleDownloadReport}
