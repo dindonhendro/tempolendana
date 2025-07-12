@@ -296,35 +296,77 @@ function App() {
   const handleSaveAgent = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
+    // Validate required fields
+    const name = formData.get("name") as string;
+    const code = formData.get("code") as string;
+
+    if (!name || !code) {
+      alert("Name and Code are required fields.");
+      return;
+    }
+
     const agentData = {
-      name: formData.get("name") as string,
-      code: formData.get("code") as string,
-      email: (formData.get("email") as string) || null,
-      phone: (formData.get("phone") as string) || null,
-      address: (formData.get("address") as string) || null,
-      license_number: (formData.get("license_number") as string) || null,
+      name: name.trim(),
+      code: code.trim(),
+      email: (formData.get("email") as string)?.trim() || null,
+      phone: (formData.get("phone") as string)?.trim() || null,
+      address: (formData.get("address") as string)?.trim() || null,
+      license_number:
+        (formData.get("license_number") as string)?.trim() || null,
     };
+
+    console.log("Saving agent data:", agentData);
 
     try {
       if (editingAgent) {
-        const { error } = await supabase
+        console.log("Updating existing agent:", editingAgent.id);
+        const { data, error } = await supabase
           .from("agent_companies")
           .update(agentData)
-          .eq("id", editingAgent.id);
-        if (error) throw error;
+          .eq("id", editingAgent.id)
+          .select();
+
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        console.log("Agent updated successfully:", data);
       } else {
-        const { error } = await supabase
+        console.log("Creating new agent");
+        const { data, error } = await supabase
           .from("agent_companies")
-          .insert([agentData]);
-        if (error) throw error;
+          .insert([agentData])
+          .select();
+
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+        console.log("Agent created successfully:", data);
       }
 
       await fetchAgentCompanies();
       setShowAgentForm(false);
       setEditingAgent(null);
-    } catch (error) {
+      alert(
+        editingAgent
+          ? "Agent company updated successfully!"
+          : "Agent company created successfully!",
+      );
+    } catch (error: any) {
       console.error("Error saving agent:", error);
-      alert("Error saving agent company. Please try again.");
+      let errorMessage = "Error saving agent company. ";
+
+      if (error?.code === "23505") {
+        errorMessage += "A company with this code already exists.";
+      } else if (error?.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += "Please try again.";
+      }
+
+      alert(errorMessage);
     }
   };
 
@@ -461,11 +503,79 @@ function App() {
     }
   };
 
-  const handleSystemOverview = () => {
+  const [systemStats, setSystemStats] = useState<{
+    totalUsers: number;
+    totalApplications: number;
+    totalBanks: number;
+    totalAgents: number;
+    pendingApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    recentApplications: any[];
+  } | null>(null);
+
+  const fetchSystemStats = async () => {
+    try {
+      setAdminLoading(true);
+
+      // Fetch all statistics in parallel
+      const [
+        usersResult,
+        applicationsResult,
+        banksResult,
+        agentsResult,
+        recentAppsResult,
+      ] = await Promise.all([
+        supabase.from("users").select("id", { count: "exact" }),
+        supabase
+          .from("loan_applications")
+          .select("id, status", { count: "exact" }),
+        supabase.from("banks").select("id", { count: "exact" }),
+        supabase.from("agent_companies").select("id", { count: "exact" }),
+        supabase
+          .from("loan_applications")
+          .select(
+            `
+            id, full_name, status, created_at, loan_amount,
+            users!inner(full_name, email)
+          `,
+          )
+          .order("created_at", { ascending: false })
+          .limit(10),
+      ]);
+
+      // Count applications by status
+      const applications = applicationsResult.data || [];
+      const pendingCount = applications.filter(
+        (app) => app.status === "Pending",
+      ).length;
+      const approvedCount = applications.filter(
+        (app) => app.status === "Approved",
+      ).length;
+      const rejectedCount = applications.filter(
+        (app) => app.status === "Rejected",
+      ).length;
+
+      setSystemStats({
+        totalUsers: usersResult.count || 0,
+        totalApplications: applicationsResult.count || 0,
+        totalBanks: banksResult.count || 0,
+        totalAgents: agentsResult.count || 0,
+        pendingApplications: pendingCount,
+        approvedApplications: approvedCount,
+        rejectedApplications: rejectedCount,
+        recentApplications: recentAppsResult.data || [],
+      });
+    } catch (error) {
+      console.error("Error fetching system stats:", error);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleSystemOverview = async () => {
     setActiveAdminSection("reports");
-    alert(
-      "System Overview feature will be implemented here. This will include:\n\n• Application Statistics\n• Financial Reports\n• User Activity Reports\n• System Health Monitoring",
-    );
+    await fetchSystemStats();
   };
 
   const getDashboardComponent = () => {
@@ -1383,6 +1493,234 @@ function App() {
                       )}
                     </CardContent>
                   </Card>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        if (activeAdminSection === "reports") {
+          return (
+            <div className="min-h-screen bg-white p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveAdminSection(null)}
+                      className="flex items-center space-x-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Back to Dashboard</span>
+                    </Button>
+                    <h1 className="text-3xl font-bold text-[#5680E9]">
+                      System Overview
+                    </h1>
+                  </div>
+                  <Button
+                    onClick={fetchSystemStats}
+                    variant="outline"
+                    className="flex items-center space-x-2"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Refresh Data</span>
+                  </Button>
+                </div>
+
+                {adminLoading ? (
+                  <div className="text-center py-8">
+                    <p>Loading system statistics...</p>
+                  </div>
+                ) : systemStats ? (
+                  <div className="space-y-6">
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Total Users
+                              </p>
+                              <p className="text-2xl font-bold text-[#5680E9]">
+                                {systemStats.totalUsers}
+                              </p>
+                            </div>
+                            <Users className="h-8 w-8 text-[#5680E9]" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Total Applications
+                              </p>
+                              <p className="text-2xl font-bold text-[#5680E9]">
+                                {systemStats.totalApplications}
+                              </p>
+                            </div>
+                            <BarChart3 className="h-8 w-8 text-[#5680E9]" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Partner Banks
+                              </p>
+                              <p className="text-2xl font-bold text-[#5680E9]">
+                                {systemStats.totalBanks}
+                              </p>
+                            </div>
+                            <Building2 className="h-8 w-8 text-[#5680E9]" />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Agent Companies
+                              </p>
+                              <p className="text-2xl font-bold text-[#5680E9]">
+                                {systemStats.totalAgents}
+                              </p>
+                            </div>
+                            <Users className="h-8 w-8 text-[#5680E9]" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Application Status Overview */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Pending Applications
+                              </p>
+                              <p className="text-2xl font-bold text-yellow-600">
+                                {systemStats.pendingApplications}
+                              </p>
+                            </div>
+                            <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                              <div className="h-4 w-4 bg-yellow-600 rounded-full"></div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Approved Applications
+                              </p>
+                              <p className="text-2xl font-bold text-green-600">
+                                {systemStats.approvedApplications}
+                              </p>
+                            </div>
+                            <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <div className="h-4 w-4 bg-green-600 rounded-full"></div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-600">
+                                Rejected Applications
+                              </p>
+                              <p className="text-2xl font-bold text-red-600">
+                                {systemStats.rejectedApplications}
+                              </p>
+                            </div>
+                            <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+                              <div className="h-4 w-4 bg-red-600 rounded-full"></div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Recent Applications */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Recent Applications</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Applicant Name</TableHead>
+                              <TableHead>Loan Amount</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Submitted</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {systemStats.recentApplications.map((app) => (
+                              <TableRow key={app.id}>
+                                <TableCell className="font-medium">
+                                  {app.full_name}
+                                </TableCell>
+                                <TableCell>
+                                  {app.loan_amount
+                                    ? `Rp ${app.loan_amount.toLocaleString()}`
+                                    : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      app.status === "Approved"
+                                        ? "bg-green-100 text-green-800"
+                                        : app.status === "Rejected"
+                                          ? "bg-red-100 text-red-800"
+                                          : app.status === "Pending"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {app.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(
+                                    app.created_at,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        {systemStats.recentApplications.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            No applications found.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      Click &quot;Refresh Data&quot; to load system statistics.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

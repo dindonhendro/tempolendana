@@ -297,6 +297,63 @@ export const uploadFileToStorage = async (
   }
 };
 
+// Delete all loan data and relations
+export const deleteAllLoanData = async () => {
+  try {
+    console.log("Starting to delete all loan data...");
+
+    // Delete in order to respect foreign key constraints
+    // 1. Delete bank_reviews first (references branch_applications)
+    const { error: reviewsError } = await supabase
+      .from("bank_reviews")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
+
+    if (reviewsError) {
+      console.error("Error deleting bank reviews:", reviewsError);
+      throw new Error(`Failed to delete bank reviews: ${reviewsError.message}`);
+    }
+    console.log("Bank reviews deleted successfully");
+
+    // 2. Delete branch_applications (references loan_applications)
+    const { error: branchAppsError } = await supabase
+      .from("branch_applications")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
+
+    if (branchAppsError) {
+      console.error("Error deleting branch applications:", branchAppsError);
+      throw new Error(
+        `Failed to delete branch applications: ${branchAppsError.message}`,
+      );
+    }
+    console.log("Branch applications deleted successfully");
+
+    // 3. Finally delete loan_applications
+    const { error: loansError } = await supabase
+      .from("loan_applications")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
+
+    if (loansError) {
+      console.error("Error deleting loan applications:", loansError);
+      throw new Error(
+        `Failed to delete loan applications: ${loansError.message}`,
+      );
+    }
+    console.log("Loan applications deleted successfully");
+
+    console.log("All loan data deleted successfully!");
+    return {
+      success: true,
+      message: "All loan data has been deleted successfully",
+    };
+  } catch (error) {
+    console.error("Error in deleteAllLoanData:", error);
+    throw error;
+  }
+};
+
 // Assign application to bank branch
 export const assignApplicationToBranch = async (
   applicationId: string,
