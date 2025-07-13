@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
 import AuthForm from "./components/auth/AuthForm";
@@ -45,6 +45,7 @@ import {
   Edit,
   Trash2,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
 
 function App() {
@@ -161,6 +162,17 @@ function App() {
   const [showBranchForm, setShowBranchForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showStaffForm, setShowStaffForm] = useState(false);
+  const [allApplications, setAllApplications] = useState<
+    Tables<"loan_applications">[]
+  >([]);
+  const [editingApplication, setEditingApplication] =
+    useState<Tables<"loan_applications"> | null>(null);
+  const [showApplicationEditDialog, setShowApplicationEditDialog] =
+    useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredApplications, setFilteredApplications] = useState<
+    Tables<"loan_applications">[]
+  >([]);
 
   const fetchBanks = async () => {
     try {
@@ -576,6 +588,187 @@ function App() {
   const handleSystemOverview = async () => {
     setActiveAdminSection("reports");
     await fetchSystemStats();
+  };
+
+  const handleApplicationManagement = async () => {
+    setActiveAdminSection("applications");
+    setAdminLoading(true);
+    try {
+      await fetchAllApplications();
+    } catch (error) {
+      console.error("Error in handleApplicationManagement:", error);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const fetchAllApplications = async () => {
+    try {
+      // First, try to get all applications without joins to see if there's data
+      const { data: basicData, error: basicError } = await supabase
+        .from("loan_applications")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (basicError) {
+        console.error("Error fetching basic applications:", basicError);
+        setAllApplications([]);
+        return;
+      }
+
+      console.log("Found applications:", basicData?.length || 0);
+
+      // If we have basic data, try to get with joins
+      if (basicData && basicData.length > 0) {
+        const { data, error } = await supabase
+          .from("loan_applications")
+          .select(
+            `
+            *,
+            users(full_name, email),
+            agent_companies(name, code)
+          `,
+          )
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching applications with joins:", error);
+          // Fall back to basic data if joins fail
+          setAllApplications(basicData);
+        } else {
+          setAllApplications(data || []);
+        }
+      } else {
+        // No applications found
+        setAllApplications([]);
+      }
+    } catch (error) {
+      console.error("Error fetching all applications:", error);
+      setAllApplications([]);
+    }
+  };
+
+  const filterApplications = (
+    applications: Tables<"loan_applications">[],
+    term: string,
+  ) => {
+    if (!term.trim()) {
+      return applications;
+    }
+
+    const searchTerm = term.toLowerCase();
+    return applications.filter((app) => {
+      // Search by applicant name
+      if (app.full_name?.toLowerCase().includes(searchTerm)) return true;
+
+      // Search by email
+      if (app.email?.toLowerCase().includes(searchTerm)) return true;
+
+      // Search by phone
+      if (app.phone_number?.toLowerCase().includes(searchTerm)) return true;
+
+      // Search by status
+      if (app.status?.toLowerCase().includes(searchTerm)) return true;
+
+      // Search by agent company name
+      if (
+        (app as any).agent_companies?.name?.toLowerCase().includes(searchTerm)
+      )
+        return true;
+
+      // Search by NIK KTP
+      if (app.nik_ktp?.toLowerCase().includes(searchTerm)) return true;
+
+      // Search by work location
+      if (app.work_location?.toLowerCase().includes(searchTerm)) return true;
+
+      return false;
+    });
+  };
+
+  // Update filtered applications when search term or all applications change
+  React.useEffect(() => {
+    const filtered = filterApplications(allApplications, searchTerm);
+    setFilteredApplications(filtered);
+  }, [allApplications, searchTerm]);
+
+  const handleEditApplicationStatus = (
+    application: Tables<"loan_applications">,
+  ) => {
+    console.log("Edit button clicked for application:", application.id);
+    try {
+      setEditingApplication(application);
+      setShowApplicationEditDialog(true);
+    } catch (error) {
+      console.error("Error setting editing application:", error);
+    }
+  };
+
+  const handleSaveApplicationStatus = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    if (!editingApplication) return;
+
+    const formData = new FormData(event.currentTarget);
+    const newStatus = formData.get("status") as string;
+    const comments = formData.get("comments") as string;
+
+    try {
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Add validation fields if status is being validated
+      if (newStatus === "Validated" && user) {
+        updateData.validated_by_lendana = user.id;
+        updateData.validated_by_lendana_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from("loan_applications")
+        .update(updateData)
+        .eq("id", editingApplication.id);
+
+      if (error) throw error;
+
+      // If there are comments and status is rejected, we might want to store them
+      // For now, we'll just update the status
+
+      await fetchAllApplications();
+      setShowApplicationEditDialog(false);
+      setEditingApplication(null);
+      alert("Application status updated successfully!");
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      alert("Error updating application status. Please try again.");
+    }
+  };
+
+  const handleDeleteApplication = async (applicationId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this application? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("loan_applications")
+        .delete()
+        .eq("id", applicationId);
+
+      if (error) throw error;
+
+      await fetchAllApplications();
+      alert("Application deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting application:", error);
+      alert("Error deleting application. Please try again.");
+    }
   };
 
   const getDashboardComponent = () => {
@@ -1499,6 +1692,287 @@ function App() {
           );
         }
 
+        if (activeAdminSection === "applications") {
+          return (
+            <div className="min-h-screen bg-white p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveAdminSection(null)}
+                      className="flex items-center space-x-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Back to Dashboard</span>
+                    </Button>
+                    <h1 className="text-3xl font-bold text-[#5680E9]">
+                      Application Management
+                    </h1>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-1 max-w-md">
+                      <Input
+                        placeholder="Search applications (name, email, phone, status, agent, NIK, work location)..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <Button
+                      onClick={fetchAllApplications}
+                      variant="outline"
+                      className="flex items-center space-x-2"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Refresh Data</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {adminLoading ? (
+                  <div className="text-center py-8">
+                    <p>Loading applications...</p>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        All Loan Applications ({filteredApplications.length} of{" "}
+                        {allApplications.length})
+                        {searchTerm && (
+                          <span className="text-sm font-normal text-gray-500 ml-2">
+                            - Filtered by: "{searchTerm}"
+                          </span>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Applicant</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Phone</TableHead>
+                              <TableHead>Loan Amount</TableHead>
+                              <TableHead>Tenor</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Agent</TableHead>
+                              <TableHead>Submitted</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredApplications.map((application) => (
+                              <TableRow key={application.id}>
+                                <TableCell className="font-medium">
+                                  {application.full_name}
+                                </TableCell>
+                                <TableCell>
+                                  {application.email ||
+                                    (application as any).users?.email ||
+                                    "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {application.phone_number || "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {application.loan_amount
+                                    ? `Rp ${application.loan_amount.toLocaleString()}`
+                                    : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {application.tenor_months
+                                    ? `${application.tenor_months} months`
+                                    : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      application.status === "Bank Approved"
+                                        ? "bg-green-100 text-green-800"
+                                        : application.status ===
+                                              "Bank Rejected" ||
+                                            application.status === "Rejected"
+                                          ? "bg-red-100 text-red-800"
+                                          : application.status ===
+                                                "Submitted" ||
+                                              application.status ===
+                                                "Checked" ||
+                                              application.status === "Validated"
+                                            ? "bg-blue-100 text-blue-800"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {application.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {(application as any).agent_companies?.name ||
+                                    "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(
+                                    application.created_at,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleEditApplicationStatus(application)
+                                      }
+                                      className="text-blue-600 hover:text-blue-700"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleDeleteApplication(application.id)
+                                      }
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        {filteredApplications.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            {searchTerm ? (
+                              <div>
+                                <p>
+                                  No applications found matching "{searchTerm}".
+                                </p>
+                                <p className="text-sm mt-2">
+                                  Try adjusting your search terms or clear the
+                                  search to see all applications.
+                                </p>
+                              </div>
+                            ) : (
+                              <div>
+                                <p>No applications found.</p>
+                                <p className="text-sm mt-2">
+                                  Applications will appear here once users
+                                  submit loan applications.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Edit Application Status Dialog */}
+                <Dialog
+                  open={showApplicationEditDialog}
+                  onOpenChange={(open) => {
+                    console.log("Dialog open state changed:", open);
+                    setShowApplicationEditDialog(open);
+                    if (!open) {
+                      setEditingApplication(null);
+                    }
+                  }}
+                >
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Edit Application Status</DialogTitle>
+                    </DialogHeader>
+                    {editingApplication ? (
+                      <form
+                        onSubmit={handleSaveApplicationStatus}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <Label>
+                            Applicant: {editingApplication.full_name}
+                          </Label>
+                        </div>
+                        <div>
+                          <Label>
+                            Current Status: {editingApplication.status}
+                          </Label>
+                        </div>
+                        <div>
+                          <Label htmlFor="status">New Status</Label>
+                          <Select
+                            name="status"
+                            defaultValue={editingApplication.status}
+                            required
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select new status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Submitted">
+                                Submitted
+                              </SelectItem>
+                              <SelectItem value="Checked">Checked</SelectItem>
+                              <SelectItem value="Validated">
+                                Validated
+                              </SelectItem>
+                              <SelectItem value="Bank Approved">
+                                Bank Approved
+                              </SelectItem>
+                              <SelectItem value="Bank Rejected">
+                                Bank Rejected
+                              </SelectItem>
+                              <SelectItem value="Rejected">Rejected</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="comments">Comments (Optional)</Label>
+                          <textarea
+                            id="comments"
+                            name="comments"
+                            placeholder="Add any comments about this status change..."
+                            rows={3}
+                            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              console.log("Cancel button clicked");
+                              setShowApplicationEditDialog(false);
+                              setEditingApplication(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                          >
+                            Update Status
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p>Loading application data...</p>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          );
+        }
+
         if (activeAdminSection === "reports") {
           return (
             <div className="min-h-screen bg-white p-4">
@@ -1739,7 +2213,7 @@ function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
                     activeAdminSection === "banks"
@@ -1785,6 +2259,30 @@ function App() {
                     className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
                   >
                     Manage Agents
+                  </Button>
+                </div>
+
+                <div
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
+                    activeAdminSection === "applications"
+                      ? "border-[#5680E9] bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center mb-3">
+                    <FileText className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Application Management
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    View and edit all loan applications
+                  </p>
+                  <Button
+                    onClick={handleApplicationManagement}
+                    className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
+                  >
+                    Manage Applications
                   </Button>
                 </div>
 
