@@ -1,0 +1,16 @@
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_persetujuan_data_privacy_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS surat_permohonan_kredit_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_kartu_keluarga_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_paspor_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_surat_nikah_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS pas_foto_3x4_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_ktp_keluarga_penjamin_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS surat_pernyataan_ortu_wali_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS surat_izin_ortu_wali_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_perjanjian_penempatan_pmi_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_perjanjian_kerja_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS surat_keterangan_p3mi_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS info_slik_bank_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_standing_instruction_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_lain_1_url TEXT;
+ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS dokumen_lain_2_url TEXT;

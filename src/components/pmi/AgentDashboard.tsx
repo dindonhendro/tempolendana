@@ -121,35 +121,32 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
       console.log("Agent company ID:", agentStaff.agent_company_id);
       setCurrentAgentCompanyId(agentStaff.agent_company_id);
 
-      // First, let's check all applications to see what's available
-      const { data: allApps, error: allAppsError } = await supabase
-        .from("loan_applications")
-        .select("id, full_name, email, status, assigned_agent_id, created_at")
-        .order("created_at", { ascending: false });
-
-      if (allAppsError) {
-        console.error("Error fetching all applications:", allAppsError);
-      } else {
-        console.log("All applications:", allApps);
-        console.log(
-          "Looking for application ID: 99f68260-6ab8-4605-9d99-7e4825577f3f",
-        );
-        const targetApp = allApps?.find(
-          (app) => app.id === "99f68260-6ab8-4605-9d99-7e4825577f3f",
-        );
-        if (targetApp) {
-          console.log("Found target application:", targetApp);
-        } else {
-          console.log("Target application not found in database");
-        }
-      }
-
-      // Fetch applications assigned to this agent's company
+      // Fetch applications assigned to this agent's company (including rejected ones to show comments)
       const { data, error } = await supabase
         .from("loan_applications")
-        .select("*")
+        .select(
+          `
+          *,
+          branch_applications(
+            id,
+            bank_reviews(
+              id,
+              status,
+              comments,
+              reviewed_at,
+              bank_staff(
+                id,
+                position,
+                users(
+                  full_name
+                )
+              )
+            )
+          )
+        `,
+        )
         .eq("assigned_agent_id", agentStaff.agent_company_id)
-        .in("status", ["Submitted", "Checked"])
+        .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -1347,6 +1344,90 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                 )}
               </div>
 
+              {/* Rejection Comments Section */}
+              {(selectedApplication.status === "Rejected" ||
+                selectedApplication.status === "Bank Rejected") && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-red-600">
+                    Rejection Comments
+                  </h3>
+
+                  {/* Lendana Validator Comments */}
+                  {selectedApplication.status === "Rejected" && (
+                    <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                      <h4 className="font-semibold text-red-800 mb-2">
+                        Rejected by Lendana Validator
+                      </h4>
+                      <p className="text-red-700 text-sm">
+                        This application was rejected during the validation
+                        process by Lendana. For specific rejection reasons,
+                        please contact the validation team.
+                      </p>
+                      <p className="text-red-600 text-xs mt-2">
+                        Status: {selectedApplication.status}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bank Staff Comments */}
+                  {selectedApplication.status === "Bank Rejected" &&
+                    selectedApplication.branch_applications &&
+                    selectedApplication.branch_applications.length > 0 && (
+                      <div className="space-y-3">
+                        {selectedApplication.branch_applications.map(
+                          (branchApp: any) =>
+                            branchApp.bank_reviews &&
+                            branchApp.bank_reviews.length > 0
+                              ? branchApp.bank_reviews.map(
+                                  (review: any, index: number) => (
+                                    <div
+                                      key={review.id || index}
+                                      className="p-4 bg-red-50 rounded-lg border border-red-200"
+                                    >
+                                      <h4 className="font-semibold text-red-800 mb-2">
+                                        Rejected by Bank Staff
+                                      </h4>
+                                      {review.comments && (
+                                        <div className="mb-3">
+                                          <Label className="text-red-700 font-medium">
+                                            Comments:
+                                          </Label>
+                                          <p className="text-red-700 bg-white p-2 rounded border mt-1">
+                                            {review.comments}
+                                          </p>
+                                        </div>
+                                      )}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                          <Label className="text-red-700">
+                                            Reviewed by:
+                                          </Label>
+                                          <p className="text-red-600">
+                                            {review.bank_staff?.users
+                                              ?.full_name || "Bank Staff"}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-red-700">
+                                            Review Date:
+                                          </Label>
+                                          <p className="text-red-600">
+                                            {new Date(
+                                              review.reviewed_at,
+                                            ).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ),
+                                )
+                              : null,
+                        )}
+                      </div>
+                    )}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex justify-center space-x-4 pt-6 border-t">
                 <Button
@@ -1359,18 +1440,21 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                     ? "Generating..."
                     : "Download KUR Form"}
                 </Button>
-                <Button
-                  onClick={() =>
-                    handleApplicationAction(selectedApplication.id, "reject")
-                  }
-                  disabled={processing === selectedApplication.id}
-                  variant="destructive"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  {processing === selectedApplication.id
-                    ? "Processing..."
-                    : "Reject Application"}
-                </Button>
+                {(selectedApplication.status === "Submitted" ||
+                  selectedApplication.status === "Checked") && (
+                  <Button
+                    onClick={() =>
+                      handleApplicationAction(selectedApplication.id, "reject")
+                    }
+                    disabled={processing === selectedApplication.id}
+                    variant="destructive"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    {processing === selectedApplication.id
+                      ? "Processing..."
+                      : "Reject Application"}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1621,7 +1705,12 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                 {filteredApplications.map((application) => (
                   <Card
                     key={application.id}
-                    className="border-l-4 border-l-blue-500"
+                    className={`border-l-4 ${
+                      application.status === "Rejected" ||
+                      application.status === "Bank Rejected"
+                        ? "border-l-red-500"
+                        : "border-l-blue-500"
+                    }`}
                   >
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
@@ -1630,7 +1719,14 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                             <h3 className="font-semibold text-lg">
                               {application.full_name}
                             </h3>
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                application.status === "Rejected" ||
+                                application.status === "Bank Rejected"
+                                  ? "bg-red-100 text-red-600"
+                                  : "bg-blue-100 text-blue-600"
+                              }`}
+                            >
                               {application.status}
                             </span>
                           </div>
@@ -1683,49 +1779,64 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                               : "KUR Form"}
                           </Button>
 
-                          <Button
-                            onClick={() =>
-                              handleAssignApplication(application.id)
-                            }
-                            disabled={
-                              assigningApplication === application.id ||
-                              !selectedBank ||
-                              !selectedProduct ||
-                              !selectedBranch
-                            }
-                            size="sm"
-                            className={`${
-                              !selectedBank ||
-                              !selectedProduct ||
-                              !selectedBranch
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-[#5680E9] hover:bg-[#4a6bc7]"
-                            } text-white`}
-                            title={
-                              !selectedBank ||
-                              !selectedProduct ||
-                              !selectedBranch
-                                ? "Please select bank, product, and branch first"
-                                : "Assign application to selected bank"
-                            }
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            {assigningApplication === application.id
-                              ? "Assigning..."
-                              : "Assign"}
-                          </Button>
+                          {(application.status === "Submitted" ||
+                            application.status === "Checked") && (
+                            <>
+                              <Button
+                                onClick={() =>
+                                  handleAssignApplication(application.id)
+                                }
+                                disabled={
+                                  assigningApplication === application.id ||
+                                  !selectedBank ||
+                                  !selectedProduct ||
+                                  !selectedBranch
+                                }
+                                size="sm"
+                                className={`${
+                                  !selectedBank ||
+                                  !selectedProduct ||
+                                  !selectedBranch
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-[#5680E9] hover:bg-[#4a6bc7]"
+                                } text-white`}
+                                title={
+                                  !selectedBank ||
+                                  !selectedProduct ||
+                                  !selectedBranch
+                                    ? "Please select bank, product, and branch first"
+                                    : "Assign application to selected bank"
+                                }
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                {assigningApplication === application.id
+                                  ? "Assigning..."
+                                  : "Assign"}
+                              </Button>
 
-                          <Button
-                            onClick={() =>
-                              handleApplicationAction(application.id, "reject")
-                            }
-                            disabled={processing === application.id}
-                            size="sm"
-                            variant="destructive"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
+                              <Button
+                                onClick={() =>
+                                  handleApplicationAction(
+                                    application.id,
+                                    "reject",
+                                  )
+                                }
+                                disabled={processing === application.id}
+                                size="sm"
+                                variant="destructive"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {(application.status === "Rejected" ||
+                            application.status === "Bank Rejected") && (
+                            <span className="text-sm text-red-600 font-medium px-2 py-1 bg-red-50 rounded">
+                              Application Rejected - View details for comments
+                            </span>
+                          )}
                         </div>
                       </div>
                     </CardContent>

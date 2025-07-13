@@ -377,10 +377,21 @@ export type Database = {
           birth_date: string | null
           birth_place: string | null
           created_at: string
+          dokumen_kartu_keluarga_url: string | null
+          dokumen_ktp_keluarga_penjamin_url: string | null
+          dokumen_lain_1_url: string | null
+          dokumen_lain_2_url: string | null
+          dokumen_paspor_url: string | null
+          dokumen_perjanjian_kerja_url: string | null
+          dokumen_perjanjian_penempatan_pmi_url: string | null
+          dokumen_persetujuan_data_privacy_url: string | null
+          dokumen_standing_instruction_url: string | null
+          dokumen_surat_nikah_url: string | null
           email: string | null
           full_name: string
           gender: string | null
           id: string
+          info_slik_bank_url: string | null
           institution: string | null
           ktp_pasangan: string | null
           ktp_photo_url: string | null
@@ -393,10 +404,15 @@ export type Database = {
           nik_ktp: string | null
           nomor_sisko: string | null
           other_certifications: string | null
+          pas_foto_3x4_url: string | null
           phone_number: string | null
           self_photo_url: string | null
           status: string
           submission_type: string | null
+          surat_izin_ortu_wali_url: string | null
+          surat_keterangan_p3mi_url: string | null
+          surat_permohonan_kredit_url: string | null
+          surat_pernyataan_ortu_wali_url: string | null
           tanggal_keberangkatan: string | null
           telp_pasangan: string | null
           telp_pemberi_kerja: string | null
@@ -419,10 +435,21 @@ export type Database = {
           birth_date?: string | null
           birth_place?: string | null
           created_at?: string
+          dokumen_kartu_keluarga_url?: string | null
+          dokumen_ktp_keluarga_penjamin_url?: string | null
+          dokumen_lain_1_url?: string | null
+          dokumen_lain_2_url?: string | null
+          dokumen_paspor_url?: string | null
+          dokumen_perjanjian_kerja_url?: string | null
+          dokumen_perjanjian_penempatan_pmi_url?: string | null
+          dokumen_persetujuan_data_privacy_url?: string | null
+          dokumen_standing_instruction_url?: string | null
+          dokumen_surat_nikah_url?: string | null
           email?: string | null
           full_name: string
           gender?: string | null
           id?: string
+          info_slik_bank_url?: string | null
           institution?: string | null
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
@@ -435,10 +462,15 @@ export type Database = {
           nik_ktp?: string | null
           nomor_sisko?: string | null
           other_certifications?: string | null
+          pas_foto_3x4_url?: string | null
           phone_number?: string | null
           self_photo_url?: string | null
           status?: string
           submission_type?: string | null
+          surat_izin_ortu_wali_url?: string | null
+          surat_keterangan_p3mi_url?: string | null
+          surat_permohonan_kredit_url?: string | null
+          surat_pernyataan_ortu_wali_url?: string | null
           tanggal_keberangkatan?: string | null
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null
@@ -461,10 +493,21 @@ export type Database = {
           birth_date?: string | null
           birth_place?: string | null
           created_at?: string
+          dokumen_kartu_keluarga_url?: string | null
+          dokumen_ktp_keluarga_penjamin_url?: string | null
+          dokumen_lain_1_url?: string | null
+          dokumen_lain_2_url?: string | null
+          dokumen_paspor_url?: string | null
+          dokumen_perjanjian_kerja_url?: string | null
+          dokumen_perjanjian_penempatan_pmi_url?: string | null
+          dokumen_persetujuan_data_privacy_url?: string | null
+          dokumen_standing_instruction_url?: string | null
+          dokumen_surat_nikah_url?: string | null
           email?: string | null
           full_name?: string
           gender?: string | null
           id?: string
+          info_slik_bank_url?: string | null
           institution?: string | null
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
@@ -477,10 +520,15 @@ export type Database = {
           nik_ktp?: string | null
           nomor_sisko?: string | null
           other_certifications?: string | null
+          pas_foto_3x4_url?: string | null
           phone_number?: string | null
           self_photo_url?: string | null
           status?: string
           submission_type?: string | null
+          surat_izin_ortu_wali_url?: string | null
+          surat_keterangan_p3mi_url?: string | null
+          surat_permohonan_kredit_url?: string | null
+          surat_pernyataan_ortu_wali_url?: string | null
           tanggal_keberangkatan?: string | null
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null

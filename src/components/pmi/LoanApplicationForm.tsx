@@ -43,7 +43,50 @@ export default function LoanApplicationForm({
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
-  }>({ ktp: "idle", selfie: "idle" });
+    dokumen_persetujuan_data_privacy:
+      | "idle"
+      | "uploading"
+      | "success"
+      | "error";
+    surat_permohonan_kredit: "idle" | "uploading" | "success" | "error";
+    dokumen_kartu_keluarga: "idle" | "uploading" | "success" | "error";
+    dokumen_paspor: "idle" | "uploading" | "success" | "error";
+    dokumen_surat_nikah: "idle" | "uploading" | "success" | "error";
+    pas_foto_3x4: "idle" | "uploading" | "success" | "error";
+    dokumen_ktp_keluarga_penjamin: "idle" | "uploading" | "success" | "error";
+    surat_pernyataan_ortu_wali: "idle" | "uploading" | "success" | "error";
+    surat_izin_ortu_wali: "idle" | "uploading" | "success" | "error";
+    dokumen_perjanjian_penempatan_pmi:
+      | "idle"
+      | "uploading"
+      | "success"
+      | "error";
+    dokumen_perjanjian_kerja: "idle" | "uploading" | "success" | "error";
+    surat_keterangan_p3mi: "idle" | "uploading" | "success" | "error";
+    info_slik_bank: "idle" | "uploading" | "success" | "error";
+    dokumen_standing_instruction: "idle" | "uploading" | "success" | "error";
+    dokumen_lain_1: "idle" | "uploading" | "success" | "error";
+    dokumen_lain_2: "idle" | "uploading" | "success" | "error";
+  }>({
+    ktp: "idle",
+    selfie: "idle",
+    dokumen_persetujuan_data_privacy: "idle",
+    surat_permohonan_kredit: "idle",
+    dokumen_kartu_keluarga: "idle",
+    dokumen_paspor: "idle",
+    dokumen_surat_nikah: "idle",
+    pas_foto_3x4: "idle",
+    dokumen_ktp_keluarga_penjamin: "idle",
+    surat_pernyataan_ortu_wali: "idle",
+    surat_izin_ortu_wali: "idle",
+    dokumen_perjanjian_penempatan_pmi: "idle",
+    dokumen_perjanjian_kerja: "idle",
+    surat_keterangan_p3mi: "idle",
+    info_slik_bank: "idle",
+    dokumen_standing_instruction: "idle",
+    dokumen_lain_1: "idle",
+    dokumen_lain_2: "idle",
+  });
 
   // Form data state
   const [formData, setFormData] = useState<LoanApplicationInsert>(
@@ -114,7 +157,42 @@ export default function LoanApplicationForm({
   const [files, setFiles] = useState<{
     ktp: File | null;
     selfie: File | null;
-  }>({ ktp: null, selfie: null });
+    dokumen_persetujuan_data_privacy: File | null;
+    surat_permohonan_kredit: File | null;
+    dokumen_kartu_keluarga: File | null;
+    dokumen_paspor: File | null;
+    dokumen_surat_nikah: File | null;
+    pas_foto_3x4: File | null;
+    dokumen_ktp_keluarga_penjamin: File | null;
+    surat_pernyataan_ortu_wali: File | null;
+    surat_izin_ortu_wali: File | null;
+    dokumen_perjanjian_penempatan_pmi: File | null;
+    dokumen_perjanjian_kerja: File | null;
+    surat_keterangan_p3mi: File | null;
+    info_slik_bank: File | null;
+    dokumen_standing_instruction: File | null;
+    dokumen_lain_1: File | null;
+    dokumen_lain_2: File | null;
+  }>({
+    ktp: null,
+    selfie: null,
+    dokumen_persetujuan_data_privacy: null,
+    surat_permohonan_kredit: null,
+    dokumen_kartu_keluarga: null,
+    dokumen_paspor: null,
+    dokumen_surat_nikah: null,
+    pas_foto_3x4: null,
+    dokumen_ktp_keluarga_penjamin: null,
+    surat_pernyataan_ortu_wali: null,
+    surat_izin_ortu_wali: null,
+    dokumen_perjanjian_penempatan_pmi: null,
+    dokumen_perjanjian_kerja: null,
+    surat_keterangan_p3mi: null,
+    info_slik_bank: null,
+    dokumen_standing_instruction: null,
+    dokumen_lain_1: null,
+    dokumen_lain_2: null,
+  });
 
   useEffect(() => {
     loadAgentCompanies();
@@ -171,7 +249,7 @@ export default function LoanApplicationForm({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileSelect = (type: "ktp" | "selfie", file: File | null) => {
+  const handleFileSelect = (type: keyof typeof files, file: File | null) => {
     if (!file) return;
 
     // Basic validation
@@ -233,6 +311,7 @@ export default function LoanApplicationForm({
 
       let ktpUrl = null;
       let selfieUrl = null;
+      const documentUrls: Record<string, string | null> = {};
 
       // Upload KTP file
       if (files.ktp) {
@@ -258,9 +337,47 @@ export default function LoanApplicationForm({
         setUploadStatus((prev) => ({ ...prev, selfie: "success" }));
       }
 
+      // Upload document other files
+      const documentKeys = [
+        "dokumen_persetujuan_data_privacy",
+        "surat_permohonan_kredit",
+        "dokumen_kartu_keluarga",
+        "dokumen_paspor",
+        "dokumen_surat_nikah",
+        "pas_foto_3x4",
+        "dokumen_ktp_keluarga_penjamin",
+        "surat_pernyataan_ortu_wali",
+        "surat_izin_ortu_wali",
+        "dokumen_perjanjian_penempatan_pmi",
+        "dokumen_perjanjian_kerja",
+        "surat_keterangan_p3mi",
+        "info_slik_bank",
+        "dokumen_standing_instruction",
+        "dokumen_lain_1",
+        "dokumen_lain_2",
+      ];
+
+      for (const docKey of documentKeys) {
+        const file = files[docKey as keyof typeof files];
+        if (file) {
+          setUploadStatus((prev) => ({ ...prev, [docKey]: "uploading" }));
+          const url = await uploadFile(file, "document-other");
+          if (!url) {
+            setUploadStatus((prev) => ({ ...prev, [docKey]: "error" }));
+            alert(
+              `Failed to upload ${docKey.replace(/_/g, " ")}. Please try again.`,
+            );
+            return;
+          }
+          documentUrls[`${docKey}_url`] = url;
+          setUploadStatus((prev) => ({ ...prev, [docKey]: "success" }));
+        }
+      }
+
       // Prepare final data
       const finalData: LoanApplicationInsert = {
         ...formData,
+        ...documentUrls,
         user_id: user.id,
         ktp_photo_url: ktpUrl,
         self_photo_url: selfieUrl,
@@ -309,11 +426,39 @@ export default function LoanApplicationForm({
       );
     } finally {
       setIsSubmitting(false);
-      setUploadStatus({ ktp: "idle", selfie: "idle" });
+      setUploadStatus({
+        ktp: "idle",
+        selfie: "idle",
+        dokumen_persetujuan_data_privacy: "idle",
+        surat_permohonan_kredit: "idle",
+        dokumen_kartu_keluarga: "idle",
+        dokumen_paspor: "idle",
+        dokumen_surat_nikah: "idle",
+        pas_foto_3x4: "idle",
+        dokumen_ktp_keluarga_penjamin: "idle",
+        surat_pernyataan_ortu_wali: "idle",
+        surat_izin_ortu_wali: "idle",
+        dokumen_perjanjian_penempatan_pmi: "idle",
+        dokumen_perjanjian_kerja: "idle",
+        surat_keterangan_p3mi: "idle",
+        info_slik_bank: "idle",
+        dokumen_standing_instruction: "idle",
+        dokumen_lain_1: "idle",
+        dokumen_lain_2: "idle",
+      });
     }
   };
 
-  const tabs = ["personal", "documents", "agent", "family", "work", "loan"];
+  const tabs = [
+    "personal",
+    "documents",
+    "loan",
+    "agent",
+    "document-other",
+    "family",
+    "work",
+    "summary",
+  ];
   const currentIndex = tabs.indexOf(currentTab);
 
   const nextTab = () => {
@@ -340,13 +485,15 @@ export default function LoanApplicationForm({
         </CardHeader>
         <CardContent>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="personal">Personal</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="loan">Loan</TabsTrigger>
               <TabsTrigger value="agent">Agent</TabsTrigger>
+              <TabsTrigger value="document-other">Doc Other</TabsTrigger>
               <TabsTrigger value="family">Family</TabsTrigger>
               <TabsTrigger value="work">Work</TabsTrigger>
-              <TabsTrigger value="loan">Loan</TabsTrigger>
+              <TabsTrigger value="summary">Summary</TabsTrigger>
             </TabsList>
 
             <TabsContent value="personal" className="space-y-4 mt-6">
@@ -574,6 +721,108 @@ export default function LoanApplicationForm({
               </div>
             </TabsContent>
 
+            <TabsContent value="summary" className="space-y-6 mt-6">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 text-[#5680E9]">
+                  Application Summary
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium mb-2">Personal Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">Name:</span>{" "}
+                        {formData.full_name}
+                      </p>
+                      <p>
+                        <span className="font-medium">Gender:</span>{" "}
+                        {formData.gender}
+                      </p>
+                      <p>
+                        <span className="font-medium">Age:</span> {formData.age}
+                      </p>
+                      <p>
+                        <span className="font-medium">Phone:</span>{" "}
+                        {formData.phone_number}
+                      </p>
+                      <p>
+                        <span className="font-medium">Email:</span>{" "}
+                        {formData.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Loan Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">Amount:</span> Rp{" "}
+                        {formData.loan_amount?.toLocaleString() || "-"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Tenor:</span>{" "}
+                        {formData.tenor_months} months
+                      </p>
+                      <p>
+                        <span className="font-medium">Work Location:</span>{" "}
+                        {formData.work_location}
+                      </p>
+                      <p>
+                        <span className="font-medium">Departure Date:</span>{" "}
+                        {formData.tanggal_keberangkatan}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Documents Status</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">KTP Photo:</span>{" "}
+                        {files.ktp ? "✓ Uploaded" : "✗ Not uploaded"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Selfie Photo:</span>{" "}
+                        {files.selfie ? "✓ Uploaded" : "✗ Not uploaded"}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          Additional Documents:
+                        </span>{" "}
+                        {Object.values(files).filter((f) => f !== null).length -
+                          (files.ktp ? 1 : 0) -
+                          (files.selfie ? 1 : 0)}{" "}
+                        uploaded
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Family Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">Mother's Name:</span>{" "}
+                        {formData.nama_ibu_kandung}
+                      </p>
+                      <p>
+                        <span className="font-medium">Spouse:</span>{" "}
+                        {formData.nama_pasangan || "Not specified"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> Please review all information
+                    carefully before submitting. Once submitted, your
+                    application will be processed by our validation team.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="agent" className="space-y-4 mt-6">
               <div>
                 <Label htmlFor="assigned_agent">Select Agent (P3MI)</Label>
@@ -606,6 +855,105 @@ export default function LoanApplicationForm({
                     Agent has been automatically assigned for your account.
                   </p>
                 )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="document-other" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  {
+                    key: "dokumen_persetujuan_data_privacy",
+                    label: "Dokumen persetujuan data privacy",
+                  },
+                  {
+                    key: "surat_permohonan_kredit",
+                    label: "Surat permohonan kredit ke bank",
+                  },
+                  {
+                    key: "dokumen_kartu_keluarga",
+                    label: "Dokumen Kartu Keluarga",
+                  },
+                  { key: "dokumen_paspor", label: "Dokumen Paspor" },
+                  { key: "dokumen_surat_nikah", label: "Dokumen Surat Nikah" },
+                  { key: "pas_foto_3x4", label: "Pas Foto (3x4)" },
+                  {
+                    key: "dokumen_ktp_keluarga_penjamin",
+                    label: "Dokumen KTP keluarga penjamin/pasangan",
+                  },
+                  {
+                    key: "surat_pernyataan_ortu_wali",
+                    label: "Surat pernyataan orang tua/wali",
+                  },
+                  {
+                    key: "surat_izin_ortu_wali",
+                    label: "Surat izin orang tua/wali",
+                  },
+                  {
+                    key: "dokumen_perjanjian_penempatan_pmi",
+                    label: "Dokumen perjanjian penempatan PMI–P3MI",
+                  },
+                  {
+                    key: "dokumen_perjanjian_kerja",
+                    label: "Dokumen perjanjian kerja (PK)",
+                  },
+                  {
+                    key: "surat_keterangan_p3mi",
+                    label: "Surat keterangan dari P3MI",
+                  },
+                  { key: "info_slik_bank", label: "Info SLIK dari bank" },
+                  {
+                    key: "dokumen_standing_instruction",
+                    label: "Dokumen standing instruction",
+                  },
+                  { key: "dokumen_lain_1", label: "Dokumen lain 1" },
+                  { key: "dokumen_lain_2", label: "Dokumen lain 2" },
+                ].map((doc) => (
+                  <div key={doc.key}>
+                    <Label>{doc.label}</Label>
+                    <div className="mt-2">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {uploadStatus[
+                            doc.key as keyof typeof uploadStatus
+                          ] === "uploading" ? (
+                            <div className="text-blue-500">Uploading...</div>
+                          ) : uploadStatus[
+                              doc.key as keyof typeof uploadStatus
+                            ] === "success" ? (
+                            <CheckCircle className="w-8 h-8 text-green-500" />
+                          ) : (
+                            <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                          )}
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
+                            {doc.label}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG, PDF (MAX. 5MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*,application/pdf"
+                          onChange={(e) =>
+                            handleFileSelect(
+                              doc.key as keyof typeof files,
+                              e.target.files?.[0] || null,
+                            )
+                          }
+                        />
+                      </label>
+                      {files[doc.key as keyof typeof files] && (
+                        <p className="mt-2 text-sm text-green-600">
+                          Selected: {files[doc.key as keyof typeof files]?.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </TabsContent>
 
