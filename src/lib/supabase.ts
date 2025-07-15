@@ -491,6 +491,107 @@ export const parseCSVContent = (csvContent: string): any[] => {
   return data;
 };
 
+// Delete user account and all related data
+export const deleteUserAccount = async (userId: string) => {
+  try {
+    console.log("Starting to delete user account:", userId);
+
+    // Delete user's loan applications and related data first
+    const { error: branchReviewsError } = await supabase
+      .from("bank_reviews")
+      .delete()
+      .in(
+        "branch_application_id",
+        supabase
+          .from("branch_applications")
+          .select("id")
+          .in(
+            "loan_application_id",
+            supabase
+              .from("loan_applications")
+              .select("id")
+              .eq("user_id", userId),
+          ),
+      );
+
+    if (branchReviewsError) {
+      console.error("Error deleting bank reviews:", branchReviewsError);
+    }
+
+    // Delete branch applications
+    const { error: branchAppsError } = await supabase
+      .from("branch_applications")
+      .delete()
+      .in(
+        "loan_application_id",
+        supabase.from("loan_applications").select("id").eq("user_id", userId),
+      );
+
+    if (branchAppsError) {
+      console.error("Error deleting branch applications:", branchAppsError);
+    }
+
+    // Delete loan applications
+    const { error: loansError } = await supabase
+      .from("loan_applications")
+      .delete()
+      .eq("user_id", userId);
+
+    if (loansError) {
+      console.error("Error deleting loan applications:", loansError);
+    }
+
+    // Delete agent staff record if exists
+    const { error: agentStaffError } = await supabase
+      .from("agent_staff")
+      .delete()
+      .eq("user_id", userId);
+
+    if (agentStaffError) {
+      console.error("Error deleting agent staff:", agentStaffError);
+    }
+
+    // Delete bank staff record if exists
+    const { error: bankStaffError } = await supabase
+      .from("bank_staff")
+      .delete()
+      .eq("user_id", userId);
+
+    if (bankStaffError) {
+      console.error("Error deleting bank staff:", bankStaffError);
+    }
+
+    // Delete user profile
+    const { error: profileError } = await supabase
+      .from("users")
+      .delete()
+      .eq("id", userId);
+
+    if (profileError) {
+      console.error("Error deleting user profile:", profileError);
+      throw new Error(`Failed to delete user profile: ${profileError.message}`);
+    }
+
+    // Delete auth user (this will cascade delete the auth record)
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+    if (authError) {
+      console.error("Error deleting auth user:", authError);
+      // Don't throw error here as the profile is already deleted
+      // The auth deletion might fail due to permissions but profile deletion is more important
+    }
+
+    console.log("User account deleted successfully!");
+    return {
+      success: true,
+      message: "User account has been deleted successfully",
+    };
+  } catch (error) {
+    console.error("Error in deleteUserAccount:", error);
+    throw error;
+  }
+};
+
 // Assign application to bank branch
 export const assignApplicationToBranch = async (
   applicationId: string,

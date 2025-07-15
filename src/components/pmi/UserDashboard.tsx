@@ -10,8 +10,26 @@ import {
   XCircle,
   Edit,
   Trash2,
+  User,
+  AlertTriangle,
 } from "lucide-react";
-import { supabase, getCurrentUserId, getCurrentUser } from "@/lib/supabase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  supabase,
+  getCurrentUserId,
+  getCurrentUser,
+  deleteUserAccount,
+} from "@/lib/supabase";
 import { Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
 import LoanApplicationTimeline from "./LoanApplicationTimeline";
@@ -33,11 +51,23 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
   const [preSelectedAgentId, setPreSelectedAgentId] = useState<string | null>(
     null,
   );
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     fetchApplications();
     checkSpecialUser();
+    loadCurrentUser();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Error loading current user:", error);
+    }
+  };
 
   const checkSpecialUser = async () => {
     try {
@@ -122,6 +152,24 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
   const canEditOrDelete = (status: string) => {
     // Only allow edit/delete for applications that haven't been processed by banks
     return ["Submitted", "Checked", "Validated"].includes(status);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser) return;
+
+    try {
+      setDeletingAccount(true);
+      await deleteUserAccount(currentUser.id);
+
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      alert(`Failed to delete account: ${error.message}`);
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -243,89 +291,10 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
           <TabsList className="mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="applications">My Applications</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Total Applications
-                      </p>
-                      <p className="text-2xl font-bold text-[#5680E9]">
-                        {applications.length}
-                      </p>
-                    </div>
-                    <FileText className="h-8 w-8 text-[#5680E9]" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Pending
-                      </p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {
-                          applications.filter((app) =>
-                            ["Submitted", "Checked", "Validated"].includes(
-                              app.status,
-                            ),
-                          ).length
-                        }
-                      </p>
-                    </div>
-                    <Clock className="h-8 w-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Approved
-                      </p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {
-                          applications.filter(
-                            (app) => app.status === "Bank Approved",
-                          ).length
-                        }
-                      </p>
-                    </div>
-                    <CheckCircle className="h-8 w-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Rejected
-                      </p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {
-                          applications.filter((app) =>
-                            ["Bank Rejected", "Rejected"].includes(app.status),
-                          ).length
-                        }
-                      </p>
-                    </div>
-                    <XCircle className="h-8 w-8 text-red-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -351,6 +320,119 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
                     <span>View All Applications</span>
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="h-5 w-5" />
+                  <span>User Profile</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {currentUser ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Full Name
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {currentUser.full_name || "Not provided"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Email
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {currentUser.email}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Role
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900 capitalize">
+                          {currentUser.role.replace("_", " ")}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">
+                          Member Since
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {new Date(
+                            currentUser.created_at,
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold text-red-600 mb-4 flex items-center space-x-2">
+                        <AlertTriangle className="h-5 w-5" />
+                        <span>Danger Zone</span>
+                      </h3>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-700 mb-4">
+                          Deleting your account will permanently remove all your
+                          data, including loan applications and cannot be
+                          undone.
+                        </p>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              disabled={deletingAccount}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              {deletingAccount
+                                ? "Deleting..."
+                                : "Delete Account"}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you absolutely sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete your account and remove all
+                                your data from our servers, including:
+                                <br />
+                                <br />
+                                • All loan applications • Personal information •
+                                Account history
+                                <br />
+                                <br />
+                                You will be immediately signed out and will not
+                                be able to recover this data.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleDeleteAccount}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Yes, delete my account
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p>Loading profile information...</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -114,20 +114,22 @@ function App() {
     }
   };
 
+  const [signingOut, setSigningOut] = useState(false);
+
   const handleSignOut = async () => {
     try {
-      setLoading(true);
+      setSigningOut(true);
       await signOut();
       setUser(null);
-      // Force a page reload to clear any cached state
-      window.location.reload();
+      // Clear any cached state without forcing a full page reload
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
       // Force sign out even if there's an error
       setUser(null);
-      window.location.reload();
+      window.location.href = "/";
     } finally {
-      setLoading(false);
+      setSigningOut(false);
     }
   };
 
@@ -2375,10 +2377,11 @@ function App() {
               variant="outline"
               size="sm"
               onClick={handleSignOut}
+              disabled={signingOut}
               className="flex items-center space-x-2"
             >
               <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
+              <span>{signingOut ? "Signing Out..." : "Sign Out"}</span>
             </Button>
           </div>
         </div>

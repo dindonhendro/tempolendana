@@ -452,8 +452,8 @@ export default function LoanApplicationForm({
   const tabs = [
     "personal",
     "documents",
-    "loan",
     "agent",
+    "loan",
     "document-other",
     "family",
     "work",
@@ -462,6 +462,15 @@ export default function LoanApplicationForm({
   const currentIndex = tabs.indexOf(currentTab);
 
   const nextTab = () => {
+    // Check if "Belum ada agent" is selected and we're on the agent tab
+    if (
+      currentTab === "agent" &&
+      formData.assigned_agent_id === "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+    ) {
+      setCurrentTab("summary");
+      return;
+    }
+
     if (currentIndex < tabs.length - 1) {
       setCurrentTab(tabs[currentIndex + 1]);
     }
@@ -488,8 +497,8 @@ export default function LoanApplicationForm({
             <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="personal">Personal</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="loan">Loan</TabsTrigger>
               <TabsTrigger value="agent">Agent</TabsTrigger>
+              <TabsTrigger value="loan">Loan</TabsTrigger>
               <TabsTrigger value="document-other">Doc Other</TabsTrigger>
               <TabsTrigger value="family">Family</TabsTrigger>
               <TabsTrigger value="work">Work</TabsTrigger>
@@ -722,6 +731,28 @@ export default function LoanApplicationForm({
             </TabsContent>
 
             <TabsContent value="summary" className="space-y-6 mt-6">
+              {formData.assigned_agent_id ===
+                "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">!</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-semibold text-blue-800 mb-2">
+                        Informasi Penting
+                      </h4>
+                      <p className="text-blue-700">
+                        Anda Mendaftar sebagai calon PMI dan belum memiliki
+                        P3MI. Lendana akan menghubungi anda untuk mencarikan
+                        P3MI yang sesuai.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold mb-4 text-[#5680E9]">
                   Application Summary
