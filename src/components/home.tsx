@@ -12,7 +12,6 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <HeroSection />
-
       {/* Partner Banks Section */}
       <section className="py-16 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
         <div className="text-center mb-12">
@@ -24,7 +23,6 @@ export default function Home() {
         </div>
         <PartnerBanks />
       </section>
-
       {/* Product Tabs Section */}
       <section className="py-16 px-4 md:px-8 lg:px-16 bg-gradient-to-r from-[#C1C8E4] to-[#84CEEB]">
         <div className="max-w-7xl mx-auto">
@@ -38,7 +36,6 @@ export default function Home() {
           <ProductTabs />
         </div>
       </section>
-
       {/* About Section */}
       <section className="py-16 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
         <div className="text-center mb-12">
@@ -49,7 +46,6 @@ export default function Home() {
         </div>
         <AboutSection />
       </section>
-
       {/* Contact Section */}
       <section className="py-16 px-4 md:px-8 lg:px-16 bg-[#5680E9] text-white">
         <div className="max-w-7xl mx-auto">
@@ -139,7 +135,6 @@ export default function Home() {
           </Card>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 px-4 md:px-8 lg:px-16">
         <div className="max-w-7xl mx-auto">
@@ -162,6 +157,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <div className="w-[800px] h-[600px]"></div>
     </div>
   );
 }
