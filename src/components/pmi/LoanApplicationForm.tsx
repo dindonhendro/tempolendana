@@ -12,7 +12,15 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, CheckCircle } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Upload, CheckCircle, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database, Tables } from "@/types/supabase";
 
@@ -67,6 +75,7 @@ export default function LoanApplicationForm({
     dokumen_standing_instruction: "idle" | "uploading" | "success" | "error";
     dokumen_lain_1: "idle" | "uploading" | "success" | "error";
     dokumen_lain_2: "idle" | "uploading" | "success" | "error";
+    tabel_angsuran_signed: "idle" | "uploading" | "success" | "error";
   }>({
     ktp: "idle",
     selfie: "idle",
@@ -86,6 +95,7 @@ export default function LoanApplicationForm({
     dokumen_standing_instruction: "idle",
     dokumen_lain_1: "idle",
     dokumen_lain_2: "idle",
+    tabel_angsuran_signed: "idle",
   });
 
   // Form data state
@@ -119,6 +129,9 @@ export default function LoanApplicationForm({
           alamat_pemberi_kerja: editData.alamat_pemberi_kerja || "",
           loan_amount: editData.loan_amount || null,
           tenor_months: editData.tenor_months || null,
+          bunga_bank: editData.bunga_bank || 6,
+          grace_period: editData.grace_period || null,
+          negara_penempatan: editData.negara_penempatan || "",
           assigned_agent_id:
             editData.assigned_agent_id || preSelectedAgentId || "",
           status: editData.status || "Submitted",
@@ -148,6 +161,9 @@ export default function LoanApplicationForm({
           alamat_pemberi_kerja: "123 Main Street, Singapore",
           loan_amount: 50000000,
           tenor_months: 12,
+          bunga_bank: 6,
+          grace_period: 3,
+          negara_penempatan: "Singapore",
           assigned_agent_id: preSelectedAgentId || "",
           status: "Submitted",
           submission_type: "PMI",
@@ -173,6 +189,7 @@ export default function LoanApplicationForm({
     dokumen_standing_instruction: File | null;
     dokumen_lain_1: File | null;
     dokumen_lain_2: File | null;
+    tabel_angsuran_signed: File | null;
   }>({
     ktp: null,
     selfie: null,
@@ -192,6 +209,7 @@ export default function LoanApplicationForm({
     dokumen_standing_instruction: null,
     dokumen_lain_1: null,
     dokumen_lain_2: null,
+    tabel_angsuran_signed: null,
   });
 
   useEffect(() => {
@@ -355,6 +373,7 @@ export default function LoanApplicationForm({
         "dokumen_standing_instruction",
         "dokumen_lain_1",
         "dokumen_lain_2",
+        "tabel_angsuran_signed",
       ];
 
       for (const docKey of documentKeys) {
@@ -445,8 +464,169 @@ export default function LoanApplicationForm({
         dokumen_standing_instruction: "idle",
         dokumen_lain_1: "idle",
         dokumen_lain_2: "idle",
+        tabel_angsuran_signed: "idle",
       });
     }
+  };
+
+  // Calculate monthly installments
+  const calculateInstallments = () => {
+    const loanAmount = formData.loan_amount || 0;
+    const tenorMonths = formData.tenor_months || 0;
+    const annualRate = (formData.bunga_bank || 6) / 100;
+    const monthlyRate = annualRate / 12;
+    const gracePeriod = formData.grace_period || 0;
+
+    if (loanAmount <= 0 || tenorMonths <= 0) return [];
+
+    // Calculate monthly payment using PMT formula
+    const monthlyPayment =
+      monthlyRate > 0
+        ? (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, tenorMonths)) /
+          (Math.pow(1 + monthlyRate, tenorMonths) - 1)
+        : loanAmount / tenorMonths;
+
+    const installments = [];
+    let remainingBalance = loanAmount;
+    const startDate = new Date();
+
+    for (let month = 1; month <= tenorMonths + gracePeriod; month++) {
+      const paymentDate = new Date(startDate);
+      paymentDate.setMonth(startDate.getMonth() + month - 1);
+
+      if (month <= gracePeriod) {
+        // Grace period - only interest payment
+        const interestPayment = remainingBalance * monthlyRate;
+        installments.push({
+          month,
+          date: paymentDate.toLocaleDateString("id-ID"),
+          principal: 0,
+          interest: interestPayment,
+          totalPayment: interestPayment,
+          remainingBalance,
+          type: "Grace Period (Bunga Saja)",
+        });
+      } else {
+        // Regular payment period
+        const interestPayment = remainingBalance * monthlyRate;
+        const principalPayment = monthlyPayment - interestPayment;
+        remainingBalance = Math.max(0, remainingBalance - principalPayment);
+
+        installments.push({
+          month,
+          date: paymentDate.toLocaleDateString("id-ID"),
+          principal: principalPayment,
+          interest: interestPayment,
+          totalPayment: monthlyPayment,
+          remainingBalance,
+          type: "Angsuran Efektif",
+        });
+      }
+    }
+
+    return installments;
+  };
+
+  const printInstallmentTable = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const installments = calculateInstallments();
+    const totalInterest = installments.reduce(
+      (sum, inst) => sum + inst.interest,
+      0,
+    );
+    const totalPayment = (formData.loan_amount || 0) + totalInterest;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Tabel Angsuran KUR PMI</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .info-table { width: 100%; margin-bottom: 20px; }
+          .info-table td { padding: 5px; }
+          .installment-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .installment-table th, .installment-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+          .installment-table th { background-color: #f0f0f0; }
+          .signature-section { margin-top: 50px; }
+          .signature-box { display: inline-block; width: 200px; text-align: center; margin: 0 50px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>TABEL ANGSURAN KREDIT USAHA RAKYAT (KUR)</h2>
+          <h3>PEKERJA MIGRAN INDONESIA (PMI)</h3>
+        </div>
+        
+        <table class="info-table">
+          <tr><td><strong>Nama Pemohon:</strong></td><td>${formData.full_name || "-"}</td></tr>
+          <tr><td><strong>Jenis Angsuran:</strong></td><td>Angsuran Efektif</td></tr>
+          <tr><td><strong>Jumlah Pinjaman:</strong></td><td>Rp ${(formData.loan_amount || 0).toLocaleString("id-ID")}</td></tr>
+          <tr><td><strong>Tenor:</strong></td><td>${formData.tenor_months || 0} Bulan</td></tr>
+          <tr><td><strong>Bunga Bank:</strong></td><td>${formData.bunga_bank || 6}% per tahun</td></tr>
+          <tr><td><strong>Grace Period:</strong></td><td>${formData.grace_period || 0} Bulan</td></tr>
+          <tr><td><strong>Total Bunga:</strong></td><td>Rp ${totalInterest.toLocaleString("id-ID")}</td></tr>
+          <tr><td><strong>Total Pembayaran:</strong></td><td>Rp ${totalPayment.toLocaleString("id-ID")}</td></tr>
+        </table>
+
+        <table class="installment-table">
+          <thead>
+            <tr>
+              <th>Bulan</th>
+              <th>Tanggal</th>
+              <th>Jenis Pembayaran</th>
+              <th>Pokok</th>
+              <th>Bunga</th>
+              <th>Total Angsuran</th>
+              <th>Sisa Pinjaman</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${installments
+              .map(
+                (inst) => `
+              <tr>
+                <td>${inst.month}</td>
+                <td>${inst.date}</td>
+                <td>${inst.type}</td>
+                <td>Rp ${inst.principal.toLocaleString("id-ID")}</td>
+                <td>Rp ${inst.interest.toLocaleString("id-ID")}</td>
+                <td>Rp ${inst.totalPayment.toLocaleString("id-ID")}</td>
+                <td>Rp ${inst.remainingBalance.toLocaleString("id-ID")}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <p>Pemohon,</p>
+            <br><br><br>
+            <p>(_____________________)</p>
+            <p>${formData.full_name || ""}</p>
+          </div>
+          <div class="signature-box">
+            <p>Petugas Bank,</p>
+            <br><br><br>
+            <p>(_____________________)</p>
+            <p>Nama & Tanda Tangan</p>
+          </div>
+        </div>
+        
+        <p style="margin-top: 30px; font-size: 12px;">Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}</p>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const tabs = [
@@ -457,6 +637,7 @@ export default function LoanApplicationForm({
     "document-other",
     "family",
     "work",
+    "installment",
     "summary",
   ];
   const currentIndex = tabs.indexOf(currentTab);
@@ -494,7 +675,7 @@ export default function LoanApplicationForm({
         </CardHeader>
         <CardContent>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="personal">Personal</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="agent">Agent</TabsTrigger>
@@ -502,6 +683,7 @@ export default function LoanApplicationForm({
               <TabsTrigger value="document-other">Doc Other</TabsTrigger>
               <TabsTrigger value="family">Family</TabsTrigger>
               <TabsTrigger value="work">Work</TabsTrigger>
+              <TabsTrigger value="installment">Angsuran</TabsTrigger>
               <TabsTrigger value="summary">Summary</TabsTrigger>
             </TabsList>
 
@@ -730,6 +912,167 @@ export default function LoanApplicationForm({
               </div>
             </TabsContent>
 
+            <TabsContent value="installment" className="space-y-6 mt-6">
+              <div className="bg-white p-6 rounded-lg border">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-[#5680E9]">
+                    Tabel Angsuran Bulanan KUR PMI
+                  </h3>
+                  <Button
+                    type="button"
+                    onClick={printInstallmentTable}
+                    className="bg-[#5680E9] hover:bg-[#5680E9]/90"
+                    disabled={!formData.loan_amount || !formData.tenor_months}
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Cetak Tabel
+                  </Button>
+                </div>
+
+                {/* Loan Information Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded">
+                  <div>
+                    <p>
+                      <strong>Nama Pemohon:</strong> {formData.full_name || "-"}
+                    </p>
+                    <p>
+                      <strong>Jenis Angsuran:</strong> Angsuran Efektif
+                    </p>
+                    <p>
+                      <strong>Jumlah Pinjaman:</strong> Rp{" "}
+                      {(formData.loan_amount || 0).toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      <strong>Tenor:</strong> {formData.tenor_months || 0} Bulan
+                    </p>
+                    <p>
+                      <strong>Bunga Bank:</strong> {formData.bunga_bank || 6}%
+                      per tahun
+                    </p>
+                    <p>
+                      <strong>Grace Period:</strong>{" "}
+                      {formData.grace_period || 0} Bulan
+                    </p>
+                  </div>
+                </div>
+
+                {/* Installment Table */}
+                {formData.loan_amount && formData.tenor_months ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-center">Bulan</TableHead>
+                          <TableHead className="text-center">Tanggal</TableHead>
+                          <TableHead className="text-center">
+                            Jenis Pembayaran
+                          </TableHead>
+                          <TableHead className="text-center">Pokok</TableHead>
+                          <TableHead className="text-center">Bunga</TableHead>
+                          <TableHead className="text-center">
+                            Total Angsuran
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Sisa Pinjaman
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {calculateInstallments().map((installment, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="text-center">
+                              {installment.month}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {installment.date}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {installment.type}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              Rp {installment.principal.toLocaleString("id-ID")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              Rp {installment.interest.toLocaleString("id-ID")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              Rp{" "}
+                              {installment.totalPayment.toLocaleString("id-ID")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              Rp{" "}
+                              {installment.remainingBalance.toLocaleString(
+                                "id-ID",
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>
+                      Silakan lengkapi data pinjaman untuk melihat tabel
+                      angsuran
+                    </p>
+                  </div>
+                )}
+
+                {/* Upload Signed Document */}
+                <div className="mt-8 p-4 border-t">
+                  <h4 className="font-medium mb-4 text-[#5680E9]">
+                    Upload Tabel Angsuran yang Sudah Ditandatangani
+                  </h4>
+                  <div>
+                    <Label>Upload Tabel Angsuran Bertanda Tangan</Label>
+                    <div className="mt-2">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {uploadStatus.tabel_angsuran_signed ===
+                          "uploading" ? (
+                            <div className="text-blue-500">Uploading...</div>
+                          ) : uploadStatus.tabel_angsuran_signed ===
+                            "success" ? (
+                            <CheckCircle className="w-8 h-8 text-green-500" />
+                          ) : (
+                            <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                          )}
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
+                            tabel angsuran bertanda tangan
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG, PDF (MAX. 5MB)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*,application/pdf"
+                          onChange={(e) =>
+                            handleFileSelect(
+                              "tabel_angsuran_signed",
+                              e.target.files?.[0] || null,
+                            )
+                          }
+                        />
+                      </label>
+                      {files.tabel_angsuran_signed && (
+                        <p className="mt-2 text-sm text-green-600">
+                          Selected: {files.tabel_angsuran_signed.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="summary" className="space-y-6 mt-6">
               {formData.assigned_agent_id ===
                 "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
@@ -796,8 +1139,22 @@ export default function LoanApplicationForm({
                         {formData.tenor_months} months
                       </p>
                       <p>
+                        <span className="font-medium">Interest Rate:</span>{" "}
+                        {formData.bunga_bank}% per year
+                      </p>
+                      <p>
+                        <span className="font-medium">Grace Period:</span>{" "}
+                        {formData.grace_period || 0} months
+                      </p>
+                      <p>
                         <span className="font-medium">Work Location:</span>{" "}
                         {formData.work_location}
+                      </p>
+                      <p>
+                        <span className="font-medium">
+                          Country of Placement:
+                        </span>{" "}
+                        {formData.negara_penempatan || "-"}
                       </p>
                       <p>
                         <span className="font-medium">Departure Date:</span>{" "}
@@ -886,6 +1243,36 @@ export default function LoanApplicationForm({
                     Agent has been automatically assigned for your account.
                   </p>
                 )}
+              </div>
+
+              <div>
+                <Label htmlFor="negara_penempatan">
+                  Negara Penempatan (Country of Placement)
+                </Label>
+                <Select
+                  value={formData.negara_penempatan || ""}
+                  onValueChange={(value) =>
+                    updateFormData("negara_penempatan", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select country of placement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Singapore">Singapore</SelectItem>
+                    <SelectItem value="Malaysia">Malaysia</SelectItem>
+                    <SelectItem value="Hong Kong">Hong Kong</SelectItem>
+                    <SelectItem value="Taiwan">Taiwan</SelectItem>
+                    <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                    <SelectItem value="UAE">United Arab Emirates</SelectItem>
+                    <SelectItem value="Kuwait">Kuwait</SelectItem>
+                    <SelectItem value="Qatar">Qatar</SelectItem>
+                    <SelectItem value="Oman">Oman</SelectItem>
+                    <SelectItem value="Bahrain">Bahrain</SelectItem>
+                    <SelectItem value="Jordan">Jordan</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </TabsContent>
 
@@ -1179,6 +1566,51 @@ export default function LoanApplicationForm({
                       <SelectItem value="36">36 Months</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <Label htmlFor="bunga_bank">Bunga Bank (%)</Label>
+                  <Input
+                    id="bunga_bank"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.bunga_bank || 6}
+                    onChange={(e) =>
+                      updateFormData(
+                        "bunga_bank",
+                        parseFloat(e.target.value) || 6,
+                      )
+                    }
+                    placeholder="Bank interest rate"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Default: 6% per year
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="grace_period">Grace Period (Months)</Label>
+                  <Select
+                    value={formData.grace_period?.toString() || ""}
+                    onValueChange={(value) =>
+                      updateFormData("grace_period", parseInt(value) || null)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select grace period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">No Grace Period</SelectItem>
+                      <SelectItem value="1">1 Month</SelectItem>
+                      <SelectItem value="2">2 Months</SelectItem>
+                      <SelectItem value="3">3 Months</SelectItem>
+                      <SelectItem value="6">6 Months</SelectItem>
+                      <SelectItem value="12">12 Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Period before loan repayment starts
+                  </p>
                 </div>
               </div>
 

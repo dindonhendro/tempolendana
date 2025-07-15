@@ -376,6 +376,7 @@ export type Database = {
           bank_approved_at: string | null
           birth_date: string | null
           birth_place: string | null
+          bunga_bank: number | null
           created_at: string
           dokumen_kartu_keluarga_url: string | null
           dokumen_ktp_keluarga_penjamin_url: string | null
@@ -390,6 +391,7 @@ export type Database = {
           email: string | null
           full_name: string
           gender: string | null
+          grace_period: number | null
           id: string
           info_slik_bank_url: string | null
           institution: string | null
@@ -401,6 +403,7 @@ export type Database = {
           nama_ibu_kandung: string | null
           nama_pasangan: string | null
           nama_pemberi_kerja: string | null
+          negara_penempatan: string | null
           nik_ktp: string | null
           nomor_sisko: string | null
           other_certifications: string | null
@@ -434,6 +437,7 @@ export type Database = {
           bank_approved_at?: string | null
           birth_date?: string | null
           birth_place?: string | null
+          bunga_bank?: number | null
           created_at?: string
           dokumen_kartu_keluarga_url?: string | null
           dokumen_ktp_keluarga_penjamin_url?: string | null
@@ -448,6 +452,7 @@ export type Database = {
           email?: string | null
           full_name: string
           gender?: string | null
+          grace_period?: number | null
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
@@ -459,6 +464,7 @@ export type Database = {
           nama_ibu_kandung?: string | null
           nama_pasangan?: string | null
           nama_pemberi_kerja?: string | null
+          negara_penempatan?: string | null
           nik_ktp?: string | null
           nomor_sisko?: string | null
           other_certifications?: string | null
@@ -492,6 +498,7 @@ export type Database = {
           bank_approved_at?: string | null
           birth_date?: string | null
           birth_place?: string | null
+          bunga_bank?: number | null
           created_at?: string
           dokumen_kartu_keluarga_url?: string | null
           dokumen_ktp_keluarga_penjamin_url?: string | null
@@ -506,6 +513,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           gender?: string | null
+          grace_period?: number | null
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
@@ -517,6 +525,7 @@ export type Database = {
           nama_ibu_kandung?: string | null
           nama_pasangan?: string | null
           nama_pemberi_kerja?: string | null
+          negara_penempatan?: string | null
           nik_ktp?: string | null
           nomor_sisko?: string | null
           other_certifications?: string | null
