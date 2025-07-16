@@ -17,6 +17,7 @@ import {
   getAgentCompanies,
   getBanks,
   getBankBranches,
+  getInsuranceCompanies,
 } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -45,6 +46,8 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
   const [branchId, setBranchId] = useState("");
   const [banks, setBanks] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
+  const [insuranceCompanyId, setInsuranceCompanyId] = useState("");
+  const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
 
   // Load agent companies and banks on component mount
   React.useEffect(() => {
@@ -52,19 +55,22 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
 
     const loadData = async () => {
       try {
-        const [companies, banksData] = await Promise.all([
+        const [companies, banksData, insuranceData] = await Promise.all([
           getAgentCompanies(),
           getBanks(),
+          getInsuranceCompanies(),
         ]);
         if (isMounted) {
           setAgentCompanies(companies || []);
           setBanks(banksData || []);
+          setInsuranceCompanies(insuranceData || []);
         }
       } catch (error) {
         console.error("Error loading data:", error);
         if (isMounted) {
           setAgentCompanies([]);
           setBanks([]);
+          setInsuranceCompanies([]);
         }
       }
     };
@@ -75,6 +81,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
         console.warn("Data loading timeout, setting empty arrays");
         setAgentCompanies([]);
         setBanks([]);
+        setInsuranceCompanies([]);
       }
     }, 5000); // 5 second timeout
 
@@ -148,13 +155,19 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       return;
     }
 
+    if (role === "insurance" && !insuranceCompanyId) {
+      setError("Please select an insurance company");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await signUp(
         signUpEmail,
         signUpPassword,
         role,
         fullName,
-        agentCompanyId,
+        role === "insurance" ? insuranceCompanyId : agentCompanyId,
         bankId,
         branchId,
       );
@@ -169,6 +182,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       setAgentCompanyId("");
       setBankId("");
       setBranchId("");
+      setInsuranceCompanyId("");
     } catch (error: any) {
       setError(error.message || "Failed to create account");
     } finally {
@@ -349,6 +363,9 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                         setBankId("");
                         setBranchId("");
                       }
+                      if (value !== "insurance") {
+                        setInsuranceCompanyId("");
+                      }
                     }}
                   >
                     <SelectTrigger>
@@ -361,6 +378,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                         Validator (Lendana)
                       </SelectItem>
                       <SelectItem value="bank_staff">Bank Staff</SelectItem>
+                      <SelectItem value="insurance">Insurance Staff</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -430,6 +448,30 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                       </div>
                     )}
                   </>
+                )}
+
+                {role === "insurance" && (
+                  <div>
+                    <Label htmlFor="insurance-company">
+                      Insurance Company *
+                    </Label>
+                    <Select
+                      value={insuranceCompanyId}
+                      onValueChange={setInsuranceCompanyId}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select insurance company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {insuranceCompanies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name} ({company.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
 
                 <Button

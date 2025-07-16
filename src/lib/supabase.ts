@@ -66,6 +66,19 @@ export const signUp = async (
 
       if (bankStaffError) throw bankStaffError;
     }
+
+    // If user is insurance, create insurance_staff record
+    if (role === "insurance" && agentCompanyId) {
+      const { error: insuranceStaffError } = await supabase
+        .from("insurance_staff")
+        .insert({
+          user_id: data.user.id,
+          insurance_company_id: agentCompanyId, // reusing agentCompanyId param for insurance company
+          position: "Staff",
+        });
+
+      if (insuranceStaffError) throw insuranceStaffError;
+    }
   }
 
   return data;
@@ -156,10 +169,16 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const getCurrentUserRole = async (): Promise<
-  "user" | "agent" | "validator" | "bank_staff" | null
+  "user" | "agent" | "validator" | "bank_staff" | "insurance" | null
 > => {
   const user = await getCurrentUser();
-  return user?.role as "user" | "agent" | "validator" | "bank_staff" | null;
+  return user?.role as
+    | "user"
+    | "agent"
+    | "validator"
+    | "bank_staff"
+    | "insurance"
+    | null;
 };
 
 export const getCurrentUserId = async (): Promise<string | null> => {
@@ -253,6 +272,25 @@ export const getBankProducts = async (bankId: string) => {
     return data || [];
   } catch (error) {
     console.error("Error in getBankProducts:", error);
+    return [];
+  }
+};
+
+// Get insurance companies
+export const getInsuranceCompanies = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("insurance_companies")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching insurance companies:", error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error("Error in getInsuranceCompanies:", error);
     return [];
   }
 };
@@ -559,6 +597,16 @@ export const deleteUserAccount = async (userId: string) => {
 
     if (bankStaffError) {
       console.error("Error deleting bank staff:", bankStaffError);
+    }
+
+    // Delete insurance staff record if exists
+    const { error: insuranceStaffError } = await supabase
+      .from("insurance_staff")
+      .delete()
+      .eq("user_id", userId);
+
+    if (insuranceStaffError) {
+      console.error("Error deleting insurance staff:", insuranceStaffError);
     }
 
     // Delete user profile

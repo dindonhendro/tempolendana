@@ -365,6 +365,151 @@ export type Database = {
           },
         ]
       }
+      insurance_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          coverage_amount: number | null
+          created_at: string | null
+          id: string
+          insurance_company_id: string | null
+          loan_application_id: string | null
+          policy_document_url: string | null
+          policy_number: string | null
+          premium_amount: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          coverage_amount?: number | null
+          created_at?: string | null
+          id?: string
+          insurance_company_id?: string | null
+          loan_application_id?: string | null
+          policy_document_url?: string | null
+          policy_number?: string | null
+          premium_amount?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          coverage_amount?: number | null
+          created_at?: string | null
+          id?: string
+          insurance_company_id?: string | null
+          loan_application_id?: string | null
+          policy_document_url?: string | null
+          policy_number?: string | null
+          premium_amount?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_assignments_insurance_company_id_fkey"
+            columns: ["insurance_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_assignments_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_companies: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string | null
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      insurance_staff: {
+        Row: {
+          created_at: string | null
+          id: string
+          insurance_company_id: string | null
+          position: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          insurance_company_id?: string | null
+          position?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          insurance_company_id?: string | null
+          position?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_staff_insurance_company_id_fkey"
+            columns: ["insurance_company_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_staff_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_applications: {
         Row: {
           address_domicile: string | null

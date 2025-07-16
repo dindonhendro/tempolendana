@@ -6,6 +6,7 @@ import UserDashboard from "./components/pmi/UserDashboard";
 import AgentDashboard from "./components/pmi/AgentDashboard";
 import ValidatorDashboard from "./components/pmi/ValidatorDashboard";
 import BankStaffDashboard from "./components/pmi/BankStaffDashboard";
+import InsuranceDashboard from "./components/pmi/InsuranceDashboard";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
@@ -148,6 +149,9 @@ function App() {
   );
   const [bankStaff, setBankStaff] = useState<Tables<"bank_staff">[]>([]);
   const [agentStaff, setAgentStaff] = useState<Tables<"agent_staff">[]>([]);
+  const [insuranceCompanies, setInsuranceCompanies] = useState<
+    Tables<"insurance_companies">[]
+  >([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [editingBank, setEditingBank] = useState<Tables<"banks"> | null>(null);
   const [editingAgent, setEditingAgent] =
@@ -159,11 +163,14 @@ function App() {
   const [editingStaff, setEditingStaff] = useState<Tables<"bank_staff"> | null>(
     null,
   );
+  const [editingInsurance, setEditingInsurance] =
+    useState<Tables<"insurance_companies"> | null>(null);
   const [showBankForm, setShowBankForm] = useState(false);
   const [showAgentForm, setShowAgentForm] = useState(false);
   const [showBranchForm, setShowBranchForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showStaffForm, setShowStaffForm] = useState(false);
+  const [showInsuranceForm, setShowInsuranceForm] = useState(false);
   const [allApplications, setAllApplications] = useState<
     Tables<"loan_applications">[]
   >([]);
@@ -199,6 +206,19 @@ function App() {
       setAgentCompanies(data || []);
     } catch (error) {
       console.error("Error fetching agent companies:", error);
+    }
+  };
+
+  const fetchInsuranceCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("insurance_companies")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      setInsuranceCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching insurance companies:", error);
     }
   };
 
@@ -274,6 +294,13 @@ function App() {
     setActiveAdminSection("agents");
     setAdminLoading(true);
     await fetchAgentCompanies();
+    setAdminLoading(false);
+  };
+
+  const handleInsuranceManagement = async () => {
+    setActiveAdminSection("insurance");
+    setAdminLoading(true);
+    await fetchInsuranceCompanies();
     setAdminLoading(false);
   };
 
@@ -410,6 +437,85 @@ function App() {
     } catch (error) {
       console.error("Error deleting agent company:", error);
       alert("Error deleting agent company. Please try again.");
+    }
+  };
+
+  const handleSaveInsurance = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    const name = formData.get("name") as string;
+    const code = formData.get("code") as string;
+
+    if (!name || !code) {
+      alert("Name and Code are required fields.");
+      return;
+    }
+
+    const insuranceData = {
+      name: name.trim(),
+      code: code.trim(),
+      email: (formData.get("email") as string)?.trim() || null,
+      phone: (formData.get("phone") as string)?.trim() || null,
+      address: (formData.get("address") as string)?.trim() || null,
+      license_number:
+        (formData.get("license_number") as string)?.trim() || null,
+    };
+
+    try {
+      if (editingInsurance) {
+        const { error } = await supabase
+          .from("insurance_companies")
+          .update(insuranceData)
+          .eq("id", editingInsurance.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("insurance_companies")
+          .insert([insuranceData]);
+        if (error) throw error;
+      }
+
+      await fetchInsuranceCompanies();
+      setShowInsuranceForm(false);
+      setEditingInsurance(null);
+      alert(
+        editingInsurance
+          ? "Insurance company updated successfully!"
+          : "Insurance company created successfully!",
+      );
+    } catch (error: any) {
+      console.error("Error saving insurance company:", error);
+      let errorMessage = "Error saving insurance company. ";
+
+      if (error?.code === "23505") {
+        errorMessage += "A company with this code already exists.";
+      } else if (error?.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += "Please try again.";
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  const handleDeleteInsurance = async (insuranceId: string) => {
+    if (!confirm("Are you sure you want to delete this insurance company?"))
+      return;
+
+    try {
+      const { error } = await supabase
+        .from("insurance_companies")
+        .delete()
+        .eq("id", insuranceId);
+      if (error) throw error;
+      await fetchInsuranceCompanies();
+    } catch (error) {
+      console.error("Error deleting insurance company:", error);
+      alert("Error deleting insurance company. Please try again.");
     }
   };
 
@@ -785,6 +891,8 @@ function App() {
         return <ValidatorDashboard validatorId={user.id} />;
       case "bank_staff":
         return <BankStaffDashboard staffId={user.id} />;
+      case "insurance":
+        return <InsuranceDashboard staffId={user.id} />;
       case "admin":
         if (activeAdminSection === "banks") {
           return (
@@ -1493,6 +1601,212 @@ function App() {
                       </Card>
                     </TabsContent>
                   </Tabs>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        if (activeAdminSection === "insurance") {
+          return (
+            <div className="min-h-screen bg-white p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveAdminSection(null)}
+                      className="flex items-center space-x-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Back to Dashboard</span>
+                    </Button>
+                    <h1 className="text-3xl font-bold text-[#5680E9]">
+                      Insurance Management
+                    </h1>
+                  </div>
+                  <Dialog
+                    open={showInsuranceForm}
+                    onOpenChange={setShowInsuranceForm}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        onClick={() => {
+                          setEditingInsurance(null);
+                          setShowInsuranceForm(true);
+                        }}
+                        className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Insurance Company</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingInsurance
+                            ? "Edit Insurance Company"
+                            : "Add New Insurance Company"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <form
+                        onSubmit={handleSaveInsurance}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <Label htmlFor="name">Company Name</Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            defaultValue={editingInsurance?.name || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="code">Company Code</Label>
+                          <Input
+                            id="code"
+                            name="code"
+                            defaultValue={editingInsurance?.code || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            defaultValue={editingInsurance?.email || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Phone</Label>
+                          <Input
+                            id="phone"
+                            name="phone"
+                            defaultValue={editingInsurance?.phone || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="address">Address</Label>
+                          <Input
+                            id="address"
+                            name="address"
+                            defaultValue={editingInsurance?.address || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="license_number">License Number</Label>
+                          <Input
+                            id="license_number"
+                            name="license_number"
+                            defaultValue={
+                              editingInsurance?.license_number || ""
+                            }
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowInsuranceForm(false);
+                              setEditingInsurance(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                          >
+                            {editingInsurance ? "Update" : "Create"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {adminLoading ? (
+                  <div className="text-center py-8">
+                    <p>Loading insurance companies...</p>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        Insurance Companies ({insuranceCompanies.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Company Name</TableHead>
+                            <TableHead>Code</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>License</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {insuranceCompanies.map((insurance) => (
+                            <TableRow key={insurance.id}>
+                              <TableCell className="font-medium">
+                                {insurance.name}
+                              </TableCell>
+                              <TableCell>{insurance.code}</TableCell>
+                              <TableCell>{insurance.email || "-"}</TableCell>
+                              <TableCell>{insurance.phone || "-"}</TableCell>
+                              <TableCell>
+                                {insurance.license_number || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(
+                                  insurance.created_at || "",
+                                ).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingInsurance(insurance);
+                                      setShowInsuranceForm(true);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleDeleteInsurance(insurance.id)
+                                    }
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {insuranceCompanies.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          No insurance companies found. Click &quot;Add
+                          Insurance Company&quot; to create your first insurance
+                          company.
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             </div>
@@ -2215,7 +2529,7 @@ function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
                     activeAdminSection === "banks"
@@ -2261,6 +2575,30 @@ function App() {
                     className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
                   >
                     Manage Agents
+                  </Button>
+                </div>
+
+                <div
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
+                    activeAdminSection === "insurance"
+                      ? "border-[#5680E9] bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center mb-3">
+                    <Building2 className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Insurance Management
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    Manage insurance companies
+                  </p>
+                  <Button
+                    onClick={handleInsuranceManagement}
+                    className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
+                  >
+                    Manage Insurance
                   </Button>
                 </div>
 

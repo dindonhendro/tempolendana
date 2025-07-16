@@ -4,9 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Search, Eye, MessageSquare } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { LoanApplication } from "@/types/supabase";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  CheckCircle,
+  XCircle,
+  Search,
+  Eye,
+  MessageSquare,
+  Shield,
+} from "lucide-react";
+import { supabase, getInsuranceCompanies } from "@/lib/supabase";
+import { LoanApplication, Tables } from "@/types/supabase";
 
 interface ValidatorDashboardProps {
   validatorId?: string;
@@ -25,9 +46,17 @@ export default function ValidatorDashboard({
     useState<LoanApplication | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [comments, setComments] = useState("");
+  const [insuranceCompanies, setInsuranceCompanies] = useState<
+    Tables<"insurance_companies">[]
+  >([]);
+  const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
+  const [selectedApplicationForInsurance, setSelectedApplicationForInsurance] =
+    useState<LoanApplication | null>(null);
+  const [selectedInsuranceCompany, setSelectedInsuranceCompany] = useState("");
 
   useEffect(() => {
     fetchApplications();
+    fetchInsuranceCompanies();
   }, []);
 
   useEffect(() => {
@@ -51,6 +80,15 @@ export default function ValidatorDashboard({
       console.error("Error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInsuranceCompanies = async () => {
+    try {
+      const companies = await getInsuranceCompanies();
+      setInsuranceCompanies(companies);
+    } catch (error) {
+      console.error("Error fetching insurance companies:", error);
     }
   };
 
@@ -116,6 +154,55 @@ export default function ValidatorDashboard({
       alert("Error updating application. Please try again.");
     } finally {
       setProcessing(null);
+    }
+  };
+
+  const handleAssignInsurance = async () => {
+    if (!selectedApplicationForInsurance || !selectedInsuranceCompany) {
+      alert("Please select an insurance company");
+      return;
+    }
+
+    try {
+      // Check if insurance assignment already exists
+      const { data: existingAssignment, error: checkError } = await supabase
+        .from("insurance_assignments")
+        .select("id")
+        .eq("loan_application_id", selectedApplicationForInsurance.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing assignment:", checkError);
+        alert("Error checking existing assignment. Please try again.");
+        return;
+      }
+
+      if (existingAssignment) {
+        alert("This application is already assigned to an insurance company");
+        return;
+      }
+
+      // Create insurance assignment
+      const { error } = await supabase.from("insurance_assignments").insert({
+        loan_application_id: selectedApplicationForInsurance.id,
+        insurance_company_id: selectedInsuranceCompany,
+        assigned_by: validatorId,
+        status: "Assigned",
+      });
+
+      if (error) {
+        console.error("Error creating insurance assignment:", error);
+        alert("Error assigning insurance company. Please try again.");
+        return;
+      }
+
+      alert("Insurance company assigned successfully!");
+      setShowInsuranceDialog(false);
+      setSelectedApplicationForInsurance(null);
+      setSelectedInsuranceCompany("");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error assigning insurance company. Please try again.");
     }
   };
 
@@ -451,14 +538,6 @@ export default function ValidatorDashboard({
                         </div>
                         <div className="flex space-x-2">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedApplication(application)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Review
-                          </Button>
-                          <Button
                             onClick={() =>
                               handleApplicationAction(
                                 application.id,
@@ -471,6 +550,18 @@ export default function ValidatorDashboard({
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Validate
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setSelectedApplicationForInsurance(application);
+                              setShowInsuranceDialog(true);
+                            }}
+                            disabled={processing === application.id}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <Shield className="h-4 w-4 mr-2" />
+                            Assign Insurance
                           </Button>
                           <Button
                             onClick={() => setSelectedApplication(application)}
@@ -490,6 +581,74 @@ export default function ValidatorDashboard({
             )}
           </CardContent>
         </Card>
+
+        {/* Insurance Assignment Dialog */}
+        <Dialog
+          open={showInsuranceDialog}
+          onOpenChange={setShowInsuranceDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Insurance Company</DialogTitle>
+            </DialogHeader>
+            {selectedApplicationForInsurance && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Applicant</Label>
+                  <p className="font-medium">
+                    {selectedApplicationForInsurance.full_name}
+                  </p>
+                </div>
+                <div>
+                  <Label>Loan Amount</Label>
+                  <p className="font-medium">
+                    Rp{" "}
+                    {selectedApplicationForInsurance.loan_amount?.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="insuranceCompany">
+                    Select Insurance Company
+                  </Label>
+                  <Select
+                    value={selectedInsuranceCompany}
+                    onValueChange={setSelectedInsuranceCompany}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose an insurance company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {insuranceCompanies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name} ({company.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowInsuranceDialog(false);
+                      setSelectedApplicationForInsurance(null);
+                      setSelectedInsuranceCompany("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAssignInsurance}
+                    disabled={!selectedInsuranceCompany}
+                    className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
+                  >
+                    Assign Insurance
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
