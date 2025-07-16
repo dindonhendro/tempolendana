@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Upload, CheckCircle, Printer } from "lucide-react";
+import { Upload, CheckCircle, Printer, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database, Tables } from "@/types/supabase";
 
@@ -629,6 +629,70 @@ export default function LoanApplicationForm({
     printWindow.print();
   };
 
+  const downloadInstallmentCSV = () => {
+    const installments = calculateInstallments();
+    const totalInterest = installments.reduce(
+      (sum, inst) => sum + inst.interest,
+      0,
+    );
+    const totalPayment = (formData.loan_amount || 0) + totalInterest;
+
+    // Create CSV header
+    const csvHeader = [
+      "Bulan",
+      "Tanggal",
+      "Jenis Pembayaran",
+      "Pokok",
+      "Bunga",
+      "Total Angsuran",
+      "Sisa Pinjaman",
+    ].join(",");
+
+    // Create CSV rows
+    const csvRows = installments.map((inst) =>
+      [
+        inst.month,
+        inst.date,
+        `"${inst.type}"`,
+        inst.principal.toFixed(0),
+        inst.interest.toFixed(0),
+        inst.totalPayment.toFixed(0),
+        inst.remainingBalance.toFixed(0),
+      ].join(","),
+    );
+
+    // Add summary information at the top
+    const summaryRows = [
+      `"Nama Pemohon","${formData.full_name || "-"}","","","","",""`,
+      `"Jenis Angsuran","Angsuran Efektif","","","","",""`,
+      `"Jumlah Pinjaman","${(formData.loan_amount || 0).toLocaleString("id-ID")}","","","","",""`,
+      `"Tenor","${formData.tenor_months || 0} Bulan","","","","",""`,
+      `"Bunga Bank","${formData.bunga_bank || 6}% per tahun","","","","",""`,
+      `"Grace Period","${formData.grace_period || 0} Bulan","","","","",""`,
+      `"Total Bunga","${totalInterest.toLocaleString("id-ID")}","","","","",""`,
+      `"Total Pembayaran","${totalPayment.toLocaleString("id-ID")}","","","","",""`,
+      "",
+      csvHeader,
+    ];
+
+    // Combine all rows
+    const csvContent = [...summaryRows, ...csvRows].join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `Tabel_Angsuran_${formData.full_name || "PMI"}_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const tabs = [
     "personal",
     "documents",
@@ -918,15 +982,26 @@ export default function LoanApplicationForm({
                   <h3 className="text-lg font-semibold text-[#5680E9]">
                     Tabel Angsuran Bulanan KUR PMI
                   </h3>
-                  <Button
-                    type="button"
-                    onClick={printInstallmentTable}
-                    className="bg-[#5680E9] hover:bg-[#5680E9]/90"
-                    disabled={!formData.loan_amount || !formData.tenor_months}
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Cetak Tabel
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      type="button"
+                      onClick={downloadInstallmentCSV}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      disabled={!formData.loan_amount || !formData.tenor_months}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download CSV
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={printInstallmentTable}
+                      className="bg-[#5680E9] hover:bg-[#5680E9]/90"
+                      disabled={!formData.loan_amount || !formData.tenor_months}
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Cetak Tabel
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Loan Information Summary */}

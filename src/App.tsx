@@ -1,12 +1,14 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
+import LandingPage from "./components/LandingPage";
 import AuthForm from "./components/auth/AuthForm";
 import UserDashboard from "./components/pmi/UserDashboard";
 import AgentDashboard from "./components/pmi/AgentDashboard";
 import ValidatorDashboard from "./components/pmi/ValidatorDashboard";
 import BankStaffDashboard from "./components/pmi/BankStaffDashboard";
 import InsuranceDashboard from "./components/pmi/InsuranceDashboard";
+import CollectorDashboard from "./components/pmi/CollectorDashboard";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
@@ -152,6 +154,9 @@ function App() {
   const [insuranceCompanies, setInsuranceCompanies] = useState<
     Tables<"insurance_companies">[]
   >([]);
+  const [collectorCompanies, setCollectorCompanies] = useState<
+    Tables<"collector_companies">[]
+  >([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [editingBank, setEditingBank] = useState<Tables<"banks"> | null>(null);
   const [editingAgent, setEditingAgent] =
@@ -165,12 +170,15 @@ function App() {
   );
   const [editingInsurance, setEditingInsurance] =
     useState<Tables<"insurance_companies"> | null>(null);
+  const [editingCollector, setEditingCollector] =
+    useState<Tables<"collector_companies"> | null>(null);
   const [showBankForm, setShowBankForm] = useState(false);
   const [showAgentForm, setShowAgentForm] = useState(false);
   const [showBranchForm, setShowBranchForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showStaffForm, setShowStaffForm] = useState(false);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
+  const [showCollectorForm, setShowCollectorForm] = useState(false);
   const [allApplications, setAllApplications] = useState<
     Tables<"loan_applications">[]
   >([]);
@@ -219,6 +227,19 @@ function App() {
       setInsuranceCompanies(data || []);
     } catch (error) {
       console.error("Error fetching insurance companies:", error);
+    }
+  };
+
+  const fetchCollectorCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("collector_companies")
+        .select("*")
+        .order("name");
+      if (error) throw error;
+      setCollectorCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching collector companies:", error);
     }
   };
 
@@ -301,6 +322,13 @@ function App() {
     setActiveAdminSection("insurance");
     setAdminLoading(true);
     await fetchInsuranceCompanies();
+    setAdminLoading(false);
+  };
+
+  const handleCollectorManagement = async () => {
+    setActiveAdminSection("collector");
+    setAdminLoading(true);
+    await fetchCollectorCompanies();
     setAdminLoading(false);
   };
 
@@ -516,6 +544,85 @@ function App() {
     } catch (error) {
       console.error("Error deleting insurance company:", error);
       alert("Error deleting insurance company. Please try again.");
+    }
+  };
+
+  const handleSaveCollector = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    const name = formData.get("name") as string;
+    const code = formData.get("code") as string;
+
+    if (!name || !code) {
+      alert("Name and Code are required fields.");
+      return;
+    }
+
+    const collectorData = {
+      name: name.trim(),
+      code: code.trim(),
+      email: (formData.get("email") as string)?.trim() || null,
+      phone: (formData.get("phone") as string)?.trim() || null,
+      address: (formData.get("address") as string)?.trim() || null,
+      license_number:
+        (formData.get("license_number") as string)?.trim() || null,
+    };
+
+    try {
+      if (editingCollector) {
+        const { error } = await supabase
+          .from("collector_companies")
+          .update(collectorData)
+          .eq("id", editingCollector.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("collector_companies")
+          .insert([collectorData]);
+        if (error) throw error;
+      }
+
+      await fetchCollectorCompanies();
+      setShowCollectorForm(false);
+      setEditingCollector(null);
+      alert(
+        editingCollector
+          ? "Collector company updated successfully!"
+          : "Collector company created successfully!",
+      );
+    } catch (error: any) {
+      console.error("Error saving collector company:", error);
+      let errorMessage = "Error saving collector company. ";
+
+      if (error?.code === "23505") {
+        errorMessage += "A company with this code already exists.";
+      } else if (error?.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += "Please try again.";
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  const handleDeleteCollector = async (collectorId: string) => {
+    if (!confirm("Are you sure you want to delete this collector company?"))
+      return;
+
+    try {
+      const { error } = await supabase
+        .from("collector_companies")
+        .delete()
+        .eq("id", collectorId);
+      if (error) throw error;
+      await fetchCollectorCompanies();
+    } catch (error) {
+      console.error("Error deleting collector company:", error);
+      alert("Error deleting collector company. Please try again.");
     }
   };
 
@@ -893,6 +1000,8 @@ function App() {
         return <BankStaffDashboard staffId={user.id} />;
       case "insurance":
         return <InsuranceDashboard staffId={user.id} />;
+      case "collector":
+        return <CollectorDashboard staffId={user.id} />;
       case "admin":
         if (activeAdminSection === "banks") {
           return (
@@ -1601,6 +1710,212 @@ function App() {
                       </Card>
                     </TabsContent>
                   </Tabs>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        if (activeAdminSection === "collector") {
+          return (
+            <div className="min-h-screen bg-white p-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveAdminSection(null)}
+                      className="flex items-center space-x-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Back to Dashboard</span>
+                    </Button>
+                    <h1 className="text-3xl font-bold text-[#5680E9]">
+                      Collector Management
+                    </h1>
+                  </div>
+                  <Dialog
+                    open={showCollectorForm}
+                    onOpenChange={setShowCollectorForm}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        onClick={() => {
+                          setEditingCollector(null);
+                          setShowCollectorForm(true);
+                        }}
+                        className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Collector Company</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingCollector
+                            ? "Edit Collector Company"
+                            : "Add New Collector Company"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <form
+                        onSubmit={handleSaveCollector}
+                        className="space-y-4"
+                      >
+                        <div>
+                          <Label htmlFor="name">Company Name</Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            defaultValue={editingCollector?.name || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="code">Company Code</Label>
+                          <Input
+                            id="code"
+                            name="code"
+                            defaultValue={editingCollector?.code || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            defaultValue={editingCollector?.email || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Phone</Label>
+                          <Input
+                            id="phone"
+                            name="phone"
+                            defaultValue={editingCollector?.phone || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="address">Address</Label>
+                          <Input
+                            id="address"
+                            name="address"
+                            defaultValue={editingCollector?.address || ""}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="license_number">License Number</Label>
+                          <Input
+                            id="license_number"
+                            name="license_number"
+                            defaultValue={
+                              editingCollector?.license_number || ""
+                            }
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowCollectorForm(false);
+                              setEditingCollector(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                          >
+                            {editingCollector ? "Update" : "Create"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {adminLoading ? (
+                  <div className="text-center py-8">
+                    <p>Loading collector companies...</p>
+                  </div>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        Collector Companies ({collectorCompanies.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Company Name</TableHead>
+                            <TableHead>Code</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>License</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {collectorCompanies.map((collector) => (
+                            <TableRow key={collector.id}>
+                              <TableCell className="font-medium">
+                                {collector.name}
+                              </TableCell>
+                              <TableCell>{collector.code}</TableCell>
+                              <TableCell>{collector.email || "-"}</TableCell>
+                              <TableCell>{collector.phone || "-"}</TableCell>
+                              <TableCell>
+                                {collector.license_number || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(
+                                  collector.created_at || "",
+                                ).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setEditingCollector(collector);
+                                      setShowCollectorForm(true);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      handleDeleteCollector(collector.id)
+                                    }
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {collectorCompanies.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          No collector companies found. Click &quot;Add
+                          Collector Company&quot; to create your first collector
+                          company.
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             </div>
@@ -2529,7 +2844,7 @@ function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
                     activeAdminSection === "banks"
@@ -2628,6 +2943,30 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
+                    activeAdminSection === "collector"
+                      ? "border-[#5680E9] bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center mb-3">
+                    <Building2 className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Collector Management
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    Manage collector companies
+                  </p>
+                  <Button
+                    onClick={handleCollectorManagement}
+                    className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
+                  >
+                    Manage Collectors
+                  </Button>
+                </div>
+
+                <div
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
                     activeAdminSection === "reports"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
@@ -2693,7 +3032,20 @@ function App() {
   }
 
   if (!user) {
-    return <AuthForm onAuthSuccess={checkUser} />;
+    return (
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <LandingPage
+              onGetStarted={() => (window.location.href = "/auth")}
+            />
+          }
+        />
+        <Route path="/auth" element={<AuthForm onAuthSuccess={checkUser} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   return (
@@ -2727,6 +3079,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/home" element={<Home />} />
+          <Route
+            path="/landing"
+            element={
+              <LandingPage
+                onGetStarted={() => (window.location.href = "/dashboard")}
+              />
+            }
+          />
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

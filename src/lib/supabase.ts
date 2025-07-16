@@ -79,6 +79,19 @@ export const signUp = async (
 
       if (insuranceStaffError) throw insuranceStaffError;
     }
+
+    // If user is collector, create collector_staff record
+    if (role === "collector" && agentCompanyId) {
+      const { error: collectorStaffError } = await supabase
+        .from("collector_staff")
+        .insert({
+          user_id: data.user.id,
+          collector_company_id: agentCompanyId, // reusing agentCompanyId param for collector company
+          position: "Staff",
+        });
+
+      if (collectorStaffError) throw collectorStaffError;
+    }
   }
 
   return data;
@@ -169,7 +182,13 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const getCurrentUserRole = async (): Promise<
-  "user" | "agent" | "validator" | "bank_staff" | "insurance" | null
+  | "user"
+  | "agent"
+  | "validator"
+  | "bank_staff"
+  | "insurance"
+  | "collector"
+  | null
 > => {
   const user = await getCurrentUser();
   return user?.role as
@@ -178,6 +197,7 @@ export const getCurrentUserRole = async (): Promise<
     | "validator"
     | "bank_staff"
     | "insurance"
+    | "collector"
     | null;
 };
 
@@ -291,6 +311,25 @@ export const getInsuranceCompanies = async () => {
     return data || [];
   } catch (error) {
     console.error("Error in getInsuranceCompanies:", error);
+    return [];
+  }
+};
+
+// Get collector companies
+export const getCollectorCompanies = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("collector_companies")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching collector companies:", error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error("Error in getCollectorCompanies:", error);
     return [];
   }
 };

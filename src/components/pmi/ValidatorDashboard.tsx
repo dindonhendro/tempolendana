@@ -25,8 +25,13 @@ import {
   Eye,
   MessageSquare,
   Shield,
+  Users,
 } from "lucide-react";
-import { supabase, getInsuranceCompanies } from "@/lib/supabase";
+import {
+  supabase,
+  getInsuranceCompanies,
+  getCollectorCompanies,
+} from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
 
 interface ValidatorDashboardProps {
@@ -53,10 +58,18 @@ export default function ValidatorDashboard({
   const [selectedApplicationForInsurance, setSelectedApplicationForInsurance] =
     useState<LoanApplication | null>(null);
   const [selectedInsuranceCompany, setSelectedInsuranceCompany] = useState("");
+  const [collectorCompanies, setCollectorCompanies] = useState<
+    Tables<"collector_companies">[]
+  >([]);
+  const [showCollectorDialog, setShowCollectorDialog] = useState(false);
+  const [selectedApplicationForCollector, setSelectedApplicationForCollector] =
+    useState<LoanApplication | null>(null);
+  const [selectedCollectorCompany, setSelectedCollectorCompany] = useState("");
 
   useEffect(() => {
     fetchApplications();
     fetchInsuranceCompanies();
+    fetchCollectorCompanies();
   }, []);
 
   useEffect(() => {
@@ -89,6 +102,15 @@ export default function ValidatorDashboard({
       setInsuranceCompanies(companies);
     } catch (error) {
       console.error("Error fetching insurance companies:", error);
+    }
+  };
+
+  const fetchCollectorCompanies = async () => {
+    try {
+      const companies = await getCollectorCompanies();
+      setCollectorCompanies(companies);
+    } catch (error) {
+      console.error("Error fetching collector companies:", error);
     }
   };
 
@@ -203,6 +225,55 @@ export default function ValidatorDashboard({
     } catch (error) {
       console.error("Error:", error);
       alert("Error assigning insurance company. Please try again.");
+    }
+  };
+
+  const handleAssignCollector = async () => {
+    if (!selectedApplicationForCollector || !selectedCollectorCompany) {
+      alert("Please select a collector company");
+      return;
+    }
+
+    try {
+      // Check if collector assignment already exists
+      const { data: existingAssignment, error: checkError } = await supabase
+        .from("collector_assignments")
+        .select("id")
+        .eq("loan_application_id", selectedApplicationForCollector.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking existing assignment:", checkError);
+        alert("Error checking existing assignment. Please try again.");
+        return;
+      }
+
+      if (existingAssignment) {
+        alert("This application is already assigned to a collector company");
+        return;
+      }
+
+      // Create collector assignment
+      const { error } = await supabase.from("collector_assignments").insert({
+        loan_application_id: selectedApplicationForCollector.id,
+        collector_company_id: selectedCollectorCompany,
+        assigned_by: validatorId,
+        status: "Assigned",
+      });
+
+      if (error) {
+        console.error("Error creating collector assignment:", error);
+        alert("Error assigning collector company. Please try again.");
+        return;
+      }
+
+      alert("Collector company assigned successfully!");
+      setShowCollectorDialog(false);
+      setSelectedApplicationForCollector(null);
+      setSelectedCollectorCompany("");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error assigning collector company. Please try again.");
     }
   };
 
@@ -564,6 +635,18 @@ export default function ValidatorDashboard({
                             Assign Insurance
                           </Button>
                           <Button
+                            onClick={() => {
+                              setSelectedApplicationForCollector(application);
+                              setShowCollectorDialog(true);
+                            }}
+                            disabled={processing === application.id}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Assign Collector
+                          </Button>
+                          <Button
                             onClick={() => setSelectedApplication(application)}
                             disabled={processing === application.id}
                             size="sm"
@@ -643,6 +726,74 @@ export default function ValidatorDashboard({
                     className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
                   >
                     Assign Insurance
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Collector Assignment Dialog */}
+        <Dialog
+          open={showCollectorDialog}
+          onOpenChange={setShowCollectorDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Collector Company</DialogTitle>
+            </DialogHeader>
+            {selectedApplicationForCollector && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Applicant</Label>
+                  <p className="font-medium">
+                    {selectedApplicationForCollector.full_name}
+                  </p>
+                </div>
+                <div>
+                  <Label>Loan Amount</Label>
+                  <p className="font-medium">
+                    Rp{" "}
+                    {selectedApplicationForCollector.loan_amount?.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="collectorCompany">
+                    Select Collector Company
+                  </Label>
+                  <Select
+                    value={selectedCollectorCompany}
+                    onValueChange={setSelectedCollectorCompany}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a collector company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {collectorCompanies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name} ({company.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowCollectorDialog(false);
+                      setSelectedApplicationForCollector(null);
+                      setSelectedCollectorCompany("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAssignCollector}
+                    disabled={!selectedCollectorCompany}
+                    className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
+                  >
+                    Assign Collector
                   </Button>
                 </div>
               </div>

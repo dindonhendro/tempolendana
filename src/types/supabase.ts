@@ -365,6 +365,128 @@ export type Database = {
           },
         ]
       }
+      collector_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          collector_company_id: string
+          created_at: string | null
+          id: string
+          loan_application_id: string
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          collector_company_id: string
+          created_at?: string | null
+          id?: string
+          loan_application_id: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          collector_company_id?: string
+          created_at?: string | null
+          id?: string
+          loan_application_id?: string
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collector_assignments_collector_company_id_fkey"
+            columns: ["collector_company_id"]
+            isOneToOne: false
+            referencedRelation: "collector_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collector_assignments_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collector_companies: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string | null
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      collector_staff: {
+        Row: {
+          collector_company_id: string
+          created_at: string | null
+          id: string
+          position: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          collector_company_id: string
+          created_at?: string | null
+          id?: string
+          position?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          collector_company_id?: string
+          created_at?: string | null
+          id?: string
+          position?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collector_staff_collector_company_id_fkey"
+            columns: ["collector_company_id"]
+            isOneToOne: false
+            referencedRelation: "collector_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_assignments: {
         Row: {
           assigned_at: string | null

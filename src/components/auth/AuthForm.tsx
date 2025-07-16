@@ -18,6 +18,7 @@ import {
   getBanks,
   getBankBranches,
   getInsuranceCompanies,
+  getCollectorCompanies,
 } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -48,6 +49,8 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
   const [branches, setBranches] = useState<any[]>([]);
   const [insuranceCompanyId, setInsuranceCompanyId] = useState("");
   const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
+  const [collectorCompanyId, setCollectorCompanyId] = useState("");
+  const [collectorCompanies, setCollectorCompanies] = useState<any[]>([]);
 
   // Load agent companies and banks on component mount
   React.useEffect(() => {
@@ -55,15 +58,18 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
 
     const loadData = async () => {
       try {
-        const [companies, banksData, insuranceData] = await Promise.all([
-          getAgentCompanies(),
-          getBanks(),
-          getInsuranceCompanies(),
-        ]);
+        const [companies, banksData, insuranceData, collectorData] =
+          await Promise.all([
+            getAgentCompanies(),
+            getBanks(),
+            getInsuranceCompanies(),
+            getCollectorCompanies(),
+          ]);
         if (isMounted) {
           setAgentCompanies(companies || []);
           setBanks(banksData || []);
           setInsuranceCompanies(insuranceData || []);
+          setCollectorCompanies(collectorData || []);
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -71,6 +77,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
           setAgentCompanies([]);
           setBanks([]);
           setInsuranceCompanies([]);
+          setCollectorCompanies([]);
         }
       }
     };
@@ -82,6 +89,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
         setAgentCompanies([]);
         setBanks([]);
         setInsuranceCompanies([]);
+        setCollectorCompanies([]);
       }
     }, 5000); // 5 second timeout
 
@@ -161,13 +169,23 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       return;
     }
 
+    if (role === "collector" && !collectorCompanyId) {
+      setError("Please select a collector company");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await signUp(
         signUpEmail,
         signUpPassword,
         role,
         fullName,
-        role === "insurance" ? insuranceCompanyId : agentCompanyId,
+        role === "insurance"
+          ? insuranceCompanyId
+          : role === "collector"
+            ? collectorCompanyId
+            : agentCompanyId,
         bankId,
         branchId,
       );
@@ -183,6 +201,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       setBankId("");
       setBranchId("");
       setInsuranceCompanyId("");
+      setCollectorCompanyId("");
     } catch (error: any) {
       setError(error.message || "Failed to create account");
     } finally {
@@ -366,6 +385,9 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                       if (value !== "insurance") {
                         setInsuranceCompanyId("");
                       }
+                      if (value !== "collector") {
+                        setCollectorCompanyId("");
+                      }
                     }}
                   >
                     <SelectTrigger>
@@ -379,6 +401,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                       </SelectItem>
                       <SelectItem value="bank_staff">Bank Staff</SelectItem>
                       <SelectItem value="insurance">Insurance Staff</SelectItem>
+                      <SelectItem value="collector">Collector Staff</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -465,6 +488,30 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                       </SelectTrigger>
                       <SelectContent>
                         {insuranceCompanies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name} ({company.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {role === "collector" && (
+                  <div>
+                    <Label htmlFor="collector-company">
+                      Collector Company *
+                    </Label>
+                    <Select
+                      value={collectorCompanyId}
+                      onValueChange={setCollectorCompanyId}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select collector company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {collectorCompanies.map((company) => (
                           <SelectItem key={company.id} value={company.id}>
                             {company.name} ({company.code})
                           </SelectItem>
