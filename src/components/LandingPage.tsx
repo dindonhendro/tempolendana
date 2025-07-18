@@ -14,6 +14,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -24,6 +33,16 @@ interface LandingPageProps {
 const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showLoanDialog, setShowLoanDialog] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [loanFormData, setLoanFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    amount: "",
+    bank: "",
+    product: "",
+  });
 
   const testimonials = [
     {
@@ -56,6 +75,97 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     setCurrentTestimonial(
       (prev) => (prev - 1 + testimonials.length) % testimonials.length,
     );
+  };
+
+  const bankProducts = {
+    "KUR Perumahan PMI": [
+      {
+        bank: "Bank Mandiri",
+        product: "KUR Perumahan Mandiri - Bunga 6% p.a",
+        maxAmount: "Rp 500 juta",
+      },
+      {
+        bank: "Bank BNI",
+        product: "KUR Perumahan BNI - Bunga 6% p.a",
+        maxAmount: "Rp 500 juta",
+      },
+      {
+        bank: "Bank BRI",
+        product: "KUR Perumahan BRI - Bunga 6% p.a",
+        maxAmount: "Rp 500 juta",
+      },
+      {
+        bank: "Bank BTN",
+        product: "KUR Perumahan BTN - Bunga 6% p.a",
+        maxAmount: "Rp 500 juta",
+      },
+    ],
+    "KUR Rumah Subsidi PMI": [
+      {
+        bank: "Bank Mandiri",
+        product: "KUR Subsidi Mandiri - Bunga 5% p.a",
+        maxAmount: "Rp 150 juta",
+      },
+      {
+        bank: "Bank BNI",
+        product: "KUR Subsidi BNI - Bunga 5% p.a",
+        maxAmount: "Rp 150 juta",
+      },
+      {
+        bank: "Bank BRI",
+        product: "KUR Subsidi BRI - Bunga 5% p.a",
+        maxAmount: "Rp 150 juta",
+      },
+      {
+        bank: "Bank BTN",
+        product: "KUR Subsidi BTN - Bunga 5% p.a",
+        maxAmount: "Rp 150 juta",
+      },
+    ],
+    "KUR Wirausaha PMI": [
+      {
+        bank: "Bank Mandiri",
+        product: "KUR Mikro Mandiri - Bunga 6% p.a",
+        maxAmount: "Rp 50 juta",
+      },
+      {
+        bank: "Bank BNI",
+        product: "KUR Mikro BNI - Bunga 6% p.a",
+        maxAmount: "Rp 50 juta",
+      },
+      {
+        bank: "Bank BRI",
+        product: "KUR Mikro BRI - Bunga 6% p.a",
+        maxAmount: "Rp 50 juta",
+      },
+      {
+        bank: "Bank Nano",
+        product: "KUR Mikro Nano - Bunga 6% p.a",
+        maxAmount: "Rp 25 juta",
+      },
+    ],
+  };
+
+  const handleLoanApplication = (productType: string) => {
+    setSelectedProduct(productType);
+    setLoanFormData({ ...loanFormData, product: productType });
+    setShowLoanDialog(true);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(
+      `Terima kasih ${loanFormData.name}! Pengajuan ${selectedProduct} Anda telah diterima. Tim kami akan menghubungi Anda dalam 1x24 jam.`,
+    );
+    setShowLoanDialog(false);
+    setLoanFormData({
+      name: "",
+      phone: "",
+      email: "",
+      amount: "",
+      bank: "",
+      product: "",
+    });
   };
 
   const privacyPolicyText = `
@@ -211,10 +321,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <Card
-                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
-                onClick={() => (window.location.href = "/auth")}
-              >
+              <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
                 <CardContent className="p-6 text-center">
                   <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
                     🏠
@@ -228,12 +335,9 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   <Button
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = "/auth";
-                    }}
+                    onClick={() => handleLoanApplication("KUR Perumahan PMI")}
                   >
-                    Daftar Sekarang
+                    Pelajari lebih lanjut
                   </Button>
                 </CardContent>
               </Card>
@@ -245,10 +349,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              <Card
-                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
-                onClick={() => (window.location.href = "/auth")}
-              >
+              <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
                 <CardContent className="p-6 text-center">
                   <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
                     🏘️
@@ -263,12 +364,11 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   <Button
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = "/auth";
-                    }}
+                    onClick={() =>
+                      handleLoanApplication("KUR Rumah Subsidi PMI")
+                    }
                   >
-                    Daftar Sekarang
+                    Pelajari lebih lanjut
                   </Button>
                 </CardContent>
               </Card>
@@ -280,10 +380,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               transition={{ duration: 0.6, delay: 0.4 }}
               viewport={{ once: true }}
             >
-              <Card
-                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
-                onClick={() => (window.location.href = "/auth")}
-              >
+              <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
                 <CardContent className="p-6 text-center">
                   <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
                     💼
@@ -297,12 +394,9 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   <Button
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.location.href = "/auth";
-                    }}
+                    onClick={() => handleLoanApplication("KUR Wirausaha PMI")}
                   >
-                    Daftar Sekarang
+                    Pelajari lebih lanjut
                   </Button>
                 </CardContent>
               </Card>
@@ -627,6 +721,160 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
           </div>
         </div>
       </footer>
+
+      {/* Loan Application Dialog */}
+      <Dialog open={showLoanDialog} onOpenChange={setShowLoanDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+              Pengajuan {selectedProduct}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleFormSubmit} className="space-y-6 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Lengkap *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  required
+                  value={loanFormData.name}
+                  onChange={(e) =>
+                    setLoanFormData({ ...loanFormData, name: e.target.value })
+                  }
+                  placeholder="Masukkan nama lengkap"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Nomor Telepon *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={loanFormData.phone}
+                  onChange={(e) =>
+                    setLoanFormData({ ...loanFormData, phone: e.target.value })
+                  }
+                  placeholder="08xxxxxxxxxx"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={loanFormData.email}
+                onChange={(e) =>
+                  setLoanFormData({ ...loanFormData, email: e.target.value })
+                }
+                placeholder="nama@email.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Jumlah Pinjaman *</Label>
+              <Input
+                id="amount"
+                type="text"
+                required
+                value={loanFormData.amount}
+                onChange={(e) =>
+                  setLoanFormData({ ...loanFormData, amount: e.target.value })
+                }
+                placeholder="Rp 50.000.000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Pilih Bank & Produk *</Label>
+              <Select
+                value={loanFormData.bank}
+                onValueChange={(value) =>
+                  setLoanFormData({ ...loanFormData, bank: value })
+                }
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih bank dan produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedProduct &&
+                    bankProducts[
+                      selectedProduct as keyof typeof bankProducts
+                    ]?.map((item, index) => (
+                      <SelectItem
+                        key={index}
+                        value={`${item.bank} - ${item.product}`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{item.bank}</span>
+                          <span className="text-sm text-gray-600">
+                            {item.product}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Maksimal: {item.maxAmount}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-[#5680E9] mb-2">
+                Informasi Produk {selectedProduct}
+              </h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                {selectedProduct === "KUR Perumahan PMI" && (
+                  <>
+                    <li>• Suku bunga: 6% efektif per tahun</li>
+                    <li>• Plafon: Hingga Rp 500 juta</li>
+                    <li>• Jangka waktu: Hingga 20 tahun</li>
+                    <li>• Untuk pembelian atau renovasi rumah</li>
+                  </>
+                )}
+                {selectedProduct === "KUR Rumah Subsidi PMI" && (
+                  <>
+                    <li>• Suku bunga: 5% efektif per tahun</li>
+                    <li>• Plafon: Hingga Rp 150 juta</li>
+                    <li>• Jangka waktu: Hingga 20 tahun</li>
+                    <li>• Program bersubsidi pemerintah</li>
+                  </>
+                )}
+                {selectedProduct === "KUR Wirausaha PMI" && (
+                  <>
+                    <li>• Suku bunga: 6% efektif per tahun</li>
+                    <li>• Plafon: Hingga Rp 50 juta</li>
+                    <li>• Jangka waktu: Hingga 5 tahun</li>
+                    <li>• Untuk modal usaha dan investasi</li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowLoanDialog(false)}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-[#5680E9] hover:bg-[#8860D0] text-white"
+              >
+                Ajukan Pinjaman
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
