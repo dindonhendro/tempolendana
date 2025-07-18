@@ -152,8 +152,167 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
         </div>
       </section>
 
-      {/* Value Proposition Section */}
+      {/* Products Section */}
       <section className="py-20 px-4 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+              Produk KUR-PMI
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Pilih produk yang sesuai dengan kebutuhan Anda
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <Card
+                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
+                onClick={() => (window.location.href = "/auth")}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    ✈️
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    KUR Penempatan PMI
+                  </h3>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    Biaya penempatan, pelatihan, & dokumen hingga Rp100 juta
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = "/auth";
+                    }}
+                  >
+                    Daftar Sekarang
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <Card
+                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
+                onClick={() => (window.location.href = "/auth")}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    🏠
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    KUR Perumahan PMI
+                  </h3>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    Kredit untuk pembelian atau renovasi rumah bagi PMI
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = "/auth";
+                    }}
+                  >
+                    Daftar Sekarang
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Card
+                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
+                onClick={() => (window.location.href = "/auth")}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    🏘️
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    KUR Rumah Subsidi PMI
+                  </h3>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    Program rumah bersubsidi khusus untuk PMI dengan bunga
+                    rendah
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = "/auth";
+                    }}
+                  >
+                    Daftar Sekarang
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <Card
+                className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
+                onClick={() => (window.location.href = "/auth")}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    💼
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    KUR Wirausaha PMI
+                  </h3>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    Modal usaha untuk PMI yang ingin memulai bisnis
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = "/auth";
+                    }}
+                  >
+                    Daftar Sekarang
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Value Proposition Section */}
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -180,12 +339,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             >
               <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">✈️</div>
+                  <div className="text-6xl mb-6">💰</div>
                   <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
-                    KUR Penempatan PMI
+                    Bunga Ringan
                   </h3>
                   <p className="text-gray-700 text-lg leading-relaxed">
-                    Biaya penempatan, pelatihan, & dokumen hingga Rp100 juta
+                    Suku bunga 6% efektif per tahun
                   </p>
                 </CardContent>
               </Card>
@@ -199,12 +358,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             >
               <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">💼</div>
+                  <div className="text-6xl mb-6">🏦</div>
                   <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
-                    KUR Mikro PMI Purna
+                    Bank Terpercaya
                   </h3>
                   <p className="text-gray-700 text-lg leading-relaxed">
-                    Modal usaha tanpa agunan pokok
+                    Disalurkan melalui bank-bank BUMN terpercaya
                   </p>
                 </CardContent>
               </Card>
@@ -218,12 +377,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             >
               <Card className="h-full hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">💰</div>
+                  <div className="text-6xl mb-6">⚡</div>
                   <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
-                    Bunga Ringan
+                    Proses Cepat
                   </h3>
                   <p className="text-gray-700 text-lg leading-relaxed">
-                    Suku bunga 6% efektif per tahun
+                    Proses persetujuan yang cepat dan mudah
                   </p>
                 </CardContent>
               </Card>
@@ -233,7 +392,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
       </section>
 
       {/* Learn More Section */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
