@@ -119,7 +119,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Akses Modal Mudah untuk
+              Akses Kredit Usaha Rakyat (KUR) untuk
               <br />
               Pekerja Migran Indonesia
             </h1>

@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
-
+import LandingPage from "./components/LandingPage";
 import AuthForm from "./components/auth/AuthForm";
 import UserDashboard from "./components/pmi/UserDashboard";
 import AgentDashboard from "./components/pmi/AgentDashboard";
@@ -3034,7 +3034,14 @@ function App() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<AuthForm onAuthSuccess={checkUser} />} />
+        <Route
+          path="/"
+          element={
+            <LandingPage
+              onGetStarted={() => (window.location.href = "/auth")}
+            />
+          }
+        />
         <Route path="/auth" element={<AuthForm onAuthSuccess={checkUser} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
