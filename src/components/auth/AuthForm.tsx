@@ -211,7 +211,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
 
   const fillTestCredentials = (testEmail: string) => {
     setSignInEmail(testEmail);
-    setSignInPassword("password123");
+    setSignInPassword("123456");
   };
 
   return (
@@ -219,7 +219,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            Pinjaman PMI{" "}
+            Lendana PMI Loan
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -287,28 +287,30 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fillTestCredentials("user8@lendana.id")}
+                    onClick={() => fillTestCredentials("user10@lendana.id")}
                   >
                     User
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fillTestCredentials("p3mi8@lendana.id")}
+                    onClick={() => fillTestCredentials("bijak10@lendana.id")}
                   >
                     Agent
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fillTestCredentials("admin8@lendana.id")}
+                    onClick={() => fillTestCredentials("admin10@lendana.id")}
                   >
                     Validator
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => fillTestCredentials("staffbank8@lendana.id")}
+                    onClick={() =>
+                      fillTestCredentials("bni_melawaai10@lendana.id")
+                    }
                   >
                     Bank Staff
                   </Button>
