@@ -54,7 +54,13 @@ export default function BankStaffDashboard({
   const initializeStaff = async () => {
     try {
       const userId = await getCurrentUserId();
-      if (!userId) return;
+      console.log("Current user ID:", userId);
+
+      if (!userId) {
+        console.log("No user ID found");
+        setLoading(false);
+        return;
+      }
 
       // Get bank staff info
       const { data: staffData, error } = await supabase
@@ -63,13 +69,24 @@ export default function BankStaffDashboard({
         .eq("user_id", userId)
         .single();
 
+      console.log("Bank staff query result:", { staffData, error });
+
       if (error) {
         console.error("Error fetching staff info:", error);
-      } else {
+        if (error.code === "PGRST116") {
+          console.log("No bank staff record found for user:", userId);
+        }
+        setLoading(false);
+      } else if (staffData) {
+        console.log("Bank staff found:", staffData);
         setCurrentStaffId(staffData.id);
+      } else {
+        console.log("No bank staff data returned");
+        setLoading(false);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error in initializeStaff:", error);
+      setLoading(false);
     }
   };
 
@@ -81,12 +98,16 @@ export default function BankStaffDashboard({
         return;
       }
 
+      console.log("Fetching applications for staff ID:", currentStaffId);
+
       // Get staff info to find their branch
       const { data: staffInfo, error: staffError } = await supabase
         .from("bank_staff")
-        .select("branch_id")
+        .select("branch_id, bank_id")
         .eq("id", currentStaffId)
         .single();
+
+      console.log("Staff info query result:", { staffInfo, staffError });
 
       if (staffError) {
         console.error("Error fetching staff info:", staffError);
@@ -95,10 +116,49 @@ export default function BankStaffDashboard({
       }
 
       if (!staffInfo?.branch_id) {
-        console.error("Staff has no assigned branch");
+        console.log(
+          "Staff has no assigned branch, showing all validated applications",
+        );
+
+        // If no branch assigned, show all validated applications
+        const { data, error } = await supabase
+          .from("loan_applications")
+          .select(
+            `
+            *,
+            branch_applications(
+              *,
+              bank_products(*)
+            )
+          `,
+          )
+          .eq("status", "Validated")
+          .order("created_at", { ascending: false });
+
+        console.log("All validated applications query result:", {
+          data,
+          error,
+        });
+
+        if (error) {
+          console.error("Error fetching all applications:", error);
+        } else {
+          // Filter applications that have branch assignments
+          const appsWithBranches = (data || []).filter(
+            (app) =>
+              app.branch_applications && app.branch_applications.length > 0,
+          );
+          console.log(
+            "Applications with branch assignments:",
+            appsWithBranches.length,
+          );
+          setApplications(appsWithBranches);
+        }
         setLoading(false);
         return;
       }
+
+      console.log("Staff branch ID:", staffInfo.branch_id);
 
       // Get applications that are validated and assigned to this staff's branch
       const { data, error } = await supabase
@@ -116,13 +176,20 @@ export default function BankStaffDashboard({
         .eq("branch_applications.branch_id", staffInfo.branch_id)
         .order("created_at", { ascending: false });
 
+      console.log("Branch applications query result:", {
+        data,
+        error,
+        count: data?.length,
+      });
+
       if (error) {
         console.error("Error fetching applications:", error);
       } else {
+        console.log("Applications found:", data?.length || 0);
         setApplications(data || []);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error in fetchApplications:", error);
     } finally {
       setLoading(false);
     }
@@ -510,6 +577,16 @@ export default function BankStaffDashboard({
                 <p className="text-gray-600">
                   No applications pending bank review
                 </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {currentStaffId
+                    ? "Applications will appear here once they are validated by Lendana and assigned to your branch."
+                    : "Unable to load staff information. Please contact administrator."}
+                </p>
+                <div className="mt-4 text-xs text-gray-400">
+                  <p>Debug Info:</p>
+                  <p>Staff ID: {currentStaffId || "Not found"}</p>
+                  <p>Applications loaded: {applications.length}</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
