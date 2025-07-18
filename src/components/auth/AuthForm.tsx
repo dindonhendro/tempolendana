@@ -219,7 +219,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            Lendana PMI Loan
+            Pinjaman KUR PMI{" "}
           </CardTitle>
         </CardHeader>
         <CardContent>
