@@ -211,7 +211,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
 
   const fillTestCredentials = (testEmail: string) => {
     setSignInEmail(testEmail);
-    setSignInPassword("password123");
+    setSignInPassword("123456");
   };
 
   return (
