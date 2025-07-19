@@ -23,6 +23,7 @@ import {
   FileText,
   Plus,
   Upload,
+  Edit,
 } from "lucide-react";
 import {
   supabase,
@@ -48,6 +49,8 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApplication, setSelectedApplication] =
+    useState<LoanApplication | null>(null);
+  const [editingApplication, setEditingApplication] =
     useState<LoanApplication | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [showNewApplicationForm, setShowNewApplicationForm] = useState(false);
@@ -1054,6 +1057,34 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     );
   }
 
+  // Handle edit application form
+  if (editingApplication) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="p-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditingApplication(null);
+              setApplicationBankProduct(null);
+            }}
+            className="mb-4"
+          >
+            ← Back to Agent Dashboard
+          </Button>
+        </div>
+        <LoanApplicationForm
+          editData={editingApplication}
+          onSubmit={() => {
+            setEditingApplication(null);
+            fetchApplications();
+          }}
+          preSelectedAgentId={currentAgentCompanyId || undefined}
+        />
+      </div>
+    );
+  }
+
   if (selectedApplication) {
     return (
       <div className="min-h-screen bg-white p-4">
@@ -1072,8 +1103,20 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-[#5680E9]">
-                Application Review - {selectedApplication.full_name}
+                Application Preview - {selectedApplication.full_name}
               </CardTitle>
+              <div className="flex space-x-2 mt-4">
+                <Button
+                  onClick={() => {
+                    setEditingApplication(selectedApplication);
+                    setSelectedApplication(null);
+                  }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Application
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Personal Data */}
@@ -1764,7 +1807,16 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                             onClick={() => setSelectedApplication(application)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            Review
+                            Preview
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => setEditingApplication(application)}
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
                           </Button>
 
                           <Button
