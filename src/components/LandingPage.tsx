@@ -35,6 +35,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showLoanDialog, setShowLoanDialog] = useState(false);
   const [showAboutLendana, setShowAboutLendana] = useState(false);
+  const [showBankList, setShowBankList] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [loanFormData, setLoanFormData] = useState({
     name: "",
@@ -77,6 +78,34 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
       (prev) => (prev - 1 + testimonials.length) % testimonials.length,
     );
   };
+
+  const bumnBanks = [
+    {
+      name: "Bank Mandiri",
+      fullName: "PT Bank Mandiri (Persero) Tbk",
+      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      description: "Bank terbesar di Indonesia dengan jaringan cabang terluas",
+    },
+    {
+      name: "Bank BNI",
+      fullName: "PT Bank Negara Indonesia (Persero) Tbk",
+      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      description: "Bank tertua di Indonesia yang didirikan pada tahun 1946",
+    },
+    {
+      name: "Bank BRI",
+      fullName: "PT Bank Rakyat Indonesia (Persero) Tbk",
+      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      description:
+        "Bank dengan fokus utama pada sektor mikro, kecil, dan menengah",
+    },
+    {
+      name: "Bank BTN",
+      fullName: "PT Bank Tabungan Negara (Persero) Tbk",
+      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      description: "Bank yang mengkhususkan diri dalam pembiayaan perumahan",
+    },
+  ];
 
   const bankProducts = {
     "KUR Perumahan PMI": [
@@ -465,14 +494,20 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card
+                className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105"
+                onClick={() => setShowBankList(true)}
+              >
                 <CardContent className="p-8 text-center">
                   <div className="text-6xl mb-6">🏦</div>
                   <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
                     Bank Terpercaya
                   </h3>
-                  <p className="text-gray-700 text-lg leading-relaxed">
+                  <p className="text-gray-700 text-lg leading-relaxed mb-4">
                     Disalurkan melalui bank-bank BUMN terpercaya
+                  </p>
+                  <p className="text-sm text-[#5680E9] font-medium">
+                    Klik untuk melihat daftar bank →
                   </p>
                 </CardContent>
               </Card>
@@ -976,6 +1011,67 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   yang mudah dan suku bunga rendah.
                 </p>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank List Dialog */}
+      <Dialog open={showBankList} onOpenChange={setShowBankList}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+              Bank BUMN Mitra Lendana
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <p className="text-gray-600 mb-6 text-center">
+              Lendana bekerja sama dengan bank-bank BUMN terpercaya untuk
+              menyalurkan KUR kepada masyarakat Indonesia
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {bumnBanks.map((bank, index) => (
+                <Card
+                  key={index}
+                  className="hover:shadow-lg transition-shadow duration-300"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <img
+                          src={bank.logo}
+                          alt={`${bank.name} logo`}
+                          className="w-16 h-16 object-contain rounded-lg"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-[#5680E9] mb-1">
+                          {bank.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {bank.fullName}
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          {bank.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-[#5680E9] mb-2">
+                Mengapa Memilih Bank BUMN?
+              </h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Terjamin keamanan dan kredibilitasnya</li>
+                <li>
+                  • Memiliki jaringan cabang yang luas di seluruh Indonesia
+                </li>
+                <li>• Berpengalaman dalam penyaluran KUR</li>
+                <li>• Didukung penuh oleh pemerintah Indonesia</li>
+              </ul>
             </div>
           </div>
         </DialogContent>
