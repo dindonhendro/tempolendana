@@ -48,7 +48,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
   const testimonials = [
     {
       quote: "KUR-PMI bantu saya berangkat ke Taiwan tanpa pinjam rentenir!",
-      name: "Siti Aminah",
+      name: "Ayu Aminah",
       location: "Purworejo, Jawa Tengah",
       role: "PMI Taiwan",
     },
