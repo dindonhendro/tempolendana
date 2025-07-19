@@ -370,7 +370,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                     🏘️
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                    KUR Rumah Subsidi PMI
+                    Rumah Subsidi PMI
                   </h3>
                   <p className="text-gray-700 text-sm leading-relaxed mb-4">
                     Program rumah bersubsidi khusus untuk PMI dengan bunga
