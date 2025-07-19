@@ -34,6 +34,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showLoanDialog, setShowLoanDialog] = useState(false);
+  const [showAboutLendana, setShowAboutLendana] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [loanFormData, setLoanFormData] = useState({
     name: "",
@@ -238,26 +239,40 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               penempatan & pengembangan usaha – bunga ringan 6%, plafon hingga
               Rp100 juta!
             </p>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              animate={{
-                scale: [1, 1.02, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-            >
-              <Button
-                onClick={onGetStarted}
-                size="lg"
-                className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{
+                  scale: [1, 1.02, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                }}
               >
-                Daftar Sekarang
-              </Button>
-            </motion.div>
+                <Button
+                  onClick={onGetStarted}
+                  size="lg"
+                  className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
+                >
+                  Daftar Sekarang
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  onClick={() => setShowAboutLendana(true)}
+                  size="lg"
+                  className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
+                >
+                  Tentang Lendana
+                </Button>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -651,30 +666,40 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
       {/* Footer */}
       <footer className="bg-gradient-to-r from-[#8860D0] to-[#5680E9] text-white py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">KUR-PMI</h3>
-              <p className="text-lg opacity-90 leading-relaxed">
-                Platform pembiayaan terpercaya untuk Pekerja Migran Indonesia.
-                Membantu mewujudkan impian bekerja di luar negeri dan
-                mengembangkan usaha di tanah air.
+              <h3 className="text-2xl font-bold mb-4">Lendana</h3>
+              <p className="text-lg opacity-90 leading-relaxed mb-4">
+                Lendana adalah Penyelenggara Agregasi Jasa Keuangan dan
+                terdaftar di Otoritas Jasa Keuangan (OJK)
               </p>
+              <div>
+                <h4 className="text-xl font-semibold mb-4">
+                  Hubungi Kami DI :
+                </h4>
+                <div className="space-y-1 opacity-90">
+                  <p className="font-semibold">
+                    PT Lendana Digitalindo Nusantara
+                  </p>
+                  <p className="font-semibold">ALAMAT KANTOR</p>
+                  <p>Sovereign 78 E1</p>
+                  <p>Jalan Raya Kemang Raya 78</p>
+                  <p>Jakarta Selatan 12730</p>
+                  <p className="font-semibold mt-2">Call Center :</p>
+                  <p>Email : admin@lendana.id</p>
+                  <p>Phone : 0813.8111.1135</p>
+                </div>
+              </div>
             </div>
             <div>
               <h4 className="text-xl font-semibold mb-4">Layanan</h4>
               <ul className="space-y-2 opacity-90">
                 <li>KUR Penempatan PMI</li>
-                <li>KUR Mikro PMI Purna</li>
+                <li>KUR Perumahan PMI</li>
+                <li>KUR Rumah Subsidi PMI</li>
+                <li>KUR Wirausaha PMI</li>
                 <li>Konsultasi Gratis</li>
                 <li>Pendampingan Aplikasi</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xl font-semibold mb-4">Kontak</h4>
-              <ul className="space-y-2 opacity-90">
-                <li>Email: info@kur-pmi.id</li>
-                <li>Telepon: 0813.8111.1135</li>
-                <li>WhatsApp: 0813.8111.1135</li>
               </ul>
             </div>
           </div>
@@ -715,7 +740,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 </button>
               </div>
               <div className="text-sm opacity-75">
-                © {new Date().getFullYear()} KUR-PMI. All rights reserved.
+                © {new Date().getFullYear()} Lendana. All rights reserved.
               </div>
             </div>
           </div>
@@ -873,6 +898,86 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* About Lendana Dialog */}
+      <Dialog open={showAboutLendana} onOpenChange={setShowAboutLendana}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+              Tentang Lendana
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-6">
+            <div>
+              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
+                Sebagai Platform Penyelenggara Agregasi Produk dan Layanan Jasa
+                Keuangan
+              </h3>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p>
+                  PT. Lendana Digitalindo Nusantara, merupakan perusahaan
+                  bergerak dibidang Financial Technology (Fintech) yang telah
+                  tercatat di Otoritas Jasa Keuangan (OJK) nomor
+                  S-27/3/MS.72/2019. Melalui Peraturan Otoritas Jasa Keuangan
+                  (OJK) No. 03 Tahun 2024 tentang Penyelenggara Inovasi Keuangan
+                  Sektor Keuangan, Platform Lendana sebagai Penyelenggara
+                  Agregasi Produk dan Layanan Jasa Keuangan.
+                </p>
+                <p>
+                  LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
+                  pembiayaan ke sector produktif diantarnya untuk calon Pekerja
+                  Migran Indonesia, Petani dan Nelayan, UMKM secara digital
+                  mudah, cepat dan terpercaya.
+                </p>
+                <p>
+                  Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
+                  Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
+                  yang mudah dan suku bunga rendah.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
+                Registrasi OJK
+              </h3>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p>
+                  PT. Lendana Digitalindo Nusantara merupakan perusahaan
+                  bergerak dibidang Financial Technology (Fintech) yang telah
+                  tercatat di Otoritas Jasa Keuangan (OJK) nomor
+                  S-27/3/MS.72/2019.
+                </p>
+                <p>
+                  Melalui Peraturan Otoritas Jasa Keuangan (OJK) No. 03 Tahun
+                  2024 tentang Penyelenggara Inovasi Keuangan Sektor Keuangan,
+                  Platform Lendana sebagai Penyelenggara Agregasi Produk dan
+                  Layanan Jasa Keuangan.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
+                Misi Kami
+              </h3>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p>
+                  LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
+                  pembiayaan ke sektor produktif diantaranya untuk calon Pekerja
+                  Migran Indonesia, Petani dan Nelayan, UMKM secara digital
+                  mudah, cepat dan terpercaya.
+                </p>
+                <p>
+                  Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
+                  Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
+                  yang mudah dan suku bunga rendah.
+                </p>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
