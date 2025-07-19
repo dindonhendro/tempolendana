@@ -138,7 +138,7 @@ export default function LoanApplicationForm({
           submission_type: editData.submission_type || "PMI",
         }
       : {
-          full_name: "John Doe",
+          full_name: "",
           gender: "Male",
           age: 25,
           birth_place: "Jakarta",
