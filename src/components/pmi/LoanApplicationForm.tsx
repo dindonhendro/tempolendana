@@ -1339,7 +1339,7 @@ export default function LoanApplicationForm({
                     <SelectItem value="Hong Kong">Hong Kong</SelectItem>
                     <SelectItem value="Taiwan">Taiwan</SelectItem>
                     <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
-                    <SelectItem value="UAE">United Arab Emirates</SelectItem>
+                    <SelectItem value="Japan">Japan</SelectItem>
                     <SelectItem value="Kuwait">Kuwait</SelectItem>
                     <SelectItem value="Qatar">Qatar</SelectItem>
                     <SelectItem value="Oman">Oman</SelectItem>
