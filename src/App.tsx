@@ -3,6 +3,7 @@ import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
 import LandingPage from "./components/LandingPage";
 import AuthForm from "./components/auth/AuthForm";
+import Welcome from "./components/Welcome";
 import UserDashboard from "./components/pmi/UserDashboard";
 import AgentDashboard from "./components/pmi/AgentDashboard";
 import ValidatorDashboard from "./components/pmi/ValidatorDashboard";
@@ -3043,6 +3044,7 @@ function App() {
           }
         />
         <Route path="/auth" element={<AuthForm onAuthSuccess={checkUser} />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
