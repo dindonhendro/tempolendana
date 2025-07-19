@@ -235,9 +235,9 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               Pekerja Migran Indonesia
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed">
-              KUR-PMI membantu calon PMI dan purna PMI dengan pembiayaan
-              penempatan & pengembangan usaha – bunga ringan 6%, plafon hingga
-              Rp100 juta!
+              KUR-PMI membantu calon PMI , PMI di LN dan purna PMI dengan
+              pembiayaan penempatan , subsidi perumahan , KUR Renovasi Rumah &
+              pengembangan usaha – bunga ringan 6%, plafon hingga Rp100 juta!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <motion.div
