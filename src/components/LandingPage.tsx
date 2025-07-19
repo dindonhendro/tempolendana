@@ -182,11 +182,11 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
         maxAmount: "Rp 25 juta",
       },
     ],
-    "Kredit Peternak Sapi Perah": [
+    "KUR Peternak Sapi Perah": [
       {
         bank: "Bank BPR",
-        product: "Kredit Peternakan BPR - Bunga 12% p.a",
-        maxAmount: "Rp 275 juta",
+        product: "KUR Peternakan BPR - Bunga 6% p.a",
+        maxAmount: "Rp 75 juta",
       },
     ],
   };
