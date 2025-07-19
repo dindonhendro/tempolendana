@@ -288,7 +288,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-              Produk KUR-PMI
+              Produk Lendana
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Pilih produk yang sesuai dengan kebutuhan Anda
@@ -671,7 +671,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               <h3 className="text-2xl font-bold mb-4">Lendana</h3>
               <p className="text-lg opacity-90 leading-relaxed mb-4">
                 Lendana adalah Penyelenggara Agregasi Jasa Keuangan dan
-                terdaftar di Otoritas Jasa Keuangan (OJK)
+                terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK)
               </p>
               <div>
                 <h4 className="text-xl font-semibold mb-4">
@@ -927,7 +927,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 </p>
                 <p>
                   LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
-                  pembiayaan ke sector produktif diantarnya untuk calon Pekerja
+                  pembiayaan ke sektor produktif diantarnya untuk calon Pekerja
                   Migran Indonesia, Petani dan Nelayan, UMKM secara digital
                   mudah, cepat dan terpercaya.
                 </p>
