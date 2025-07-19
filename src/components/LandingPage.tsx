@@ -83,7 +83,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     {
       name: "Bank Mandiri",
       fullName: "PT Bank Mandiri (Persero) Tbk",
-      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      logo: "/images/Bank_Mandiri_logo_2016.svg",
       description: "Bank terbesar di Indonesia dengan jaringan cabang terluas",
     },
     {
