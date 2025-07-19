@@ -44,6 +44,14 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     amount: "",
     bank: "",
     product: "",
+    // Dairy farmer specific fields
+    cowCount: "",
+    farmLocation: "",
+    loanPurpose: "",
+    dailyMilkYield: "",
+    cooperative: "",
+    // KTP upload
+    ktpFile: null as File | null,
   });
 
   const testimonials = [
@@ -174,6 +182,13 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
         maxAmount: "Rp 25 juta",
       },
     ],
+    "KUR Peternak Sapi Perah": [
+      {
+        bank: "Bank BPR",
+        product: "KUR Peternakan BPR - Bunga 6% p.a",
+        maxAmount: "Rp 75 juta",
+      },
+    ],
   };
 
   const handleLoanApplication = (productType: string) => {
@@ -195,6 +210,12 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
       amount: "",
       bank: "",
       product: "",
+      cowCount: "",
+      farmLocation: "",
+      loanPurpose: "",
+      dailyMilkYield: "",
+      cooperative: "",
+      ktpFile: null,
     });
   };
 
@@ -324,7 +345,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -439,6 +460,37 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
                     onClick={() => handleLoanApplication("KUR Wirausaha PMI")}
+                  >
+                    Pelajari lebih lanjut
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
+                <CardContent className="p-6 text-center">
+                  <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    🐄
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    KUR Peternak Sapi Perah
+                  </h3>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    Modal usaha untuk peternak sapi perah dengan dukungan
+                    koperasi
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                    onClick={() =>
+                      handleLoanApplication("KUR Peternak Sapi Perah")
+                    }
                   >
                     Pelajari lebih lanjut
                   </Button>
@@ -733,6 +785,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 <li>KUR Perumahan PMI</li>
                 <li>KUR Rumah Subsidi PMI</li>
                 <li>KUR Wirausaha PMI</li>
+                <li>KUR Peternak Sapi Perah</li>
                 <li>Konsultasi Gratis</li>
                 <li>Pendampingan Aplikasi</li>
               </ul>
@@ -848,6 +901,133 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               />
             </div>
 
+            {/* KTP Upload Field */}
+            <div className="space-y-2">
+              <Label htmlFor="ktp">Upload KTP *</Label>
+              <Input
+                id="ktp"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setLoanFormData({ ...loanFormData, ktpFile: file });
+                }}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#5680E9] file:text-white hover:file:bg-[#8860D0]"
+              />
+              <p className="text-xs text-gray-500">
+                Format yang diterima: JPG, PNG, PDF (Maksimal 5MB)
+              </p>
+            </div>
+
+            {/* Dairy Farmer Specific Fields */}
+            {selectedProduct === "KUR Peternak Sapi Perah" && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cowCount">Jumlah Sapi *</Label>
+                    <Input
+                      id="cowCount"
+                      type="number"
+                      required
+                      value={loanFormData.cowCount}
+                      onChange={(e) =>
+                        setLoanFormData({
+                          ...loanFormData,
+                          cowCount: e.target.value,
+                        })
+                      }
+                      placeholder="10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="farmLocation">Lokasi Peternakan *</Label>
+                    <Input
+                      id="farmLocation"
+                      type="text"
+                      required
+                      value={loanFormData.farmLocation}
+                      onChange={(e) =>
+                        setLoanFormData({
+                          ...loanFormData,
+                          farmLocation: e.target.value,
+                        })
+                      }
+                      placeholder="Kota/Kabupaten"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="loanPurpose">Tujuan Peminjaman *</Label>
+                  <Select
+                    value={loanFormData.loanPurpose}
+                    onValueChange={(value) =>
+                      setLoanFormData({ ...loanFormData, loanPurpose: value })
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tujuan peminjaman" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pembelian-sapi">
+                        Pembelian Sapi
+                      </SelectItem>
+                      <SelectItem value="perbaikan-kandang">
+                        Perbaikan Kandang
+                      </SelectItem>
+                      <SelectItem value="pembelian-pakan">
+                        Pembelian Pakan
+                      </SelectItem>
+                      <SelectItem value="peralatan-perah">
+                        Peralatan Perah
+                      </SelectItem>
+                      <SelectItem value="modal-kerja">Modal Kerja</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dailyMilkYield">
+                      Rata-rata Hasil Susu/Hari (Liter) *
+                    </Label>
+                    <Input
+                      id="dailyMilkYield"
+                      type="number"
+                      required
+                      value={loanFormData.dailyMilkYield}
+                      onChange={(e) =>
+                        setLoanFormData({
+                          ...loanFormData,
+                          dailyMilkYield: e.target.value,
+                        })
+                      }
+                      placeholder="50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cooperative">
+                      Koperasi Pengelola Data *
+                    </Label>
+                    <Input
+                      id="cooperative"
+                      type="text"
+                      required
+                      value={loanFormData.cooperative}
+                      onChange={(e) =>
+                        setLoanFormData({
+                          ...loanFormData,
+                          cooperative: e.target.value,
+                        })
+                      }
+                      placeholder="Nama Koperasi"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <Label>Pilih Bank & Produk *</Label>
               <Select
@@ -911,6 +1091,16 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                     <li>• Plafon: Hingga Rp 50 juta</li>
                     <li>• Jangka waktu: Hingga 5 tahun</li>
                     <li>• Untuk modal usaha dan investasi</li>
+                  </>
+                )}
+                {selectedProduct === "KUR Peternak Sapi Perah" && (
+                  <>
+                    <li>• Suku bunga: 6% efektif per tahun</li>
+                    <li>• Plafon: Hingga Rp 75 juta</li>
+                    <li>• Jangka waktu: Hingga 5 tahun</li>
+                    <li>• Untuk pengembangan usaha peternakan sapi perah</li>
+                    <li>• Didukung koperasi sebagai pusat pengelolaan data</li>
+                    <li>• Disalurkan melalui Bank BPR</li>
                   </>
                 )}
               </ul>
