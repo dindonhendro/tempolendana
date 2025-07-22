@@ -55,46 +55,94 @@ import {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
-    // Check initial auth state
-    checkUser();
+    let isMounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Set a maximum timeout for initialization
+        const timeoutId = setTimeout(() => {
+          if (isMounted && !authInitialized) {
+            console.warn(
+              "Auth initialization timeout, proceeding without user",
+            );
+            setUser(null);
+            setLoading(false);
+            setAuthInitialized(true);
+          }
+        }, 3000);
+
+        const currentUser = await getCurrentUser();
+
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          setUser(currentUser);
+          setLoading(false);
+          setAuthInitialized(true);
+
+          if (currentUser) {
+            console.log(
+              "User authenticated:",
+              currentUser.email,
+              currentUser.role,
+            );
+          } else {
+            console.log("No authenticated user found");
+          }
+        }
+      } catch (error: any) {
+        if (isMounted) {
+          console.error("Error checking user:", error);
+          setUser(null);
+          setLoading(false);
+          setAuthInitialized(true);
+        }
+      }
+    };
+
+    // Initialize auth
+    initializeAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
       console.log("Auth state change:", event, session?.user?.id);
 
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        await checkUser();
+        try {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        } catch (error) {
+          console.error("Error getting user after auth change:", error);
+          setUser(null);
+        }
       } else if (event === "SIGNED_OUT") {
         console.log("User signed out, clearing state");
         setUser(null);
-      } else if (event === "USER_UPDATED") {
-        // Handle user updates without full re-authentication
-        await checkUser();
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUser = async () => {
     try {
       const currentUser = await getCurrentUser();
+      setUser(currentUser);
       if (currentUser) {
         console.log("User authenticated:", currentUser.email, currentUser.role);
-        setUser(currentUser as User | null);
-      } else {
-        console.log("No authenticated user found");
-        setUser(null);
       }
     } catch (error: any) {
       console.error("Error checking user:", error);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -3000,10 +3048,13 @@ function App() {
     }
   };
 
-  if (loading) {
+  if (loading && !authInitialized) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <p>Loading...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5680E9] mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
       </div>
     );
   }

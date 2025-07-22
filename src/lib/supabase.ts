@@ -114,36 +114,22 @@ export const signOut = async () => {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    // Get current auth user with timeout
-    const authPromise = supabase.auth.getUser();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Auth timeout")), 5000),
-    );
-
+    // Get current auth user
     const {
       data: { user },
       error: authError,
-    } = (await Promise.race([authPromise, timeoutPromise])) as any;
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return null;
     }
 
-    // Get user profile with timeout
-    const profilePromise = supabase
+    // Get user profile
+    const { data: profile, error } = await supabase
       .from("users")
       .select("*")
       .eq("id", user.id)
       .single();
-
-    const profileTimeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Profile timeout")), 3000),
-    );
-
-    const { data: profile, error } = (await Promise.race([
-      profilePromise,
-      profileTimeoutPromise,
-    ])) as any;
 
     if (error) {
       console.error("Error fetching user profile:", error);
