@@ -182,7 +182,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
         maxAmount: "Rp 25 juta",
       },
     ],
-    "KUR Peternak Sapi Perah": [
+    "Peternak Sapi PMI": [
       {
         bank: "Bank BPR",
         product: "KUR Peternakan BPR - Bunga 6% p.a",
@@ -479,7 +479,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                     🐄
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                    KUR Peternak Sapi Perah
+                    Peternak Sapi PMI
                   </h3>
                   <p className="text-gray-700 text-sm leading-relaxed mb-4">
                     Modal usaha untuk peternak sapi perah dengan dukungan
@@ -488,9 +488,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   <Button
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                    onClick={() =>
-                      handleLoanApplication("KUR Peternak Sapi Perah")
-                    }
+                    onClick={() => handleLoanApplication("Peternak Sapi PMI")}
                   >
                     Pelajari lebih lanjut
                   </Button>
@@ -785,7 +783,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 <li>KUR Perumahan PMI</li>
                 <li>KUR Rumah Subsidi PMI</li>
                 <li>KUR Wirausaha PMI</li>
-                <li>KUR Peternak Sapi Perah</li>
+                <li>Peternak Sapi PMI</li>
                 <li>Konsultasi Gratis</li>
                 <li>Pendampingan Aplikasi</li>
               </ul>
@@ -920,7 +918,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             </div>
 
             {/* Dairy Farmer Specific Fields */}
-            {selectedProduct === "KUR Peternak Sapi Perah" && (
+            {selectedProduct === "Peternak Sapi PMI" && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -1093,7 +1091,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                     <li>• Untuk modal usaha dan investasi</li>
                   </>
                 )}
-                {selectedProduct === "KUR Peternak Sapi Perah" && (
+                {selectedProduct === "Peternak Sapi PMI" && (
                   <>
                     <li>• Suku bunga: 6% efektif per tahun</li>
                     <li>• Plafon: Hingga Rp 75 juta</li>
