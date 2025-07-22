@@ -130,6 +130,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
 
     try {
       await signIn(signInEmail, signInPassword);
+      setSuccess("Sign in successful! Redirecting...");
 
       // Small delay to allow auth state to update
       setTimeout(() => {
@@ -139,7 +140,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
           // Fallback redirect if no callback provided
           window.location.href = "/dashboard";
         }
-      }, 100);
+      }, 500);
     } catch (error: any) {
       setError(error.message || "Failed to sign in");
       setIsLoading(false);

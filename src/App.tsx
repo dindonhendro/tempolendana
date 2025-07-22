@@ -56,31 +56,36 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeAuth = async () => {
       try {
-        // Set a maximum timeout for initialization
-        const timeoutId = setTimeout(() => {
+        console.log("Starting auth initialization...");
+
+        // Set a maximum timeout for the entire initialization
+        const initTimeout = setTimeout(() => {
           if (isMounted && !authInitialized) {
             console.warn(
               "Auth initialization timeout, proceeding without user",
             );
+            setAuthError("Authentication timeout");
             setUser(null);
             setLoading(false);
             setAuthInitialized(true);
           }
-        }, 3000);
+        }, 8000);
 
         const currentUser = await getCurrentUser();
 
         if (isMounted) {
-          clearTimeout(timeoutId);
+          clearTimeout(initTimeout);
           setUser(currentUser);
           setLoading(false);
           setAuthInitialized(true);
+          setAuthError(null);
 
           if (currentUser) {
             console.log(
@@ -95,6 +100,7 @@ function App() {
       } catch (error: any) {
         if (isMounted) {
           console.error("Error checking user:", error);
+          setAuthError(error.message || "Authentication failed");
           setUser(null);
           setLoading(false);
           setAuthInitialized(true);
@@ -3050,10 +3056,16 @@ function App() {
 
   if (loading && !authInitialized) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5680E9] mx-auto mb-4"></div>
-          <p>Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#5680E9] to-[#8860D0] flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
+          <h2 className="text-xl font-semibold mb-2">Lendana PMI</h2>
+          <p className="text-sm opacity-90">Initializing application...</p>
+          {authError && (
+            <div className="mt-4 p-3 bg-red-500/20 border border-red-300 rounded text-red-100 text-sm">
+              {authError}
+            </div>
+          )}
         </div>
       </div>
     );
