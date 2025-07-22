@@ -495,16 +495,15 @@ export default function LoanApplicationForm({
       paymentDate.setMonth(startDate.getMonth() + month - 1);
 
       if (month <= gracePeriod) {
-        // Grace period - only interest payment
-        const interestPayment = remainingBalance * monthlyRate;
+        // Grace period - no payment (completely free)
         installments.push({
           month,
           date: paymentDate.toLocaleDateString("id-ID"),
           principal: 0,
-          interest: interestPayment,
-          totalPayment: interestPayment,
+          interest: 0,
+          totalPayment: 0,
           remainingBalance,
-          type: "Grace Period (Bunga Saja)",
+          type: "Grace Period (Gratis)",
         });
       } else {
         // Regular payment period
@@ -764,6 +763,7 @@ export default function LoanApplicationForm({
                     placeholder="Enter your full name"
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="gender">Gender *</Label>
                   <Select
@@ -1288,13 +1288,14 @@ export default function LoanApplicationForm({
 
             <TabsContent value="agent" className="space-y-4 mt-6">
               <div>
-                <Label htmlFor="assigned_agent">Select Agent (P3MI)</Label>
+                <Label htmlFor="assigned_agent">Select Agent (P3MI) *</Label>
                 <Select
                   value={formData.assigned_agent_id || ""}
                   onValueChange={(value) =>
                     updateFormData("assigned_agent_id", value)
                   }
                   disabled={!!preSelectedAgentId}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue
@@ -1513,6 +1514,28 @@ export default function LoanApplicationForm({
             <TabsContent value="work" className="space-y-4 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="nama_pemberi_kerja">Nama Pemberi Kerja</Label>
+                  <Input
+                    id="nama_pemberi_kerja"
+                    value={formData.nama_pemberi_kerja || ""}
+                    onChange={(e) =>
+                      updateFormData("nama_pemberi_kerja", e.target.value)
+                    }
+                    placeholder="Enter employer name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telp_pemberi_kerja">Telp Pemberi Kerja</Label>
+                  <Input
+                    id="telp_pemberi_kerja"
+                    value={formData.telp_pemberi_kerja || ""}
+                    onChange={(e) =>
+                      updateFormData("telp_pemberi_kerja", e.target.value)
+                    }
+                    placeholder="Enter employer phone"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="institution">Institution</Label>
                   <Input
                     id="institution"
@@ -1552,28 +1575,6 @@ export default function LoanApplicationForm({
                       updateFormData("work_location", e.target.value)
                     }
                     placeholder="Enter work location"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="nama_pemberi_kerja">Nama Pemberi Kerja</Label>
-                  <Input
-                    id="nama_pemberi_kerja"
-                    value={formData.nama_pemberi_kerja || ""}
-                    onChange={(e) =>
-                      updateFormData("nama_pemberi_kerja", e.target.value)
-                    }
-                    placeholder="Enter employer name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="telp_pemberi_kerja">Telp Pemberi Kerja</Label>
-                  <Input
-                    id="telp_pemberi_kerja"
-                    value={formData.telp_pemberi_kerja || ""}
-                    onChange={(e) =>
-                      updateFormData("telp_pemberi_kerja", e.target.value)
-                    }
-                    placeholder="Enter employer phone"
                   />
                 </div>
                 <div>
