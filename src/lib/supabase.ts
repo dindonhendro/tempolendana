@@ -114,63 +114,39 @@ export const signOut = async () => {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
+    // Get current auth user with timeout
+    const authPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Auth timeout")), 5000),
+    );
+
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = (await Promise.race([authPromise, timeoutPromise])) as any;
 
-    if (authError) {
-      console.error("Auth error:", authError);
-      // Don't return null immediately for certain recoverable errors
-      if (
-        authError.message?.includes("Invalid JWT") ||
-        authError.message?.includes("JWT expired")
-      ) {
-        console.log("JWT expired, attempting to refresh session...");
-        const { data: refreshData, error: refreshError } =
-          await supabase.auth.refreshSession();
-        if (refreshError) {
-          console.error("Session refresh failed:", refreshError);
-          return null;
-        }
-        if (refreshData.user) {
-          // Retry with refreshed session
-          const { data: profile, error: profileError } = await supabase
-            .from("users")
-            .select("*")
-            .eq("id", refreshData.user.id)
-            .single();
-
-          if (profileError) {
-            console.error(
-              "Error fetching user profile after refresh:",
-              profileError,
-            );
-            return null;
-          }
-          return profile;
-        }
-      }
+    if (authError || !user) {
       return null;
     }
 
-    if (!user) return null;
-
-    const { data: profile, error } = await supabase
+    // Get user profile with timeout
+    const profilePromise = supabase
       .from("users")
       .select("*")
       .eq("id", user.id)
       .single();
 
+    const profileTimeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Profile timeout")), 3000),
+    );
+
+    const { data: profile, error } = (await Promise.race([
+      profilePromise,
+      profileTimeoutPromise,
+    ])) as any;
+
     if (error) {
       console.error("Error fetching user profile:", error);
-      // Check if it's a network error or temporary issue
-      if (
-        error.code === "PGRST116" ||
-        error.message?.includes("No rows returned")
-      ) {
-        console.error("User profile not found in database for user:", user.id);
-      }
       return null;
     }
 

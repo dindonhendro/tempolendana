@@ -48,6 +48,7 @@ export default function LoanApplicationForm({
   const [selectedBankId, setSelectedBankId] = useState<string>("");
   const [selectedBankProductId, setSelectedBankProductId] =
     useState<string>("");
+  const [selectedProductType, setSelectedProductType] = useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
@@ -1688,6 +1689,25 @@ export default function LoanApplicationForm({
                     Period before loan repayment starts
                   </p>
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="product_type">Product Type</Label>
+                <Select
+                  value={selectedProductType}
+                  onValueChange={setSelectedProductType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose product type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pmi placement">PMI Placement</SelectItem>
+                    <SelectItem value="kur rumah">KUR Rumah</SelectItem>
+                    <SelectItem value="subsidi rumah">Subsidi Rumah</SelectItem>
+                    <SelectItem value="wirausaha">Wirausaha</SelectItem>
+                    <SelectItem value="peternak">Peternak</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

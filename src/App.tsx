@@ -82,15 +82,7 @@ function App() {
 
   const checkUser = async () => {
     try {
-      // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 15000),
-      );
-
-      const userPromise = getCurrentUser();
-
-      const currentUser = await Promise.race([userPromise, timeoutPromise]);
-
+      const currentUser = await getCurrentUser();
       if (currentUser) {
         console.log("User authenticated:", currentUser.email, currentUser.role);
         setUser(currentUser as User | null);
@@ -100,19 +92,7 @@ function App() {
       }
     } catch (error: any) {
       console.error("Error checking user:", error);
-
-      // Don't immediately sign out on network errors
-      if (error?.message === "Timeout" || error?.code === "NETWORK_ERROR") {
-        console.log("Network error during user check, retrying...");
-        // Keep current user state and try again after a delay
-        setTimeout(() => {
-          if (!user) {
-            checkUser();
-          }
-        }, 3000);
-      } else {
-        setUser(null);
-      }
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -121,20 +101,16 @@ function App() {
   const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
+    setSigningOut(true);
     try {
-      setSigningOut(true);
       await signOut();
-      setUser(null);
-      // Clear any cached state without forcing a full page reload
-      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out:", error);
-      // Force sign out even if there's an error
-      setUser(null);
-      window.location.href = "/";
-    } finally {
-      setSigningOut(false);
     }
+    // Always clear user state and redirect
+    setUser(null);
+    setSigningOut(false);
+    window.location.href = "/";
   };
 
   const [activeAdminSection, setActiveAdminSection] = useState<string | null>(
