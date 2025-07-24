@@ -139,32 +139,32 @@ export default function LoanApplicationForm({
           submission_type: editData.submission_type || "PMI",
         }
       : {
-          full_name: "Jhon Doe",
-          gender: "Male",
-          age: 25,
-          birth_place: "Jakarta",
-          birth_date: "1999-01-01",
-          phone_number: "081234567890",
-          email: "john.doe@example.com",
-          nik_ktp: "1234567890123456",
-          last_education: "SMA",
-          nomor_sisko: "PMI123456789",
-          address_ktp: "Jl. Contoh No. 123, Jakarta",
-          address_domicile: "Jl. Contoh No. 123, Jakarta",
-          nama_ibu_kandung: "Jane Doe",
-          institution: "PT. Contoh Perusahaan",
-          major: "General Worker",
-          work_experience: "2 years",
-          work_location: "Singapore",
-          nama_pemberi_kerja: "ABC Company",
-          telp_pemberi_kerja: "65-12345678",
-          tanggal_keberangkatan: "2024-06-01",
-          alamat_pemberi_kerja: "123 Main Street, Singapore",
-          loan_amount: 50000000,
-          tenor_months: 12,
+          full_name: "",
+          gender: "",
+          age: null,
+          birth_place: "",
+          birth_date: "",
+          phone_number: "",
+          email: "",
+          nik_ktp: "",
+          last_education: "",
+          nomor_sisko: "",
+          address_ktp: "",
+          address_domicile: "",
+          nama_ibu_kandung: "",
+          institution: "",
+          major: "",
+          work_experience: "",
+          work_location: "",
+          nama_pemberi_kerja: "",
+          telp_pemberi_kerja: "",
+          tanggal_keberangkatan: "",
+          alamat_pemberi_kerja: "",
+          loan_amount: null,
+          tenor_months: null,
           bunga_bank: 6,
-          grace_period: 3,
-          negara_penempatan: "Singapore",
+          grace_period: null,
+          negara_penempatan: "",
           assigned_agent_id: preSelectedAgentId || "",
           status: "Submitted",
           submission_type: "PMI",
@@ -220,12 +220,12 @@ export default function LoanApplicationForm({
 
   useEffect(() => {
     if (selectedBankId) {
-      loadBankProducts(selectedBankId);
+      loadBankProducts(selectedBankId, formData.submission_type || undefined);
     } else {
       setBankProducts([]);
       setSelectedBankProductId("");
     }
-  }, [selectedBankId]);
+  }, [selectedBankId, formData.submission_type]);
 
   const loadAgentCompanies = async () => {
     try {
@@ -250,13 +250,30 @@ export default function LoanApplicationForm({
     }
   };
 
-  const loadBankProducts = async (bankId: string) => {
+  const loadBankProducts = async (bankId: string, submissionType?: string) => {
     try {
-      const { data } = await supabase
+      let query = supabase
         .from("bank_products")
         .select("*")
-        .eq("bank_id", bankId)
-        .order("name");
+        .eq("bank_id", bankId);
+
+      // Filter by submission type if provided
+      if (submissionType) {
+        const typeMapping: Record<string, string> = {
+          PMI: "pmi placement",
+          KUR_PERUMAHAN_PMI: "kur rumah",
+          RUMAH_SUBSIDI_PMI: "subsidi rumah",
+          KUR_WIRAUSAHA_PMI: "wirausaha",
+          PETERNAK_SAPI_PMI: "peternak",
+        };
+
+        const productType = typeMapping[submissionType];
+        if (productType) {
+          query = query.eq("type", productType);
+        }
+      }
+
+      const { data } = await query.order("name");
       setBankProducts(data || []);
     } catch (error) {
       console.error("Error loading bank products:", error);
@@ -319,14 +336,27 @@ export default function LoanApplicationForm({
     setIsSubmitting(true);
 
     try {
+      console.log("Starting form submission...");
+
       // Get current user
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("Error getting user:", userError);
+        alert("Authentication error. Please sign in again.");
+        return;
+      }
+
       if (!user) {
+        console.error("No authenticated user found");
         alert("Please sign in to submit application.");
         return;
       }
+
+      console.log("User authenticated:", user.id);
 
       let ktpUrl = null;
       let selfieUrl = null;
@@ -405,44 +435,64 @@ export default function LoanApplicationForm({
         updated_at: new Date().toISOString(),
       };
 
+      console.log("Final data to be submitted:", {
+        ...finalData,
+        // Don't log sensitive URLs, just indicate if they exist
+        ktp_photo_url: ktpUrl ? "[FILE_UPLOADED]" : null,
+        self_photo_url: selfieUrl ? "[FILE_UPLOADED]" : null,
+      });
+
       // Submit to database (insert or update)
       if (editData) {
+        console.log("Updating existing application:", editData.id);
         // Update existing application
-        const { error } = await supabase
+        const { data: updateResult, error } = await supabase
           .from("loan_applications")
           .update({
             ...finalData,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", editData.id);
+          .eq("id", editData.id)
+          .select();
 
         if (error) {
-          console.error("Database error:", error);
+          console.error("Database update error:", error);
           alert(`Failed to update application: ${error.message}`);
           return;
         }
 
+        console.log("Application updated successfully:", updateResult);
         alert("Application updated successfully!");
       } else {
+        console.log("Inserting new application...");
         // Insert new application
-        const { error } = await supabase
+        const { data: insertResult, error } = await supabase
           .from("loan_applications")
-          .insert([finalData]);
+          .insert([finalData])
+          .select();
 
         if (error) {
-          console.error("Database error:", error);
+          console.error("Database insert error:", error);
+          console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+          });
           alert(`Failed to submit application: ${error.message}`);
           return;
         }
 
+        console.log("Application inserted successfully:", insertResult);
         alert("Application submitted successfully!");
       }
 
       if (onSubmit) onSubmit(finalData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submission error:", error);
+      console.error("Error stack:", error.stack);
       alert(
-        "An error occurred while submitting your application. Please try again.",
+        `An error occurred while submitting your application: ${error.message || "Unknown error"}. Please try again.`,
       );
     } finally {
       setIsSubmitting(false);
@@ -1223,8 +1273,12 @@ export default function LoanApplicationForm({
                         {formData.grace_period || 0} months
                       </p>
                       <p>
+                        <span className="font-medium">Application Type:</span>{" "}
+                        {formData.submission_type || "-"}
+                      </p>
+                      <p>
                         <span className="font-medium">Work Location:</span>{" "}
-                        {formData.work_location}
+                        {formData.work_location || "-"}
                       </p>
                       <p>
                         <span className="font-medium">
@@ -1234,7 +1288,7 @@ export default function LoanApplicationForm({
                       </p>
                       <p>
                         <span className="font-medium">Departure Date:</span>{" "}
-                        {formData.tanggal_keberangkatan}
+                        {formData.tanggal_keberangkatan || "-"}
                       </p>
                     </div>
                   </div>
@@ -1608,6 +1662,47 @@ export default function LoanApplicationForm({
             </TabsContent>
 
             <TabsContent value="loan" className="space-y-4 mt-6">
+              <div>
+                <Label htmlFor="submission_type">Jenis Aplikasi KUR *</Label>
+                <Select
+                  value={formData.submission_type || ""}
+                  onValueChange={(value) => {
+                    console.log("Submission type changed to:", value);
+                    updateFormData("submission_type", value);
+                    // Reset bank selection when submission type changes
+                    setSelectedBankId("");
+                    setSelectedBankProductId("");
+                    setBankProducts([]);
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih jenis aplikasi KUR" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PMI">
+                      KUR PMI (Pekerja Migran Indonesia)
+                    </SelectItem>
+                    <SelectItem value="KUR_PERUMAHAN_PMI">
+                      KUR Perumahan PMI
+                    </SelectItem>
+                    <SelectItem value="RUMAH_SUBSIDI_PMI">
+                      Rumah Subsidi PMI
+                    </SelectItem>
+                    <SelectItem value="KUR_WIRAUSAHA_PMI">
+                      KUR Wirausaha PMI
+                    </SelectItem>
+                    <SelectItem value="PETERNAK_SAPI_PMI">
+                      Peternak Sapi PMI
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Pilih jenis aplikasi terlebih dahulu untuk melihat produk bank
+                  yang sesuai
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="loan_amount">Loan Amount</Label>
@@ -1691,48 +1786,31 @@ export default function LoanApplicationForm({
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="product_type">Product Type</Label>
-                <Select
-                  value={selectedProductType}
-                  onValueChange={setSelectedProductType}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose product type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pmi placement">PMI Placement</SelectItem>
-                    <SelectItem value="kur rumah">KUR Rumah</SelectItem>
-                    <SelectItem value="subsidi rumah">Subsidi Rumah</SelectItem>
-                    <SelectItem value="wirausaha">Wirausaha</SelectItem>
-                    <SelectItem value="peternak">Peternak</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.submission_type && (
+                <div>
+                  <Label htmlFor="bank_selection">Select Bank</Label>
+                  <Select
+                    value={selectedBankId}
+                    onValueChange={(value) => {
+                      setSelectedBankId(value);
+                      setSelectedBankProductId(""); // Reset product selection when bank changes
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a bank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {banks.map((bank) => (
+                        <SelectItem key={bank.id} value={bank.id}>
+                          {bank.name} ({bank.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              <div>
-                <Label htmlFor="bank_selection">Select Bank</Label>
-                <Select
-                  value={selectedBankId}
-                  onValueChange={(value) => {
-                    setSelectedBankId(value);
-                    setSelectedBankProductId(""); // Reset product selection when bank changes
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {banks.map((bank) => (
-                      <SelectItem key={bank.id} value={bank.id}>
-                        {bank.name} ({bank.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedBankId && (
+              {selectedBankId && formData.submission_type && (
                 <div>
                   <Label htmlFor="bank_product">Select Bank Product</Label>
                   <Select
@@ -1745,7 +1823,8 @@ export default function LoanApplicationForm({
                     <SelectContent>
                       {bankProducts.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.name} ({product.interest_rate}% - Rp{" "}
+                          {product.name} ({product.type} -{" "}
+                          {product.interest_rate}% - Rp{" "}
                           {product.min_amount.toLocaleString()} - Rp{" "}
                           {product.max_amount.toLocaleString()})
                         </SelectItem>
@@ -1754,7 +1833,8 @@ export default function LoanApplicationForm({
                   </Select>
                   {bankProducts.length === 0 && (
                     <p className="text-sm text-gray-500 mt-1">
-                      No products available for this bank.
+                      Tidak ada produk {formData.submission_type} yang tersedia
+                      untuk bank ini.
                     </p>
                   )}
                 </div>
@@ -1775,7 +1855,12 @@ export default function LoanApplicationForm({
             {currentIndex === tabs.length - 1 ? (
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  !formData.submission_type ||
+                  !formData.full_name ||
+                  !formData.email
+                }
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >
                 {isSubmitting

@@ -114,6 +114,8 @@ export const signOut = async () => {
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
+    console.log("Getting current user...");
+
     // Get current auth user with timeout
     const authPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise((_, reject) =>
@@ -125,9 +127,17 @@ export const getCurrentUser = async (): Promise<User | null> => {
       error: authError,
     } = (await Promise.race([authPromise, timeoutPromise])) as any;
 
-    if (authError || !user) {
+    if (authError) {
+      console.error("Auth error:", authError);
       return null;
     }
+
+    if (!user) {
+      console.log("No authenticated user found");
+      return null;
+    }
+
+    console.log("Auth user found:", user.id);
 
     // Get user profile with timeout
     const profilePromise = supabase
@@ -150,6 +160,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       return null;
     }
 
+    console.log("User profile loaded:", profile?.email);
     return profile;
   } catch (error) {
     console.error("Error in getCurrentUser:", error);
@@ -252,14 +263,34 @@ export const getBankBranches = async (bankId: string) => {
   }
 };
 
-// Get bank products by bank ID
-export const getBankProducts = async (bankId: string) => {
+// Get bank products by bank ID and optionally filter by submission type
+export const getBankProducts = async (
+  bankId: string,
+  submissionType?: string,
+) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("bank_products")
       .select("*")
-      .eq("bank_id", bankId)
-      .order("name");
+      .eq("bank_id", bankId);
+
+    // Filter by submission type if provided
+    if (submissionType) {
+      const typeMapping: Record<string, string> = {
+        PMI: "pmi placement",
+        KUR_PERUMAHAN_PMI: "kur rumah",
+        RUMAH_SUBSIDI_PMI: "subsidi rumah",
+        KUR_WIRAUSAHA_PMI: "wirausaha",
+        PETERNAK_SAPI_PMI: "peternak",
+      };
+
+      const productType = typeMapping[submissionType];
+      if (productType) {
+        query = query.eq("type", productType);
+      }
+    }
+
+    const { data, error } = await query.order("name");
 
     if (error) {
       console.error("Error fetching bank products:", error);
@@ -319,19 +350,33 @@ export const uploadFileToStorage = async (
   if (!file) return { error: "No file selected" };
   if (file.size > 5242880) return { error: "File too large (max 5MB)" };
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "application/pdf",
+  ];
   if (!allowedTypes.includes(file.type)) {
-    return { error: "Only JPG and PNG files allowed" };
+    return { error: "Only JPG, PNG, and PDF files allowed" };
   }
 
   try {
+    console.log(
+      `Uploading file to ${folder}:`,
+      file.name,
+      file.type,
+      file.size,
+    );
+
     // Generate unique filename
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
+    console.log(`Upload path: ${filePath}`);
+
     // Direct upload - let Supabase handle bucket creation
-    const { error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
       .upload(filePath, file, {
         cacheControl: "3600",
@@ -339,14 +384,20 @@ export const uploadFileToStorage = async (
       });
 
     if (uploadError) {
+      console.error("Upload error:", uploadError);
       return { error: `Upload failed: ${uploadError.message}` };
     }
 
+    console.log("Upload successful:", uploadData);
+
     // Get public URL
     const { data } = supabase.storage.from("documents").getPublicUrl(filePath);
+    console.log("Public URL generated:", data.publicUrl);
+
     return { url: data.publicUrl };
-  } catch (error) {
-    return { error: "Upload failed. Please try again." };
+  } catch (error: any) {
+    console.error("File upload exception:", error);
+    return { error: `Upload failed: ${error.message || "Unknown error"}` };
   }
 };
 
@@ -542,6 +593,46 @@ export const parseCSVContent = (csvContent: string): any[] => {
   }
 
   return data;
+};
+
+// Test database connection and table structure
+export const testDatabaseConnection = async () => {
+  try {
+    console.log("Testing database connection...");
+
+    // Test basic connection
+    const { data: testData, error: testError } = await supabase
+      .from("loan_applications")
+      .select("id")
+      .limit(1);
+
+    if (testError) {
+      console.error("Database connection test failed:", testError);
+      return { success: false, error: testError.message };
+    }
+
+    console.log("Database connection successful");
+
+    // Test table structure
+    const { data: structureData, error: structureError } = await supabase
+      .from("loan_applications")
+      .select("*")
+      .limit(0);
+
+    if (structureError) {
+      console.error("Table structure test failed:", structureError);
+      return { success: false, error: structureError.message };
+    }
+
+    console.log("Table structure test successful");
+    return {
+      success: true,
+      message: "Database connection and table structure verified",
+    };
+  } catch (error: any) {
+    console.error("Database test exception:", error);
+    return { success: false, error: error.message };
+  }
 };
 
 // Delete user account and all related data

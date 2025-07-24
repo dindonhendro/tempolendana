@@ -29,6 +29,7 @@ import {
   getCurrentUserId,
   getCurrentUser,
   deleteUserAccount,
+  testDatabaseConnection,
 } from "@/lib/supabase";
 import { Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
@@ -53,6 +54,7 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
   );
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [testingDatabase, setTestingDatabase] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -169,6 +171,22 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
       alert(`Failed to delete account: ${error.message}`);
     } finally {
       setDeletingAccount(false);
+    }
+  };
+
+  const handleTestDatabase = async () => {
+    setTestingDatabase(true);
+    try {
+      const result = await testDatabaseConnection();
+      if (result.success) {
+        alert(`Database test successful: ${result.message}`);
+      } else {
+        alert(`Database test failed: ${result.error}`);
+      }
+    } catch (error: any) {
+      alert(`Database test error: ${error.message}`);
+    } finally {
+      setTestingDatabase(false);
     }
   };
 
@@ -312,12 +330,24 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
                   </Button>
 
                   <Button
-                    variant="outline"
                     onClick={() => setActiveTab("applications")}
                     className="h-20 flex flex-col items-center justify-center space-y-2"
                   >
                     <FileText className="h-6 w-6" />
                     <span>View All Applications</span>
+                  </Button>
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    onClick={handleTestDatabase}
+                    disabled={testingDatabase}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {testingDatabase
+                      ? "Testing..."
+                      : "Test Database Connection"}
                   </Button>
                 </div>
               </CardContent>
