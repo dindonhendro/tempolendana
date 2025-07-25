@@ -1023,6 +1023,8 @@ function App() {
     switch (user.role) {
       case "user":
         return <UserDashboard userId={user.id} />;
+      case "wirausaha":
+        return <UserDashboard userId={user.id} isWirausaha={true} />;
       case "agent":
         return <AgentDashboard agentId={user.id} />;
       case "validator":
@@ -3083,6 +3085,10 @@ function App() {
           }
         />
         <Route path="/auth" element={<AuthForm onAuthSuccess={checkUser} />} />
+        <Route
+          path="/auth/wirausaha"
+          element={<AuthForm onAuthSuccess={checkUser} isWirausaha={true} />}
+        />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -31,13 +31,18 @@ interface LoanApplicationFormProps {
   onSubmit?: (data: LoanApplicationInsert) => void;
   editData?: Tables<"loan_applications"> | null;
   preSelectedAgentId?: string;
+  isWirausaha?: boolean;
 }
 
 export default function LoanApplicationForm({
   onSubmit,
   editData,
   preSelectedAgentId,
+  isWirausaha = false,
 }: LoanApplicationFormProps = {}) {
+  // Check if this is a KUR Wirausaha application
+  const isKurWirausaha =
+    isWirausaha || editData?.submission_type === "KUR_WIRAUSAHA_PMI";
   const [currentTab, setCurrentTab] = useState("personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agentCompanies, setAgentCompanies] = useState<any[]>([]);
@@ -133,10 +138,11 @@ export default function LoanApplicationForm({
           bunga_bank: editData.bunga_bank || 6,
           grace_period: editData.grace_period || null,
           negara_penempatan: editData.negara_penempatan || "",
-          assigned_agent_id:
-            editData.assigned_agent_id || preSelectedAgentId || "",
+          assigned_agent_id: isKurWirausaha
+            ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+            : editData.assigned_agent_id || preSelectedAgentId || "",
           status: editData.status || "Submitted",
-          submission_type: editData.submission_type || "PMI",
+          submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
         }
       : {
           full_name: "",
@@ -165,9 +171,11 @@ export default function LoanApplicationForm({
           bunga_bank: 6,
           grace_period: null,
           negara_penempatan: "",
-          assigned_agent_id: preSelectedAgentId || "",
+          assigned_agent_id: isKurWirausaha
+            ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+            : preSelectedAgentId || "",
           status: "Submitted",
-          submission_type: "PMI",
+          submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
         },
   );
 
@@ -337,6 +345,29 @@ export default function LoanApplicationForm({
 
     try {
       console.log("Starting form submission...");
+      console.log("Form data:", {
+        submission_type: formData.submission_type,
+        full_name: formData.full_name,
+        email: formData.email,
+        loan_amount: formData.loan_amount,
+        tenor_months: formData.tenor_months,
+      });
+
+      // Validate required fields
+      if (!formData.submission_type) {
+        alert("Please select application type (Jenis Aplikasi KUR)");
+        return;
+      }
+
+      if (!formData.full_name) {
+        alert("Please enter your full name");
+        return;
+      }
+
+      if (!formData.email) {
+        alert("Please enter your email");
+        return;
+      }
 
       // Get current user
       const {
@@ -346,13 +377,19 @@ export default function LoanApplicationForm({
 
       if (userError) {
         console.error("Error getting user:", userError);
-        alert("Authentication error. Please sign in again.");
+        alert(
+          "Authentication error. Please sign in to continue. Click 'OK' to go to login page.",
+        );
+        window.location.href = "/auth";
         return;
       }
 
       if (!user) {
         console.error("No authenticated user found");
-        alert("Please sign in to submit application.");
+        alert(
+          "You must be logged in to submit an application. Click 'OK' to go to login page.",
+        );
+        window.location.href = "/auth";
         return;
       }
 
@@ -424,7 +461,7 @@ export default function LoanApplicationForm({
         }
       }
 
-      // Prepare final data
+      // Prepare final data with proper date handling
       const finalData: LoanApplicationInsert = {
         ...formData,
         ...documentUrls,
@@ -433,13 +470,31 @@ export default function LoanApplicationForm({
         self_photo_url: selfieUrl,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // For KUR Wirausaha, bypass agent and set special agent ID or null
+        assigned_agent_id: isKurWirausaha
+          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+          : formData.assigned_agent_id,
+        // Set submission type if not already set
+        submission_type:
+          formData.submission_type ||
+          (isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI"),
+        // Convert empty date strings to null
+        birth_date: formData.birth_date || null,
+        tanggal_keberangkatan: formData.tanggal_keberangkatan || null,
       };
 
       console.log("Final data to be submitted:", {
-        ...finalData,
-        // Don't log sensitive URLs, just indicate if they exist
+        submission_type: finalData.submission_type,
+        full_name: finalData.full_name,
+        email: finalData.email,
+        user_id: finalData.user_id,
+        loan_amount: finalData.loan_amount,
+        tenor_months: finalData.tenor_months,
+        status: finalData.status,
+        assigned_agent_id: finalData.assigned_agent_id,
         ktp_photo_url: ktpUrl ? "[FILE_UPLOADED]" : null,
         self_photo_url: selfieUrl ? "[FILE_UPLOADED]" : null,
+        document_count: Object.keys(documentUrls).length,
       });
 
       // Submit to database (insert or update)
@@ -479,12 +534,26 @@ export default function LoanApplicationForm({
             details: error.details,
             hint: error.hint,
           });
-          alert(`Failed to submit application: ${error.message}`);
+
+          let errorMessage = "Failed to submit application: ";
+          if (error.code === "23505") {
+            errorMessage +=
+              "Duplicate entry detected. You may have already submitted this application.";
+          } else if (error.code === "23503") {
+            errorMessage +=
+              "Invalid reference data. Please check your selections.";
+          } else {
+            errorMessage += error.message || "Unknown database error";
+          }
+
+          alert(errorMessage);
           return;
         }
 
         console.log("Application inserted successfully:", insertResult);
-        alert("Application submitted successfully!");
+        alert(
+          `${formData.submission_type} application submitted successfully! Your application ID: ${insertResult[0]?.id?.substring(0, 8)}...`,
+        );
       }
 
       if (onSubmit) onSubmit(finalData);
@@ -743,20 +812,34 @@ export default function LoanApplicationForm({
     document.body.removeChild(link);
   };
 
-  const tabs = [
-    "personal",
-    "documents",
-    "agent",
-    "loan",
-    "document-other",
-    "family",
-    "work",
-    "installment",
-    "summary",
-  ];
+  // Define tabs based on whether this is KUR Wirausaha or not
+  const tabs = isKurWirausaha
+    ? ["personal", "documents", "loan"] // Simplified 3-step flow for KUR Wirausaha
+    : [
+        "personal",
+        "documents",
+        "agent",
+        "loan",
+        "document-other",
+        "family",
+        "work",
+        "installment",
+        "summary",
+      ];
   const currentIndex = tabs.indexOf(currentTab);
 
   const nextTab = () => {
+    // For KUR Wirausaha, simplified 3-step flow
+    if (isKurWirausaha) {
+      if (currentIndex < tabs.length - 1) {
+        setCurrentTab(tabs[currentIndex + 1]);
+      } else {
+        // On the last tab (loan), submit directly
+        handleSubmit();
+      }
+      return;
+    }
+
     // Check if "Belum ada agent" is selected and we're on the agent tab
     if (
       currentTab === "agent" &&
@@ -782,23 +865,44 @@ export default function LoanApplicationForm({
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            {editData
-              ? "Edit PMI Loan Application"
-              : "PMI Loan Application Form"}
+            {isKurWirausaha
+              ? "Formulir KUR Wirausaha PMI"
+              : editData
+                ? "Edit PMI Loan Application"
+                : "PMI Loan Application Form"}
           </CardTitle>
+          {isKurWirausaha && (
+            <p className="text-center text-gray-600 mt-2">
+              Proses sederhana 3 langkah untuk mengajukan KUR Wirausaha PMI
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid w-full grid-cols-9">
-              <TabsTrigger value="personal">Personal</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="agent">Agent</TabsTrigger>
-              <TabsTrigger value="loan">Loan</TabsTrigger>
-              <TabsTrigger value="document-other">Doc Other</TabsTrigger>
-              <TabsTrigger value="family">Family</TabsTrigger>
-              <TabsTrigger value="work">Work</TabsTrigger>
-              <TabsTrigger value="installment">Angsuran</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsList
+              className={`grid w-full ${isKurWirausaha ? "grid-cols-3" : "grid-cols-9"}`}
+            >
+              <TabsTrigger value="personal">1. Data Personal</TabsTrigger>
+              <TabsTrigger value="documents">2. Upload Dokumen</TabsTrigger>
+              {!isKurWirausaha && (
+                <TabsTrigger value="agent">Agent</TabsTrigger>
+              )}
+              <TabsTrigger value="loan">
+                {isKurWirausaha ? "3. Data Pinjaman" : "Loan"}
+              </TabsTrigger>
+              {!isKurWirausaha && (
+                <TabsTrigger value="document-other">Doc Other</TabsTrigger>
+              )}
+              {!isKurWirausaha && (
+                <TabsTrigger value="family">Family</TabsTrigger>
+              )}
+              {!isKurWirausaha && <TabsTrigger value="work">Work</TabsTrigger>}
+              {!isKurWirausaha && (
+                <TabsTrigger value="installment">Angsuran</TabsTrigger>
+              )}
+              {!isKurWirausaha && (
+                <TabsTrigger value="summary">Summary</TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="personal" className="space-y-4 mt-6">
@@ -1200,28 +1304,72 @@ export default function LoanApplicationForm({
             </TabsContent>
 
             <TabsContent value="summary" className="space-y-6 mt-6">
-              {formData.assigned_agent_id ===
-                "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
-                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+              {isKurWirausaha && (
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">!</span>
+                      <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">✓</span>
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold text-blue-800 mb-2">
-                        Informasi Penting
+                      <h4 className="text-lg font-semibold text-green-800 mb-2">
+                        KUR Wirausaha PMI
                       </h4>
-                      <p className="text-blue-700">
-                        Anda Mendaftar sebagai calon PMI dan belum memiliki
-                        P3MI. Lendana akan menghubungi anda untuk mencarikan
-                        P3MI yang sesuai.
+                      <p className="text-green-700">
+                        Aplikasi Anda akan langsung diteruskan ke validator
+                        Lendana untuk proses persetujuan. Tidak perlu melalui
+                        agent P3MI.
                       </p>
                     </div>
                   </div>
                 </div>
               )}
+              {!isKurWirausaha &&
+                formData.assigned_agent_id ===
+                  "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
+                  <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">
+                            !
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-semibold text-blue-800 mb-2">
+                          Informasi Penting
+                        </h4>
+                        <p className="text-blue-700">
+                          Anda Mendaftar sebagai calon PMI dan belum memiliki
+                          P3MI. Lendana akan menghubungi anda untuk mencarikan
+                          P3MI yang sesuai.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              {/* Authentication Status */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mb-6">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">✓</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-green-800 mb-2">
+                      Status Login
+                    </h4>
+                    <p className="text-green-700">
+                      Anda sudah login dan siap untuk submit aplikasi{" "}
+                      {formData.submission_type || "KUR"}.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold mb-4 text-[#5680E9]">
                   Application Summary
@@ -1274,7 +1422,9 @@ export default function LoanApplicationForm({
                       </p>
                       <p>
                         <span className="font-medium">Application Type:</span>{" "}
-                        {formData.submission_type || "-"}
+                        {isKurWirausaha
+                          ? "KUR Wirausaha PMI"
+                          : formData.submission_type || "-"}
                       </p>
                       <p>
                         <span className="font-medium">Work Location:</span>{" "}
@@ -1335,7 +1485,11 @@ export default function LoanApplicationForm({
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Please review all information
                     carefully before submitting. Once submitted, your
-                    application will be processed by our validation team.
+                    application will be{" "}
+                    {isKurWirausaha
+                      ? "sent directly to our validation team for review"
+                      : "processed by our validation team"}
+                    .
                   </p>
                 </div>
               </div>
@@ -1662,45 +1816,73 @@ export default function LoanApplicationForm({
             </TabsContent>
 
             <TabsContent value="loan" className="space-y-4 mt-6">
+              {isKurWirausaha && (
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200 mb-6">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">
+                    KUR Wirausaha PMI - Langkah Terakhir
+                  </h3>
+                  <p className="text-green-700">
+                    Lengkapi data pinjaman usaha Anda. Setelah submit, aplikasi
+                    akan langsung diteruskan ke validator Lendana untuk proses
+                    persetujuan.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="submission_type">Jenis Aplikasi KUR *</Label>
-                <Select
-                  value={formData.submission_type || ""}
-                  onValueChange={(value) => {
-                    console.log("Submission type changed to:", value);
-                    updateFormData("submission_type", value);
-                    // Reset bank selection when submission type changes
-                    setSelectedBankId("");
-                    setSelectedBankProductId("");
-                    setBankProducts([]);
-                  }}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih jenis aplikasi KUR" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PMI">
-                      KUR PMI (Pekerja Migran Indonesia)
-                    </SelectItem>
-                    <SelectItem value="KUR_PERUMAHAN_PMI">
-                      KUR Perumahan PMI
-                    </SelectItem>
-                    <SelectItem value="RUMAH_SUBSIDI_PMI">
-                      Rumah Subsidi PMI
-                    </SelectItem>
-                    <SelectItem value="KUR_WIRAUSAHA_PMI">
-                      KUR Wirausaha PMI
-                    </SelectItem>
-                    <SelectItem value="PETERNAK_SAPI_PMI">
-                      Peternak Sapi PMI
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Pilih jenis aplikasi terlebih dahulu untuk melihat produk bank
-                  yang sesuai
-                </p>
+                {isKurWirausaha ? (
+                  <div>
+                    <Input
+                      value="KUR Wirausaha PMI"
+                      disabled
+                      className="bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Aplikasi khusus untuk KUR Wirausaha PMI
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Select
+                      value={formData.submission_type || ""}
+                      onValueChange={(value) => {
+                        console.log("Submission type changed to:", value);
+                        updateFormData("submission_type", value);
+                        // Reset bank selection when submission type changes
+                        setSelectedBankId("");
+                        setSelectedBankProductId("");
+                        setBankProducts([]);
+                      }}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih jenis aplikasi KUR" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PMI">
+                          KUR PMI (Pekerja Migran Indonesia)
+                        </SelectItem>
+                        <SelectItem value="KUR_PERUMAHAN_PMI">
+                          KUR Perumahan PMI
+                        </SelectItem>
+                        <SelectItem value="RUMAH_SUBSIDI_PMI">
+                          Rumah Subsidi PMI
+                        </SelectItem>
+                        <SelectItem value="KUR_WIRAUSAHA_PMI">
+                          KUR Wirausaha PMI
+                        </SelectItem>
+                        <SelectItem value="PETERNAK_SAPI_PMI">
+                          Peternak Sapi PMI
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Pilih jenis aplikasi terlebih dahulu untuk melihat produk
+                      bank yang sesuai
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1786,7 +1968,7 @@ export default function LoanApplicationForm({
                 </div>
               </div>
 
-              {formData.submission_type && (
+              {(formData.submission_type || isKurWirausaha) && (
                 <div>
                   <Label htmlFor="bank_selection">Select Bank</Label>
                   <Select
@@ -1810,35 +1992,39 @@ export default function LoanApplicationForm({
                 </div>
               )}
 
-              {selectedBankId && formData.submission_type && (
-                <div>
-                  <Label htmlFor="bank_product">Select Bank Product</Label>
-                  <Select
-                    value={selectedBankProductId}
-                    onValueChange={setSelectedBankProductId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankProducts.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} ({product.type} -{" "}
-                          {product.interest_rate}% - Rp{" "}
-                          {product.min_amount.toLocaleString()} - Rp{" "}
-                          {product.max_amount.toLocaleString()})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {bankProducts.length === 0 && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Tidak ada produk {formData.submission_type} yang tersedia
-                      untuk bank ini.
-                    </p>
-                  )}
-                </div>
-              )}
+              {selectedBankId &&
+                (formData.submission_type || isKurWirausaha) && (
+                  <div>
+                    <Label htmlFor="bank_product">Select Bank Product</Label>
+                    <Select
+                      value={selectedBankProductId}
+                      onValueChange={setSelectedBankProductId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankProducts.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} ({product.type} -{" "}
+                            {product.interest_rate}% - Rp{" "}
+                            {product.min_amount.toLocaleString()} - Rp{" "}
+                            {product.max_amount.toLocaleString()})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {bankProducts.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Tidak ada produk{" "}
+                        {isKurWirausaha
+                          ? "KUR_WIRAUSAHA_PMI"
+                          : formData.submission_type}{" "}
+                        yang tersedia untuk bank ini.
+                      </p>
+                    )}
+                  </div>
+                )}
             </TabsContent>
           </Tabs>
 
@@ -1852,7 +2038,25 @@ export default function LoanApplicationForm({
               Previous
             </Button>
 
-            {currentIndex === tabs.length - 1 ? (
+            {isKurWirausaha ? (
+              <Button
+                onClick={nextTab}
+                disabled={
+                  isSubmitting ||
+                  !formData.full_name ||
+                  !formData.email ||
+                  (currentTab === "loan" &&
+                    (!formData.loan_amount || !formData.tenor_months))
+                }
+                className="bg-[#5680E9] hover:bg-[#5680E9]/90"
+              >
+                {currentIndex === tabs.length - 1
+                  ? isSubmitting
+                    ? "Submitting..."
+                    : "Submit KUR Wirausaha Application"
+                  : "Next"}
+              </Button>
+            ) : currentIndex === tabs.length - 1 ? (
               <Button
                 onClick={handleSubmit}
                 disabled={
@@ -1869,7 +2073,7 @@ export default function LoanApplicationForm({
                     : "Submitting..."
                   : editData
                     ? "Update Application"
-                    : "Submit Application"}
+                    : `Submit ${formData.submission_type || "Application"}`}
               </Button>
             ) : (
               <Button

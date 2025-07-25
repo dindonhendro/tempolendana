@@ -459,9 +459,9 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   <Button
                     size="sm"
                     className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                    onClick={() => handleLoanApplication("KUR Wirausaha PMI")}
+                    onClick={() => (window.location.href = "/auth/wirausaha")}
                   >
-                    Pelajari lebih lanjut
+                    Daftar Sekarang
                   </Button>
                 </CardContent>
               </Card>

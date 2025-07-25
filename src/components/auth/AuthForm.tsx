@@ -24,9 +24,13 @@ import { Eye, EyeOff } from "lucide-react";
 
 interface AuthFormProps {
   onAuthSuccess?: () => void;
+  isWirausaha?: boolean;
 }
 
-export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
+export default function AuthForm({
+  onAuthSuccess,
+  isWirausaha = false,
+}: AuthFormProps = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -227,7 +231,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            KUR Penempatan PMI
+            {isWirausaha ? "KUR Wirausaha PMI" : "KUR Penempatan PMI"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -291,38 +295,52 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                 <p className="text-sm text-gray-600 text-center">
                   Test Accounts:
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillTestCredentials("user10@lendana.id")}
-                  >
-                    User
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillTestCredentials("bijak10@lendana.id")}
-                  >
-                    Agent
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillTestCredentials("admin10@lendana.id")}
-                  >
-                    Validator
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      fillTestCredentials("bni_melawai11@lendana.id")
-                    }
-                  >
-                    Bank Staff
-                  </Button>
-                </div>
+                {isWirausaha ? (
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        fillTestCredentials("wirausaha10@lendana.id")
+                      }
+                    >
+                      Test Wirausaha Account
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fillTestCredentials("user10@lendana.id")}
+                    >
+                      User
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fillTestCredentials("bijak10@lendana.id")}
+                    >
+                      Agent
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fillTestCredentials("admin10@lendana.id")}
+                    >
+                      Validator
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        fillTestCredentials("bni_melawai11@lendana.id")
+                      }
+                    >
+                      Bank Staff
+                    </Button>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
@@ -404,20 +422,32 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">User (PMI)</SelectItem>
-                      <SelectItem value="agent">Agent (P3MI)</SelectItem>
-                      <SelectItem value="validator">
-                        Validator (Lendana)
-                      </SelectItem>
-                      <SelectItem value="bank_staff">Bank Staff</SelectItem>
-                      <SelectItem value="insurance">Insurance Staff</SelectItem>
-                      <SelectItem value="collector">Collector Staff</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {isWirausaha ? (
+                        <SelectItem value="wirausaha">
+                          User Wirausaha PMI
+                        </SelectItem>
+                      ) : (
+                        <>
+                          <SelectItem value="user">User (PMI)</SelectItem>
+                          <SelectItem value="agent">Agent (P3MI)</SelectItem>
+                          <SelectItem value="validator">
+                            Validator (Lendana)
+                          </SelectItem>
+                          <SelectItem value="bank_staff">Bank Staff</SelectItem>
+                          <SelectItem value="insurance">
+                            Insurance Staff
+                          </SelectItem>
+                          <SelectItem value="collector">
+                            Collector Staff
+                          </SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {role === "agent" && (
+                {role === "agent" && !isWirausaha && (
                   <div>
                     <Label htmlFor="agent-company">Agent Company *</Label>
                     <Select
@@ -439,7 +469,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                   </div>
                 )}
 
-                {role === "bank_staff" && (
+                {role === "bank_staff" && !isWirausaha && (
                   <>
                     <div>
                       <Label htmlFor="bank">Bank</Label>
@@ -483,7 +513,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                   </>
                 )}
 
-                {role === "insurance" && (
+                {role === "insurance" && !isWirausaha && (
                   <div>
                     <Label htmlFor="insurance-company">
                       Insurance Company *
@@ -507,7 +537,7 @@ export default function AuthForm({ onAuthSuccess }: AuthFormProps = {}) {
                   </div>
                 )}
 
-                {role === "collector" && (
+                {role === "collector" && !isWirausaha && (
                   <div>
                     <Label htmlFor="collector-company">
                       Collector Company *

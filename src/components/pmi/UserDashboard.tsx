@@ -39,9 +39,13 @@ type LoanApplication = Tables<"loan_applications">;
 
 interface UserDashboardProps {
   userId?: string;
+  isWirausaha?: boolean;
 }
 
-export default function UserDashboard({ userId }: UserDashboardProps = {}) {
+export default function UserDashboard({
+  userId,
+  isWirausaha = false,
+}: UserDashboardProps = {}) {
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -240,6 +244,7 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
             fetchApplications();
           }}
           preSelectedAgentId={preSelectedAgentId || undefined}
+          isWirausaha={isWirausaha}
         />
       </div>
     );
@@ -268,6 +273,7 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
             fetchApplications();
           }}
           preSelectedAgentId={preSelectedAgentId || undefined}
+          isWirausaha={isWirausaha}
         />
       </div>
     );
@@ -298,10 +304,12 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#5680E9] mb-2">
-            PMI Loan Dashboard
+            {isWirausaha ? "KUR Wirausaha Dashboard" : "PMI Loan Dashboard"}
           </h1>
           <p className="text-gray-600">
-            Manage your loan applications and track their status
+            {isWirausaha
+              ? "Manage your KUR Wirausaha applications and track their status"
+              : "Manage your loan applications and track their status"}
           </p>
         </div>
 
@@ -326,7 +334,11 @@ export default function UserDashboard({ userId }: UserDashboardProps = {}) {
                     className="h-20 bg-[#5680E9] hover:bg-[#5680E9]/90 flex flex-col items-center justify-center space-y-2"
                   >
                     <Plus className="h-6 w-6" />
-                    <span>Submit New Application</span>
+                    <span>
+                      {isWirausaha
+                        ? "Submit KUR Wirausaha Application"
+                        : "Submit New Application"}
+                    </span>
                   </Button>
 
                   <Button

@@ -175,6 +175,8 @@ export const getCurrentUserRole = async (): Promise<
   | "bank_staff"
   | "insurance"
   | "collector"
+  | "wirausaha"
+  | "admin"
   | null
 > => {
   const user = await getCurrentUser();
@@ -185,6 +187,8 @@ export const getCurrentUserRole = async (): Promise<
     | "bank_staff"
     | "insurance"
     | "collector"
+    | "wirausaha"
+    | "admin"
     | null;
 };
 
