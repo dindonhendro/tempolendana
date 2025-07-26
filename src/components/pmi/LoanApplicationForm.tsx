@@ -828,7 +828,53 @@ export default function LoanApplicationForm({
       ];
   const currentIndex = tabs.indexOf(currentTab);
 
+  const validateCurrentTab = () => {
+    const missingFields: string[] = [];
+
+    if (currentTab === "personal") {
+      if (!formData.full_name) missingFields.push("Full Name");
+      if (!formData.gender) missingFields.push("Gender");
+      if (!formData.age) missingFields.push("Age");
+      if (!formData.birth_place) missingFields.push("Birth Place");
+      if (!formData.birth_date) missingFields.push("Birth Date");
+      if (!formData.phone_number) missingFields.push("Phone Number");
+      if (!formData.email) missingFields.push("Email");
+      if (!formData.nik_ktp) missingFields.push("NIK KTP");
+      if (!formData.last_education) missingFields.push("Last Education");
+      if (!formData.nomor_sisko) missingFields.push("Nomor Sisko PMI");
+    }
+
+    if (currentTab === "loan") {
+      if (!formData.loan_amount) missingFields.push("Loan Amount");
+      if (!formData.tenor_months) missingFields.push("Tenor (Months)");
+      if (
+        formData.grace_period === null ||
+        formData.grace_period === undefined
+      ) {
+        missingFields.push("Grace Period (Months)");
+      }
+    }
+
+    if (currentTab === "family") {
+      if (!formData.nama_ibu_kandung) missingFields.push("Nama Ibu Kandung");
+    }
+
+    if (missingFields.length > 0) {
+      alert(
+        `Please fill in the following mandatory fields:\n\n${missingFields.join("\n")}`,
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const nextTab = () => {
+    // Validate current tab before proceeding
+    if (!validateCurrentTab()) {
+      return;
+    }
+
     // For KUR Wirausaha, simplified 3-step flow
     if (isKurWirausaha) {
       if (currentIndex < tabs.length - 1) {
@@ -883,7 +929,7 @@ export default function LoanApplicationForm({
               className={`grid w-full ${isKurWirausaha ? "grid-cols-3" : "grid-cols-9"}`}
             >
               <TabsTrigger value="personal">1. Data Personal</TabsTrigger>
-              <TabsTrigger value="documents">2. Upload Dokumen</TabsTrigger>
+              <TabsTrigger value="documents">2. Doc</TabsTrigger>
               {!isKurWirausaha && (
                 <TabsTrigger value="agent">Agent</TabsTrigger>
               )}
@@ -1887,7 +1933,7 @@ export default function LoanApplicationForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="loan_amount">Loan Amount</Label>
+                  <Label htmlFor="loan_amount">Loan Amount *</Label>
                   <Input
                     id="loan_amount"
                     type="number"
@@ -1899,15 +1945,17 @@ export default function LoanApplicationForm({
                       )
                     }
                     placeholder="Enter loan amount"
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="tenor_months">Tenor (Months)</Label>
+                  <Label htmlFor="tenor_months">Tenor (Months) *</Label>
                   <Select
                     value={formData.tenor_months?.toString() || ""}
                     onValueChange={(value) =>
                       updateFormData("tenor_months", parseInt(value))
                     }
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select tenor" />
@@ -1943,12 +1991,13 @@ export default function LoanApplicationForm({
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="grace_period">Grace Period (Months)</Label>
+                  <Label htmlFor="grace_period">Grace Period (Months) *</Label>
                   <Select
                     value={formData.grace_period?.toString() || ""}
                     onValueChange={(value) =>
                       updateFormData("grace_period", parseInt(value) || null)
                     }
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select grace period" />
