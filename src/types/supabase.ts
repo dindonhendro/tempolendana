@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -639,7 +639,7 @@ export type Database = {
           age: number | null
           alamat_pasangan: string | null
           alamat_pemberi_kerja: string | null
-          assigned_agent_id: string | null
+          assigned_agent_id: string
           bank_approved_at: string | null
           birth_date: string | null
           birth_place: string | null
@@ -671,7 +671,7 @@ export type Database = {
           nama_pasangan: string | null
           nama_pemberi_kerja: string | null
           negara_penempatan: string | null
-          nik_ktp: string | null
+          nik_ktp: string
           nomor_sisko: string | null
           other_certifications: string | null
           pas_foto_3x4_url: string | null
@@ -700,7 +700,7 @@ export type Database = {
           age?: number | null
           alamat_pasangan?: string | null
           alamat_pemberi_kerja?: string | null
-          assigned_agent_id?: string | null
+          assigned_agent_id: string
           bank_approved_at?: string | null
           birth_date?: string | null
           birth_place?: string | null
@@ -732,7 +732,7 @@ export type Database = {
           nama_pasangan?: string | null
           nama_pemberi_kerja?: string | null
           negara_penempatan?: string | null
-          nik_ktp?: string | null
+          nik_ktp?: string
           nomor_sisko?: string | null
           other_certifications?: string | null
           pas_foto_3x4_url?: string | null
@@ -761,7 +761,7 @@ export type Database = {
           age?: number | null
           alamat_pasangan?: string | null
           alamat_pemberi_kerja?: string | null
-          assigned_agent_id?: string | null
+          assigned_agent_id?: string
           bank_approved_at?: string | null
           birth_date?: string | null
           birth_place?: string | null
@@ -793,7 +793,7 @@ export type Database = {
           nama_pasangan?: string | null
           nama_pemberi_kerja?: string | null
           negara_penempatan?: string | null
-          nik_ktp?: string | null
+          nik_ktp?: string
           nomor_sisko?: string | null
           other_certifications?: string | null
           pas_foto_3x4_url?: string | null

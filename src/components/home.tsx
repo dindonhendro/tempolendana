@@ -36,6 +36,103 @@ export default function Home() {
           <ProductTabs />
         </div>
       </section>
+
+      {/* P3MI Business Development Section */}
+      <section className="py-16 px-4 md:px-8 lg:px-16 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-[#5680E9]">
+              Pengembangan Usaha P3MI
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Pinjaman khusus untuk pengembangan usaha P3MI/Agent dengan proses
+              yang mudah dan bunga kompetitif.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-2xl font-bold mb-6 text-[#5680E9]">
+                Keunggulan Program
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-[#5680E9] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm font-bold">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Proses Cepat
+                    </h4>
+                    <p className="text-gray-600">
+                      Agent mengisi form, diverifikasi Lendana, langsung ke bank
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-[#5680E9] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm font-bold">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Khusus Business Loan
+                    </h4>
+                    <p className="text-gray-600">
+                      Produk bank yang ditampilkan hanya Business Loan
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-[#5680E9] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-white text-sm font-bold">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">
+                      Dokumentasi Lengkap
+                    </h4>
+                    <p className="text-gray-600">
+                      Upload 16 dokumen pendukung untuk kelengkapan aplikasi
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-[#5680E9] to-[#8860D0] p-8 rounded-2xl text-white">
+              <h3 className="text-2xl font-bold mb-6">Alur Pengajuan</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-white text-[#5680E9] rounded-full flex items-center justify-center font-bold">
+                    1
+                  </div>
+                  <span>Data Perusahaan P3MI</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-white text-[#5680E9] rounded-full flex items-center justify-center font-bold">
+                    2
+                  </div>
+                  <span>Upload 16 Dokumen</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-white text-[#5680E9] rounded-full flex items-center justify-center font-bold">
+                    3
+                  </div>
+                  <span>Data Pinjaman & Pilihan Bank</span>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={() => (window.location.href = "/p3mi-business-loan")}
+                  className="w-full bg-white text-[#5680E9] font-bold py-3 px-6 rounded-full hover:bg-gray-100 transition-colors duration-300"
+                >
+                  Ajukan Pinjaman Sekarang
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* About Section */}
       <section className="py-16 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto">
         <div className="text-center mb-12">
@@ -157,7 +254,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      <div className="w-[800px] h-[600px]"></div>
     </div>
   );
 }

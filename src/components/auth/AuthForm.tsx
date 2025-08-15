@@ -440,6 +440,9 @@ export default function AuthForm({
                           <SelectItem value="collector">
                             Collector Staff
                           </SelectItem>
+                          <SelectItem value="perusahaan">
+                            Perusahaan (P3MI Business)
+                          </SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </>
                       )}

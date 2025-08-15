@@ -116,10 +116,10 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     console.log("Getting current user...");
 
-    // Get current auth user with timeout
+    // Get current auth user with shorter timeout
     const authPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Auth timeout")), 5000),
+      setTimeout(() => reject(new Error("Auth timeout")), 3000),
     );
 
     const {
@@ -139,7 +139,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
     console.log("Auth user found:", user.id);
 
-    // Get user profile with timeout
+    // Get user profile with shorter timeout and retry logic
     const profilePromise = supabase
       .from("users")
       .select("*")
@@ -147,13 +147,34 @@ export const getCurrentUser = async (): Promise<User | null> => {
       .single();
 
     const profileTimeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Profile timeout")), 3000),
+      setTimeout(() => reject(new Error("Profile timeout")), 2000),
     );
 
-    const { data: profile, error } = (await Promise.race([
-      profilePromise,
-      profileTimeoutPromise,
-    ])) as any;
+    let profile, error;
+    let retries = 0;
+    const maxRetries = 2;
+
+    while (retries <= maxRetries) {
+      try {
+        const result = (await Promise.race([
+          profilePromise,
+          profileTimeoutPromise,
+        ])) as any;
+
+        profile = result.data;
+        error = result.error;
+        break;
+      } catch (timeoutError) {
+        retries++;
+        if (retries > maxRetries) {
+          console.error("Profile fetch timeout after retries");
+          error = timeoutError;
+          break;
+        }
+        console.log(`Retrying profile fetch (attempt ${retries})`);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
 
     if (error) {
       console.error("Error fetching user profile:", error);
@@ -176,6 +197,7 @@ export const getCurrentUserRole = async (): Promise<
   | "insurance"
   | "collector"
   | "wirausaha"
+  | "perusahaan"
   | "admin"
   | null
 > => {
@@ -188,6 +210,7 @@ export const getCurrentUserRole = async (): Promise<
     | "insurance"
     | "collector"
     | "wirausaha"
+    | "perusahaan"
     | "admin"
     | null;
 };
@@ -207,34 +230,47 @@ export const isAuthenticated = async (): Promise<boolean> => {
   return !!user;
 };
 
-// Get agent companies
+// Get agent companies with timeout and retry
 export const getAgentCompanies = async () => {
   try {
-    const { data, error } = await supabase
+    const queryPromise = supabase
       .from("agent_companies")
       .select("*")
       .order("name");
 
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    );
+
+    const { data, error } = (await Promise.race([
+      queryPromise,
+      timeoutPromise,
+    ])) as any;
+
     if (error) {
       console.error("Error fetching agent companies:", error);
-      // Return empty array instead of throwing error
       return [];
     }
     return data || [];
   } catch (error) {
     console.error("Error in getAgentCompanies:", error);
-    // Always return empty array to prevent app hanging
     return [];
   }
 };
 
-// Get banks
+// Get banks with timeout
 export const getBanks = async () => {
   try {
-    const { data, error } = await supabase
-      .from("banks")
-      .select("*")
-      .order("name");
+    const queryPromise = supabase.from("banks").select("*").order("name");
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    );
+
+    const { data, error } = (await Promise.race([
+      queryPromise,
+      timeoutPromise,
+    ])) as any;
 
     if (error) {
       console.error("Error fetching banks:", error);
@@ -307,13 +343,22 @@ export const getBankProducts = async (
   }
 };
 
-// Get insurance companies
+// Get insurance companies with timeout
 export const getInsuranceCompanies = async () => {
   try {
-    const { data, error } = await supabase
+    const queryPromise = supabase
       .from("insurance_companies")
       .select("*")
       .order("name");
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    );
+
+    const { data, error } = (await Promise.race([
+      queryPromise,
+      timeoutPromise,
+    ])) as any;
 
     if (error) {
       console.error("Error fetching insurance companies:", error);
@@ -326,13 +371,22 @@ export const getInsuranceCompanies = async () => {
   }
 };
 
-// Get collector companies
+// Get collector companies with timeout
 export const getCollectorCompanies = async () => {
   try {
-    const { data, error } = await supabase
+    const queryPromise = supabase
       .from("collector_companies")
       .select("*")
       .order("name");
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    );
+
+    const { data, error } = (await Promise.race([
+      queryPromise,
+      timeoutPromise,
+    ])) as any;
 
     if (error) {
       console.error("Error fetching collector companies:", error);

@@ -1,15 +1,28 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState, lazy } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
-import Home from "./components/home";
-import LandingPage from "./components/LandingPage";
-import AuthForm from "./components/auth/AuthForm";
-import Welcome from "./components/Welcome";
-import UserDashboard from "./components/pmi/UserDashboard";
-import AgentDashboard from "./components/pmi/AgentDashboard";
-import ValidatorDashboard from "./components/pmi/ValidatorDashboard";
-import BankStaffDashboard from "./components/pmi/BankStaffDashboard";
-import InsuranceDashboard from "./components/pmi/InsuranceDashboard";
-import CollectorDashboard from "./components/pmi/CollectorDashboard";
+
+// Lazy load components for better performance
+const Home = lazy(() => import("./components/home"));
+const LandingPage = lazy(() => import("./components/LandingPage"));
+const AuthForm = lazy(() => import("./components/auth/AuthForm"));
+const Welcome = lazy(() => import("./components/Welcome"));
+const UserDashboard = lazy(() => import("./components/pmi/UserDashboard"));
+const AgentDashboard = lazy(() => import("./components/pmi/AgentDashboard"));
+const ValidatorDashboard = lazy(
+  () => import("./components/pmi/ValidatorDashboard"),
+);
+const BankStaffDashboard = lazy(
+  () => import("./components/pmi/BankStaffDashboard"),
+);
+const InsuranceDashboard = lazy(
+  () => import("./components/pmi/InsuranceDashboard"),
+);
+const CollectorDashboard = lazy(
+  () => import("./components/pmi/CollectorDashboard"),
+);
+const P3MIBusinessLoanForm = lazy(
+  () => import("./components/pmi/P3MIBusinessLoanForm"),
+);
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
@@ -57,26 +70,35 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
+    let initTimeout: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log("Starting auth initialization...");
 
-        // Set a maximum timeout for the entire initialization
-        const initTimeout = setTimeout(() => {
+        // Set a shorter timeout for better UX
+        initTimeout = setTimeout(() => {
           if (isMounted && !authInitialized) {
             console.warn(
               "Auth initialization timeout, proceeding without user",
             );
-            setAuthError("Authentication timeout");
+            if (retryCount < 2) {
+              setRetryCount((prev) => prev + 1);
+              console.log(
+                `Retrying auth initialization (attempt ${retryCount + 1})`,
+              );
+              return;
+            }
+            setAuthError("Authentication timeout - please refresh the page");
             setUser(null);
             setLoading(false);
             setAuthInitialized(true);
           }
-        }, 8000);
+        }, 5000); // Reduced from 8000ms to 5000ms
 
         const currentUser = await getCurrentUser();
 
@@ -86,6 +108,7 @@ function App() {
           setLoading(false);
           setAuthInitialized(true);
           setAuthError(null);
+          setRetryCount(0);
 
           if (currentUser) {
             console.log(
@@ -100,6 +123,21 @@ function App() {
       } catch (error: any) {
         if (isMounted) {
           console.error("Error checking user:", error);
+
+          // Retry logic for network errors
+          if (
+            retryCount < 2 &&
+            (error.message?.includes("network") ||
+              error.message?.includes("timeout"))
+          ) {
+            console.log(
+              `Retrying due to network error (attempt ${retryCount + 1})`,
+            );
+            setRetryCount((prev) => prev + 1);
+            setTimeout(() => initializeAuth(), 1000);
+            return;
+          }
+
           setAuthError(error.message || "Authentication failed");
           setUser(null);
           setLoading(false);
@@ -111,7 +149,7 @@ function App() {
     // Initialize auth
     initializeAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes with error handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -119,25 +157,28 @@ function App() {
 
       console.log("Auth state change:", event, session?.user?.id);
 
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        try {
+      try {
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
           const currentUser = await getCurrentUser();
           setUser(currentUser);
-        } catch (error) {
-          console.error("Error getting user after auth change:", error);
+          setAuthError(null);
+        } else if (event === "SIGNED_OUT") {
+          console.log("User signed out, clearing state");
           setUser(null);
+          setAuthError(null);
         }
-      } else if (event === "SIGNED_OUT") {
-        console.log("User signed out, clearing state");
-        setUser(null);
+      } catch (error: any) {
+        console.error("Error in auth state change handler:", error);
+        // Don't set error here to avoid disrupting the flow
       }
     });
 
     return () => {
       isMounted = false;
+      if (initTimeout) clearTimeout(initTimeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [retryCount]);
 
   const checkUser = async () => {
     try {
@@ -1025,6 +1066,8 @@ function App() {
         return <UserDashboard userId={user.id} />;
       case "wirausaha":
         return <UserDashboard userId={user.id} isWirausaha={true} />;
+      case "perusahaan":
+        return <P3MIBusinessLoanForm />;
       case "agent":
         return <AgentDashboard agentId={user.id} />;
       case "validator":
@@ -3062,10 +3105,20 @@ function App() {
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold mb-2">Lendana PMI</h2>
-          <p className="text-sm opacity-90">Initializing application...</p>
+          <p className="text-sm opacity-90">
+            {retryCount > 0
+              ? `Retrying connection... (${retryCount}/2)`
+              : "Initializing application..."}
+          </p>
           {authError && (
-            <div className="mt-4 p-3 bg-red-500/20 border border-red-300 rounded text-red-100 text-sm">
-              {authError}
+            <div className="mt-4 p-3 bg-red-500/20 border border-red-300 rounded text-red-100 text-sm max-w-md">
+              <p>{authError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors"
+              >
+                Refresh Page
+              </button>
             </div>
           )}
         </div>
@@ -3089,6 +3142,10 @@ function App() {
           path="/auth/wirausaha"
           element={<AuthForm onAuthSuccess={checkUser} isWirausaha={true} />}
         />
+        <Route
+          path="/auth/perusahaan"
+          element={<AuthForm onAuthSuccess={checkUser} isPerusahaan={true} />}
+        />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -3096,7 +3153,16 @@ function App() {
   }
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-[#5680E9] to-[#8860D0] flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-sm opacity-90">Loading...</p>
+          </div>
+        </div>
+      }
+    >
       <>
         {/* Header with user info and logout */}
         <div className="bg-white border-b border-gray-200 px-4 py-3">
@@ -3126,6 +3192,16 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/home" element={<Home />} />
+          <Route
+            path="/p3mi-business-loan"
+            element={
+              user?.role === "perusahaan" ? (
+                <P3MIBusinessLoanForm />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
 
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
