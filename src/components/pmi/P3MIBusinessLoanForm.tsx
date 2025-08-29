@@ -19,7 +19,15 @@ import { Database, Tables } from "@/types/supabase";
 type LoanApplicationInsert =
   Database["public"]["Tables"]["loan_applications"]["Insert"];
 
-export default function P3MIBusinessLoanForm() {
+interface P3MIBusinessLoanFormProps {
+  editData?: Tables<"loan_applications"> | null;
+  onSubmit?: () => void;
+}
+
+export default function P3MIBusinessLoanForm({
+  editData,
+  onSubmit,
+}: P3MIBusinessLoanFormProps = {}) {
   const [currentTab, setCurrentTab] = useState("company");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [banks, setBanks] = useState<Tables<"banks">[]>([]);
@@ -34,24 +42,45 @@ export default function P3MIBusinessLoanForm() {
   }>({});
 
   // Form data state
-  const [formData, setFormData] = useState<LoanApplicationInsert>({
-    full_name: "",
-    email: "",
-    phone_number: "",
-    nik_ktp: "",
-    address_ktp: "",
-    address_domicile: "",
-    institution: "", // Company name
-    major: "", // Business type
-    work_experience: "", // Years in business
-    work_location: "", // Business location
-    loan_amount: null,
-    tenor_months: null,
-    bunga_bank: 6,
-    grace_period: null,
-    status: "Submitted",
-    submission_type: "P3MI_BUSINESS_LOAN",
-  });
+  const [formData, setFormData] = useState<LoanApplicationInsert>(
+    editData
+      ? {
+          full_name: editData.full_name || "",
+          email: editData.email || "",
+          phone_number: editData.phone_number || "",
+          nik_ktp: editData.nik_ktp || "",
+          address_ktp: editData.address_ktp || "",
+          address_domicile: editData.address_domicile || "",
+          institution: editData.institution || "", // Company name
+          major: editData.major || "", // Business type
+          work_experience: editData.work_experience || "", // Years in business
+          work_location: editData.work_location || "", // Business location
+          loan_amount: editData.loan_amount || null,
+          tenor_months: editData.tenor_months || null,
+          bunga_bank: editData.bunga_bank || 6,
+          grace_period: editData.grace_period || null,
+          status: editData.status || "Submitted",
+          submission_type: editData.submission_type || "P3MI_BUSINESS_LOAN",
+        }
+      : {
+          full_name: "",
+          email: "",
+          phone_number: "",
+          nik_ktp: "",
+          address_ktp: "",
+          address_domicile: "",
+          institution: "", // Company name
+          major: "", // Business type
+          work_experience: "", // Years in business
+          work_location: "", // Business location
+          loan_amount: null,
+          tenor_months: null,
+          bunga_bank: 6,
+          grace_period: null,
+          status: "Submitted",
+          submission_type: "P3MI_BUSINESS_LOAN",
+        },
+  );
 
   const [files, setFiles] = useState<{
     [key: string]: File | null;
@@ -324,35 +353,68 @@ export default function P3MIBusinessLoanForm() {
         document_count: Object.keys(documentUrls).length,
       });
 
-      // Submit to database
-      const { data: insertResult, error } = await supabase
-        .from("loan_applications")
-        .insert([finalData])
-        .select();
+      // Submit to database (insert or update)
+      if (editData) {
+        console.log(
+          "Updating existing P3MI Business Loan application:",
+          editData.id,
+        );
+        // Update existing application
+        const { data: updateResult, error } = await supabase
+          .from("loan_applications")
+          .update({
+            ...finalData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editData.id)
+          .select();
 
-      if (error) {
-        console.error("Database insert error:", error);
-        let errorMessage = "Failed to submit application: ";
-        if (error.code === "23505") {
-          errorMessage +=
-            "Duplicate entry detected. You may have already submitted this application.";
-        } else if (error.code === "23503") {
-          errorMessage +=
-            "Invalid reference data. Please check your selections.";
-        } else {
-          errorMessage += error.message || "Unknown database error";
+        if (error) {
+          console.error("Database update error:", error);
+          alert(`Failed to update application: ${error.message}`);
+          return;
         }
-        alert(errorMessage);
-        return;
+
+        console.log(
+          "P3MI Business Loan application updated successfully:",
+          updateResult,
+        );
+        alert("P3MI Business Loan application updated successfully!");
+      } else {
+        // Insert new application
+        const { data: insertResult, error } = await supabase
+          .from("loan_applications")
+          .insert([finalData])
+          .select();
+
+        if (error) {
+          console.error("Database insert error:", error);
+          let errorMessage = "Failed to submit application: ";
+          if (error.code === "23505") {
+            errorMessage +=
+              "Duplicate entry detected. You may have already submitted this application.";
+          } else if (error.code === "23503") {
+            errorMessage +=
+              "Invalid reference data. Please check your selections.";
+          } else {
+            errorMessage += error.message || "Unknown database error";
+          }
+          alert(errorMessage);
+          return;
+        }
+
+        console.log("Application inserted successfully:", insertResult);
+        alert(
+          `P3MI Business Loan application submitted successfully! Your application ID: ${insertResult[0]?.id?.substring(0, 8)}... \n\nYour application will be reviewed by Lendana and forwarded to the selected bank branch.`,
+        );
       }
 
-      console.log("Application inserted successfully:", insertResult);
-      alert(
-        `P3MI Business Loan application submitted successfully! Your application ID: ${insertResult[0]?.id?.substring(0, 8)}... \n\nYour application will be reviewed by Lendana and forwarded to the selected bank branch.`,
-      );
-
-      // Redirect to dashboard or home
-      window.location.href = "/dashboard";
+      if (onSubmit) {
+        onSubmit();
+      } else {
+        // Redirect to dashboard or home
+        window.location.href = "/dashboard";
+      }
     } catch (error: any) {
       console.error("Submission error:", error);
       alert(
@@ -434,11 +496,14 @@ export default function P3MIBusinessLoanForm() {
             </Button>
           </div>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            Pengembangan Usaha P3MI
+            {editData
+              ? "Edit P3MI Business Loan Application"
+              : "Pengembangan Usaha P3MI"}
           </CardTitle>
           <p className="text-center text-gray-600 mt-2">
-            Formulir pinjaman pengembangan usaha untuk P3MI/Agent dengan 3
-            langkah mudah
+            {editData
+              ? "Edit formulir pinjaman pengembangan usaha P3MI/Agent"
+              : "Formulir pinjaman pengembangan usaha untuk P3MI/Agent dengan 3 langkah mudah"}
           </p>
         </CardHeader>
         <CardContent>
@@ -615,18 +680,30 @@ export default function P3MIBusinessLoanForm() {
                             <div className="text-blue-500">Uploading...</div>
                           ) : uploadStatus[doc.key] === "success" ? (
                             <CheckCircle className="w-8 h-8 text-green-500" />
+                          ) : files[doc.key] ? (
+                            <CheckCircle className="w-8 h-8 text-green-500" />
                           ) : (
                             <Upload className="w-8 h-8 mb-4 text-gray-500" />
                           )}
                           <p className="mb-2 text-sm text-gray-500">
                             <span className="font-semibold">
-                              Click to upload
+                              {files[doc.key] ||
+                              (editData && (editData as any)[`${doc.key}_url`])
+                                ? "Click to replace"
+                                : "Click to upload"}
                             </span>{" "}
                             {doc.label}
                           </p>
                           <p className="text-xs text-gray-500">
                             PNG, JPG, PDF (MAX. 5MB)
                           </p>
+                          {editData &&
+                            (editData as any)[`${doc.key}_url`] &&
+                            !files[doc.key] && (
+                              <p className="text-xs text-green-600 mt-1">
+                                ✓ File already uploaded
+                              </p>
+                            )}
                         </div>
                         <input
                           type="file"
@@ -846,8 +923,12 @@ export default function P3MIBusinessLoanForm() {
             >
               {currentIndex === tabs.length - 1
                 ? isSubmitting
-                  ? "Submitting..."
-                  : "Submit P3MI Business Loan Application"
+                  ? editData
+                    ? "Updating..."
+                    : "Submitting..."
+                  : editData
+                    ? "Update P3MI Business Loan Application"
+                    : "Submit P3MI Business Loan Application"
                 : "Next"}
             </Button>
           </div>

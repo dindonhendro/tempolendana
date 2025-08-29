@@ -13,6 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   CheckCircle,
   XCircle,
   Search,
@@ -24,6 +31,8 @@ import {
   Plus,
   Upload,
   Edit,
+  ExternalLink,
+  File,
 } from "lucide-react";
 import {
   supabase,
@@ -36,12 +45,17 @@ import {
 } from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
+import P3MIBusinessLoanForm from "./P3MIBusinessLoanForm";
 
 interface AgentDashboardProps {
   agentId?: string;
+  isCheckerAgent?: boolean;
 }
 
-export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
+export default function AgentDashboard({
+  agentId,
+  isCheckerAgent = false,
+}: AgentDashboardProps = {}) {
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<
     LoanApplication[]
@@ -95,6 +109,8 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
 
   const fetchApplications = async () => {
     try {
+      console.log("fetchApplications called, isCheckerAgent:", isCheckerAgent);
+
       // Get current user to find their agent company
       const { getCurrentUser } = await import("@/lib/supabase");
       const currentUser = await getCurrentUser();
@@ -107,7 +123,54 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
 
       console.log("Current user:", currentUser.email, currentUser.id);
 
-      // Get agent staff record to find agent company
+      // For checker_agent, we might not need agent_staff record
+      if (isCheckerAgent) {
+        console.log("Checker agent - fetching P3MI Business Loan applications");
+
+        // For checker_agent, fetch P3MI Business Loan applications directly
+        const { data, error } = await supabase
+          .from("loan_applications")
+          .select(
+            `
+              *,
+              branch_applications(
+                id,
+                bank_reviews(
+                  id,
+                  status,
+                  comments,
+                  reviewed_at,
+                  bank_staff(
+                    id,
+                    position,
+                    users(
+                      full_name
+                    )
+                  )
+                )
+              )
+            `,
+          )
+          .eq("submission_type", "P3MI_BUSINESS_LOAN")
+          .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching P3MI applications:", error);
+          setApplications([]);
+        } else {
+          console.log(
+            "P3MI Business Loan applications found:",
+            data?.length || 0,
+          );
+          setApplications(data || []);
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // For regular agents, get agent staff record to find agent company
       const { data: agentStaff, error: agentError } = await supabase
         .from("agent_staff")
         .select("agent_company_id")
@@ -124,29 +187,29 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
       console.log("Agent company ID:", agentStaff.agent_company_id);
       setCurrentAgentCompanyId(agentStaff.agent_company_id);
 
-      // Fetch applications assigned to this agent's company (including rejected ones to show comments)
+      // For regular agents, show applications assigned to their company
       const { data, error } = await supabase
         .from("loan_applications")
         .select(
           `
-          *,
-          branch_applications(
-            id,
-            bank_reviews(
+            *,
+            branch_applications(
               id,
-              status,
-              comments,
-              reviewed_at,
-              bank_staff(
+              bank_reviews(
                 id,
-                position,
-                users(
-                  full_name
+                status,
+                comments,
+                reviewed_at,
+                bank_staff(
+                  id,
+                  position,
+                  users(
+                    full_name
+                  )
                 )
               )
             )
-          )
-        `,
+          `,
         )
         .eq("assigned_agent_id", agentStaff.agent_company_id)
         .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
@@ -154,8 +217,9 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
 
       if (error) {
         console.error("Error fetching applications:", error);
+        setApplications([]);
       } else {
-        console.log("Filtered applications for agent:", data);
+        console.log("Filtered applications for agent:", data?.length || 0);
         setApplications(data || []);
       }
 
@@ -178,7 +242,8 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
         );
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error in fetchApplications:", error);
+      setApplications([]);
     } finally {
       setLoading(false);
     }
@@ -793,6 +858,163 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
     setShowBulkUpload(false);
   };
 
+  // Get document list for P3MI Business Loan applications
+  const getP3MIDocumentList = () => {
+    return [
+      {
+        key: "surat_permohonan_kredit",
+        label: "Surat Permohonan Fasilitas Kredit",
+      },
+      {
+        key: "dokumen_lain_1",
+        label: "Surat Persetujuan Komisaris",
+      },
+      {
+        key: "dokumen_lain_2",
+        label:
+          "Laporan Keuangan Home Statement (Neraca dan Laba Rugi) 2tahun terakhir",
+      },
+      {
+        key: "info_slik_bank",
+        label: "Rekening Koran simpanan di Bank 1tahun terakhir",
+      },
+      {
+        key: "dokumen_kartu_keluarga",
+        label: "Rincian Pekerjaan selama tahun lalu",
+      },
+      {
+        key: "dokumen_ktp_keluarga_penjamin",
+        label: "Rincian Pekerjaan mendatang tahun ini",
+      },
+      {
+        key: "dokumen_paspor",
+        label: "Rincian piutang usaha berikut umur piutang",
+      },
+      {
+        key: "dokumen_perjanjian_kerja",
+        label: "Rincian hutang usaha berikut umur piutang",
+      },
+      {
+        key: "dokumen_perjanjian_penempatan_pmi",
+        label:
+          "Daftar nama pelanggan dominan berikut nomor telepon yang bisa dihubungi",
+      },
+      {
+        key: "dokumen_persetujuan_data_privacy",
+        label:
+          "Daftar nama pemasok / rekanan dominan berikut nomor telepon yang bisa di hubungi",
+      },
+      {
+        key: "dokumen_standing_instruction",
+        label: "NIB dan Legalitas perusahaan terbaru",
+      },
+      {
+        key: "dokumen_surat_nikah",
+        label: "Akta Pendirian Awal dan Perubahan Akhir",
+      },
+      { key: "surat_izin_ortu_wali", label: "Bukti bayar PBB Jaminan terbaru" },
+      { key: "surat_keterangan_p3mi", label: "Bukti SPT Tahun lalu" },
+      {
+        key: "surat_pernyataan_ortu_wali",
+        label: "Copy Jaminan yang akan diagunkan (SHM)",
+      },
+      {
+        key: "pas_foto_3x4",
+        label: "Izin Mendirikan Bangunan (IMB) yang akan diagunkan",
+      },
+    ];
+  };
+
+  // Component to display uploaded files
+  const UploadedFilesViewer = ({
+    application,
+  }: {
+    application: LoanApplication;
+  }) => {
+    const documentList = getP3MIDocumentList();
+    const uploadedFiles = documentList.filter((doc) => {
+      const fileUrl = (application as any)[`${doc.key}_url`];
+      return fileUrl && fileUrl.trim() !== "";
+    });
+
+    if (uploadedFiles.length === 0) {
+      return (
+        <div className="text-center py-4 text-gray-500">
+          <File className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+          <p>No files uploaded for this application</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="font-semibold text-blue-800 mb-2">
+            Uploaded Files ({uploadedFiles.length}/16)
+          </h4>
+          <p className="text-blue-700 text-sm">
+            Click on any file to view or download it. Files are stored securely
+            in the system.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {uploadedFiles.map((doc, index) => {
+            const fileUrl = (application as any)[`${doc.key}_url`];
+            const fileName = fileUrl
+              ? fileUrl.split("/").pop() || "Unknown file"
+              : "Unknown file";
+
+            return (
+              <div
+                key={doc.key}
+                className="border rounded-lg p-4 hover:bg-gray-50"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h5 className="font-medium text-gray-900 mb-1">
+                      {index + 1}. {doc.label}
+                    </h5>
+                    <p className="text-sm text-gray-600 mb-2">
+                      File: {fileName}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(fileUrl, "_blank")}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <div className="flex items-center text-xs text-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    File uploaded successfully
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {uploadedFiles.length < 16 && (
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <p className="text-yellow-800 text-sm">
+              <strong>Note:</strong> Only {uploadedFiles.length} out of 16
+              required files have been uploaded. Missing files may need to be
+              requested from the applicant.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const generateCSVTemplate = () => {
     const headers = [
       "full_name",
@@ -1059,6 +1281,11 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
 
   // Handle edit application form
   if (editingApplication) {
+    // For checker_agent users, determine which form to use based on submission_type
+    const isP3MIBusinessLoan =
+      editingApplication.submission_type === "P3MI_BUSINESS_LOAN";
+    const shouldUseP3MIForm = isCheckerAgent && isP3MIBusinessLoan;
+
     return (
       <div className="min-h-screen bg-white">
         <div className="p-4">
@@ -1073,14 +1300,24 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
             ← Back to Agent Dashboard
           </Button>
         </div>
-        <LoanApplicationForm
-          editData={editingApplication}
-          onSubmit={() => {
-            setEditingApplication(null);
-            fetchApplications();
-          }}
-          preSelectedAgentId={currentAgentCompanyId || undefined}
-        />
+        {shouldUseP3MIForm ? (
+          <P3MIBusinessLoanForm
+            editData={editingApplication}
+            onSubmit={() => {
+              setEditingApplication(null);
+              fetchApplications();
+            }}
+          />
+        ) : (
+          <LoanApplicationForm
+            editData={editingApplication}
+            onSubmit={() => {
+              setEditingApplication(null);
+              fetchApplications();
+            }}
+            preSelectedAgentId={currentAgentCompanyId || undefined}
+          />
+        )}
       </div>
     );
   }
@@ -1472,6 +1709,19 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
               )}
 
               {/* Action Buttons */}
+              {/* Uploaded Files Section for P3MI Business Loan */}
+              {isCheckerAgent &&
+                selectedApplication.submission_type ===
+                  "P3MI_BUSINESS_LOAN" && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-[#5680E9]">
+                      Uploaded Documents Review
+                    </h3>
+                    <UploadedFilesViewer application={selectedApplication} />
+                  </div>
+                )}
+
+              {/* Action Buttons */}
               <div className="flex justify-center space-x-4 pt-6 border-t">
                 <Button
                   onClick={() => handleDownloadKURForm(selectedApplication)}
@@ -1511,10 +1761,12 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#5680E9] mb-2">
-            Agent Dashboard
+            {isCheckerAgent ? "Checker Agent Dashboard" : "Agent Dashboard"}
           </h1>
           <p className="text-gray-600">
-            Review and process submitted loan applications
+            {isCheckerAgent
+              ? "Review and edit P3MI Business Loan applications"
+              : "Review and process submitted loan applications"}
           </p>
         </div>
 
@@ -1830,6 +2082,34 @@ export default function AgentDashboard({ agentId }: AgentDashboardProps = {}) {
                               ? "Generating..."
                               : "KUR Form"}
                           </Button>
+
+                          {/* Files Review Button for P3MI Business Loan */}
+                          {isCheckerAgent &&
+                            application.submission_type ===
+                              "P3MI_BUSINESS_LOAN" && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                  >
+                                    <File className="h-4 w-4 mr-2" />
+                                    Review Files
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle className="text-xl font-bold text-[#5680E9]">
+                                      Review Uploaded Files -{" "}
+                                      {application.full_name}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <UploadedFilesViewer
+                                    application={application}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            )}
 
                           {(application.status === "Submitted" ||
                             application.status === "Checked") && (

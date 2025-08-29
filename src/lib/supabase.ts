@@ -6,7 +6,19 @@ const supabaseUrl =
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY || "your-anon-key";
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: "pkce",
+  },
+  global: {
+    headers: {
+      "x-client-info": "lendana-pmi-app",
+    },
+  },
+});
 
 // Authentication functions
 export const signUp = async (
@@ -42,12 +54,12 @@ export const signUp = async (
 
     if (profileError) throw profileError;
 
-    // If user is an agent, create agent_staff record
-    if (role === "agent" && agentCompanyId) {
+    // If user is an agent or checker_agent, create agent_staff record
+    if ((role === "agent" || role === "checker_agent") && agentCompanyId) {
       const { error: agentError } = await supabase.from("agent_staff").insert({
         user_id: data.user.id,
         agent_company_id: agentCompanyId,
-        position: "Agent",
+        position: role === "checker_agent" ? "Checker Agent" : "Agent",
       });
 
       if (agentError) throw agentError;
@@ -116,7 +128,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     console.log("Getting current user...");
 
-    // Get current auth user with shorter timeout
+    // Get current auth user with timeout
     const authPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("Auth timeout")), 3000),
@@ -139,53 +151,54 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
     console.log("Auth user found:", user.id);
 
-    // Get user profile with shorter timeout and retry logic
-    const profilePromise = supabase
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    // Get user profile with timeout
+    try {
+      const profilePromise = supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
-    const profileTimeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Profile timeout")), 2000),
-    );
+      const profileTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile timeout")), 2000),
+      );
 
-    let profile, error;
-    let retries = 0;
-    const maxRetries = 2;
+      const { data: profile, error } = (await Promise.race([
+        profilePromise,
+        profileTimeoutPromise,
+      ])) as any;
 
-    while (retries <= maxRetries) {
-      try {
-        const result = (await Promise.race([
-          profilePromise,
-          profileTimeoutPromise,
-        ])) as any;
-
-        profile = result.data;
-        error = result.error;
-        break;
-      } catch (timeoutError) {
-        retries++;
-        if (retries > maxRetries) {
-          console.error("Profile fetch timeout after retries");
-          error = timeoutError;
-          break;
-        }
-        console.log(`Retrying profile fetch (attempt ${retries})`);
-        await new Promise((resolve) => setTimeout(resolve, 500));
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        // Return minimal user object from auth data
+        console.log("Returning minimal user object from auth data");
+        return {
+          id: user.id,
+          email: user.email || "",
+          full_name: user.user_metadata?.full_name || user.email || "",
+          role: user.user_metadata?.role || "user",
+          created_at: user.created_at || new Date().toISOString(),
+          updated_at: user.updated_at || new Date().toISOString(),
+        } as User;
       }
-    }
 
-    if (error) {
-      console.error("Error fetching user profile:", error);
-      return null;
+      console.log("User profile loaded:", profile?.email);
+      return profile;
+    } catch (profileError) {
+      console.error("Profile fetch timeout or error:", profileError);
+      // Return minimal user object from auth data
+      return {
+        id: user.id,
+        email: user.email || "",
+        full_name: user.user_metadata?.full_name || user.email || "",
+        role: user.user_metadata?.role || "user",
+        created_at: user.created_at || new Date().toISOString(),
+        updated_at: user.updated_at || new Date().toISOString(),
+      } as User;
     }
-
-    console.log("User profile loaded:", profile?.email);
-    return profile;
   } catch (error) {
     console.error("Error in getCurrentUser:", error);
-    return null;
+    return null; // Don't throw, just return null
   }
 };
 
@@ -198,6 +211,7 @@ export const getCurrentUserRole = async (): Promise<
   | "collector"
   | "wirausaha"
   | "perusahaan"
+  | "checker_agent"
   | "admin"
   | null
 > => {
@@ -211,6 +225,7 @@ export const getCurrentUserRole = async (): Promise<
     | "collector"
     | "wirausaha"
     | "perusahaan"
+    | "checker_agent"
     | "admin"
     | null;
 };
@@ -230,7 +245,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
   return !!user;
 };
 
-// Get agent companies with timeout and retry
+// Get agent companies with timeout
 export const getAgentCompanies = async () => {
   try {
     const queryPromise = supabase
@@ -238,8 +253,8 @@ export const getAgentCompanies = async () => {
       .select("*")
       .order("name");
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Query timeout")), 2000), // Reduced timeout
     );
 
     const { data, error } = (await Promise.race([
@@ -263,8 +278,8 @@ export const getBanks = async () => {
   try {
     const queryPromise = supabase.from("banks").select("*").order("name");
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Query timeout")), 2000), // Reduced timeout
     );
 
     const { data, error } = (await Promise.race([
@@ -351,8 +366,8 @@ export const getInsuranceCompanies = async () => {
       .select("*")
       .order("name");
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Query timeout")), 2000), // Reduced timeout
     );
 
     const { data, error } = (await Promise.race([
@@ -379,8 +394,8 @@ export const getCollectorCompanies = async () => {
       .select("*")
       .order("name");
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Query timeout")), 3000),
+    const timeoutPromise = new Promise(
+      (_, reject) => setTimeout(() => reject(new Error("Query timeout")), 2000), // Reduced timeout
     );
 
     const { data, error } = (await Promise.race([

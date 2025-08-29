@@ -70,7 +70,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,20 +79,11 @@ function App() {
       try {
         console.log("Starting auth initialization...");
 
-        // Set a shorter timeout for better UX
+        // Set a reasonable timeout for auth initialization
         initTimeout = setTimeout(() => {
           if (isMounted && !authInitialized) {
-            console.warn(
-              "Auth initialization timeout, proceeding without user",
-            );
-            if (retryCount < 2) {
-              setRetryCount((prev) => prev + 1);
-              console.log(
-                `Retrying auth initialization (attempt ${retryCount + 1})`,
-              );
-              return;
-            }
-            setAuthError("Authentication timeout - please refresh the page");
+            console.warn("Auth initialization timeout");
+            setAuthError("Connection timeout - please refresh the page");
             setUser(null);
             setLoading(false);
             setAuthInitialized(true);
@@ -108,7 +98,6 @@ function App() {
           setLoading(false);
           setAuthInitialized(true);
           setAuthError(null);
-          setRetryCount(0);
 
           if (currentUser) {
             console.log(
@@ -122,22 +111,10 @@ function App() {
         }
       } catch (error: any) {
         if (isMounted) {
-          console.error("Error checking user:", error);
+          console.error("Error in auth initialization:", error);
+          clearTimeout(initTimeout);
 
-          // Retry logic for network errors
-          if (
-            retryCount < 2 &&
-            (error.message?.includes("network") ||
-              error.message?.includes("timeout"))
-          ) {
-            console.log(
-              `Retrying due to network error (attempt ${retryCount + 1})`,
-            );
-            setRetryCount((prev) => prev + 1);
-            setTimeout(() => initializeAuth(), 1000);
-            return;
-          }
-
+          // Simplified error handling - no automatic retries
           setAuthError(error.message || "Authentication failed");
           setUser(null);
           setLoading(false);
@@ -146,10 +123,10 @@ function App() {
       }
     };
 
-    // Initialize auth
+    // Initialize auth immediately
     initializeAuth();
 
-    // Listen for auth changes with error handling
+    // Listen for auth changes with simplified error handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -159,17 +136,30 @@ function App() {
 
       try {
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+          console.log("Processing sign in or token refresh");
           const currentUser = await getCurrentUser();
-          setUser(currentUser);
-          setAuthError(null);
+          if (isMounted) {
+            setUser(currentUser);
+            setAuthError(null);
+            setLoading(false);
+            setAuthInitialized(true);
+          }
         } else if (event === "SIGNED_OUT") {
           console.log("User signed out, clearing state");
-          setUser(null);
-          setAuthError(null);
+          if (isMounted) {
+            setUser(null);
+            setAuthError(null);
+            setLoading(false);
+            setAuthInitialized(true);
+          }
         }
       } catch (error: any) {
         console.error("Error in auth state change handler:", error);
-        // Don't set error here to avoid disrupting the flow
+        if (isMounted) {
+          setAuthError("Authentication error occurred");
+          setLoading(false);
+          setAuthInitialized(true);
+        }
       }
     });
 
@@ -178,7 +168,7 @@ function App() {
       if (initTimeout) clearTimeout(initTimeout);
       subscription.unsubscribe();
     };
-  }, [retryCount]);
+  }, []); // Removed retryCount dependency
 
   const checkUser = async () => {
     try {
@@ -198,14 +188,23 @@ function App() {
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
+      console.log("Initiating sign out...");
       await signOut();
+      console.log("Sign out successful");
     } catch (error) {
       console.error("Error signing out:", error);
+    } finally {
+      // Always clear user state
+      setUser(null);
+      setAuthError(null);
+      setSigningOut(false);
+      setAuthInitialized(false);
+
+      // Force a clean redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     }
-    // Always clear user state and redirect
-    setUser(null);
-    setSigningOut(false);
-    window.location.href = "/";
   };
 
   const [activeAdminSection, setActiveAdminSection] = useState<string | null>(
@@ -1061,6 +1060,8 @@ function App() {
   const getDashboardComponent = () => {
     if (!user) return null;
 
+    console.log("Getting dashboard component for user role:", user.role);
+
     switch (user.role) {
       case "user":
         return <UserDashboard userId={user.id} />;
@@ -1070,6 +1071,9 @@ function App() {
         return <P3MIBusinessLoanForm />;
       case "agent":
         return <AgentDashboard agentId={user.id} />;
+      case "checker_agent":
+        console.log("Rendering AgentDashboard for checker_agent");
+        return <AgentDashboard agentId={user.id} isCheckerAgent={true} />;
       case "validator":
         return <ValidatorDashboard validatorId={user.id} />;
       case "bank_staff":
@@ -3105,11 +3109,7 @@ function App() {
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold mb-2">Lendana PMI</h2>
-          <p className="text-sm opacity-90">
-            {retryCount > 0
-              ? `Retrying connection... (${retryCount}/2)`
-              : "Initializing application..."}
-          </p>
+          <p className="text-sm opacity-90">Initializing application...</p>
           {authError && (
             <div className="mt-4 p-3 bg-red-500/20 border border-red-300 rounded text-red-100 text-sm max-w-md">
               <p>{authError}</p>

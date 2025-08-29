@@ -163,7 +163,7 @@ export default function AuthForm({
       return;
     }
 
-    if (role === "agent" && !agentCompanyId) {
+    if ((role === "agent" || role === "checker_agent") && !agentCompanyId) {
       setError("Please select an agent company");
       setIsLoading(false);
       return;
@@ -290,58 +290,6 @@ export default function AuthForm({
                   {isLoading ? "Signing In..." : "Sign In"}
                 </Button>
               </form>
-
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600 text-center">
-                  Test Accounts:
-                </p>
-                {isWirausaha ? (
-                  <div className="grid grid-cols-1 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        fillTestCredentials("wirausaha10@lendana.id")
-                      }
-                    >
-                      Test Wirausaha Account
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fillTestCredentials("user10@lendana.id")}
-                    >
-                      User
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fillTestCredentials("bijak10@lendana.id")}
-                    >
-                      Agent
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fillTestCredentials("admin10@lendana.id")}
-                    >
-                      Validator
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        fillTestCredentials("bni_melawai11@lendana.id")
-                      }
-                    >
-                      Bank Staff
-                    </Button>
-                  </div>
-                )}
-              </div>
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
@@ -403,7 +351,7 @@ export default function AuthForm({
                     value={role}
                     onValueChange={(value) => {
                       setRole(value);
-                      if (value !== "agent") {
+                      if (value !== "agent" && value !== "checker_agent") {
                         setAgentCompanyId("");
                       }
                       if (value !== "bank_staff") {
@@ -430,6 +378,9 @@ export default function AuthForm({
                         <>
                           <SelectItem value="user">User (PMI)</SelectItem>
                           <SelectItem value="agent">Agent (P3MI)</SelectItem>
+                          <SelectItem value="checker_agent">
+                            Checker Agent (P3MI Business Review)
+                          </SelectItem>
                           <SelectItem value="validator">
                             Validator (Lendana)
                           </SelectItem>
@@ -450,27 +401,28 @@ export default function AuthForm({
                   </Select>
                 </div>
 
-                {role === "agent" && !isWirausaha && (
-                  <div>
-                    <Label htmlFor="agent-company">Agent Company *</Label>
-                    <Select
-                      value={agentCompanyId}
-                      onValueChange={setAgentCompanyId}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select agent company" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {agentCompanies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name} ({company.code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                {(role === "agent" || role === "checker_agent") &&
+                  !isWirausaha && (
+                    <div>
+                      <Label htmlFor="agent-company">Agent Company *</Label>
+                      <Select
+                        value={agentCompanyId}
+                        onValueChange={setAgentCompanyId}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select agent company" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agentCompanies.map((company) => (
+                            <SelectItem key={company.id} value={company.id}>
+                              {company.name} ({company.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                 {role === "bank_staff" && !isWirausaha && (
                   <>
