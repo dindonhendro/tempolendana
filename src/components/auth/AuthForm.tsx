@@ -132,20 +132,31 @@ export default function AuthForm({
     setError("");
     setSuccess("");
 
+    // Add timeout for the entire sign-in process
+    const signInTimeout = setTimeout(() => {
+      setError("Sign in is taking too long. Please try again.");
+      setIsLoading(false);
+    }, 15000); // 15 second timeout
+
     try {
+      console.log("Attempting sign in...");
       await signIn(signInEmail, signInPassword);
+      
+      clearTimeout(signInTimeout);
       setSuccess("Sign in successful! Redirecting...");
 
-      // Small delay to allow auth state to update
+      // Immediate redirect without waiting
       setTimeout(() => {
         if (onAuthSuccess) {
           onAuthSuccess();
         } else {
-          // Fallback redirect if no callback provided
-          window.location.href = "/dashboard";
+          // Force page reload to ensure auth state is updated
+          window.location.reload();
         }
-      }, 500);
+      }, 100); // Very short delay
     } catch (error: any) {
+      clearTimeout(signInTimeout);
+      console.error("Sign in error:", error);
       setError(error.message || "Failed to sign in");
       setIsLoading(false);
     }

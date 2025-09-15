@@ -342,16 +342,30 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-4xl font-bold mb-6 leading-tight">
-              Akses Pembiayaan untuk
-              <br />
-              Pekerja Migran Indonesia
+            {/* Main Title */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              Ingin Pembiayaan KUR PMI untuk Bekerja di Luar Negeri?
             </h1>
-            <p className="text-lg mb-8 max-w-4xl mx-auto leading-relaxed">
-              KUR-PMI membantu calon PMI , PMI di LN dan purna PMI dengan
-              pembiayaan penempatan , subsidi perumahan , KUR Renovasi Rumah &
-              pengembangan usaha – bunga ringan 6%, plafon hingga Rp100 juta!
+            
+            {/* Subtitle */}
+            <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-white/95">
+              Berangkat kerja dengan AMAN, Legal dengan Pembiayaan KUR-PMI
+            </h2>
+            
+            {/* Additional Text */}
+            <p className="text-lg md:text-xl mb-8 max-w-4xl mx-auto leading-relaxed text-white/90">
+              Tersedia fasilitas Pembiayaan bekerjasama dengan LENDANA yang telah Terdaftar di OJK
             </p>
+
+            {/* Badge */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-[#5680E9] border-4 border-white rounded-full px-8 py-4 shadow-2xl">
+                <span className="text-white font-bold text-xl md:text-2xl">
+                  Fasilitas KUR PMI 6% /tahun
+                </span>
+              </div>
+            </div>
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -368,7 +382,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 <Button
                   onClick={onGetStarted}
                   size="lg"
-                  className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
+                  className="bg-white text-[#5680E9] hover:bg-white/90 hover:text-[#5680E9]/90 font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
                 >
                   Daftar Sekarang
                 </Button>
@@ -380,7 +394,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 <Button
                   onClick={() => setShowAboutLendana(true)}
                   size="lg"
-                  className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#5680E9] font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
                 >
                   Tentang Lendana
                 </Button>

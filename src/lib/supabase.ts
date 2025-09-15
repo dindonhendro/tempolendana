@@ -110,13 +110,35 @@ export const signUp = async (
 };
 
 export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) throw error;
-  return data;
+  try {
+    console.log("Starting sign in process...");
+    
+    // Use a timeout to prevent hanging
+    const signInPromise = supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Sign in timeout")), 10000) // 10 second timeout
+    );
+    
+    const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+    
+    if (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+    
+    console.log("Sign in successful");
+    return data;
+  } catch (error: any) {
+    console.error("Sign in failed:", error);
+    if (error.message === "Sign in timeout") {
+      throw new Error("Sign in is taking too long. Please check your connection and try again.");
+    }
+    throw error;
+  }
 };
 
 export const signOut = async () => {
@@ -128,19 +150,16 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     console.log("Getting current user...");
 
-    // Get current auth user with timeout
-    const authPromise = supabase.auth.getUser();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Auth timeout")), 3000),
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = (await Promise.race([authPromise, timeoutPromise])) as any;
+    // Get current auth user with better error handling
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
       console.error("Auth error:", authError);
+      // If it's a network error, return null instead of throwing
+      if (authError.message?.includes('Failed to fetch') || authError.message?.includes('timeout')) {
+        console.warn("Network error during auth, returning null");
+        return null;
+      }
       return null;
     }
 
@@ -151,22 +170,13 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
     console.log("Auth user found:", user.id);
 
-    // Get user profile with timeout
+    // Get user profile with better error handling
     try {
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from("users")
         .select("*")
         .eq("id", user.id)
         .single();
-
-      const profileTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Profile timeout")), 2000),
-      );
-
-      const { data: profile, error } = (await Promise.race([
-        profilePromise,
-        profileTimeoutPromise,
-      ])) as any;
 
       if (error) {
         console.error("Error fetching user profile:", error);
@@ -185,8 +195,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
       console.log("User profile loaded:", profile?.email);
       return profile;
     } catch (profileError) {
-      console.error("Profile fetch timeout or error:", profileError);
-      // Return minimal user object from auth data
+      console.error("Profile fetch error:", profileError);
+      // Return minimal user object from auth data as fallback
       return {
         id: user.id,
         email: user.email || "",
@@ -198,7 +208,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
     }
   } catch (error) {
     console.error("Error in getCurrentUser:", error);
-    return null; // Don't throw, just return null
+    return null; // Don't throw, just return null to prevent app crashes
   }
 };
 

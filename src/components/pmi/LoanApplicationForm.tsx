@@ -179,6 +179,62 @@ export default function LoanApplicationForm({
         },
   );
 
+  // Cost component state
+  const [costData, setCostData] = useState({
+    // Biaya persiapan penempatan
+    biaya_pelatihan: 0,
+    biaya_sertifikasi: 0,
+    biaya_jasa_perusahaan: 0,
+    biaya_transportasi_lokal: 0,
+    biaya_visa_kerja: 0,
+    biaya_tiket_keberangkatan: 0,
+    biaya_tiket_pulang: 0,
+    biaya_akomodasi: 0,
+    // Biaya berkaitan dengan penempatan
+    biaya_pemeriksaan_kesehatan: 0,
+    biaya_jaminan_sosial: 0,
+    biaya_apostille: 0,
+    // Biaya lain-lain
+    biaya_lain_lain_1: 0,
+    biaya_lain_lain_2: 0,
+    keterangan_biaya_lain: "",
+  });
+
+  const updateCostData = (field: keyof typeof costData, value: any) => {
+    setCostData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Calculate total costs
+  const calculateTotalCosts = () => {
+    const biayaPersiapan = 
+      costData.biaya_pelatihan +
+      costData.biaya_sertifikasi +
+      costData.biaya_jasa_perusahaan +
+      costData.biaya_transportasi_lokal +
+      costData.biaya_visa_kerja +
+      costData.biaya_tiket_keberangkatan +
+      costData.biaya_tiket_pulang +
+      costData.biaya_akomodasi;
+
+    const biayaPenempatan = 
+      costData.biaya_pemeriksaan_kesehatan +
+      costData.biaya_jaminan_sosial +
+      costData.biaya_apostille;
+
+    const biayaLainLain = 
+      costData.biaya_lain_lain_1 +
+      costData.biaya_lain_lain_2;
+
+    const totalKeseluruhan = biayaPersiapan + biayaPenempatan + biayaLainLain;
+
+    return {
+      biayaPersiapan,
+      biayaPenempatan,
+      biayaLainLain,
+      totalKeseluruhan,
+    };
+  };
+
   const [files, setFiles] = useState<{
     ktp: File | null;
     selfie: File | null;
@@ -221,19 +277,76 @@ export default function LoanApplicationForm({
     tabel_angsuran_signed: null,
   });
 
+  // Prevent session timeout by keeping auth alive
   useEffect(() => {
-    loadAgentCompanies();
-    loadBanks();
+    const keepAlive = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Refresh the session to prevent timeout
+          await supabase.auth.refreshSession();
+        }
+      } catch (error) {
+        console.error("Session refresh error:", error);
+      }
+    }, 5 * 60 * 1000); // Refresh every 5 minutes
+
+    return () => clearInterval(keepAlive);
   }, []);
 
   useEffect(() => {
-    if (selectedBankId) {
-      loadBankProducts(selectedBankId, formData.submission_type || undefined);
-    } else {
-      setBankProducts([]);
-      setSelectedBankProductId("");
+    loadAgentCompanies();
+    loadBanks();
+    
+    // Load cost component data if editing
+    if (editData?.id) {
+      loadCostComponentData(editData.id);
     }
-  }, [selectedBankId, formData.submission_type]);
+  }, [editData?.id]);
+
+  // Add function to load cost component data
+  const loadCostComponentData = async (loanApplicationId: string) => {
+    try {
+      console.log("Loading cost component data for application:", loanApplicationId);
+      const { data, error } = await supabase
+        .from("komponen_biaya")
+        .select("*")
+        .eq("loan_application_id", loanApplicationId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No cost component data found - this is normal for older applications
+          console.log("No cost component data found for this application");
+          return;
+        }
+        console.error("Error loading cost component data:", error);
+        return;
+      }
+
+      if (data) {
+        console.log("Cost component data loaded:", data);
+        setCostData({
+          biaya_pelatihan: data.biaya_pelatihan || 0,
+          biaya_sertifikasi: data.biaya_sertifikasi || 0,
+          biaya_jasa_perusahaan: data.biaya_jasa_perusahaan || 0,
+          biaya_transportasi_lokal: data.biaya_transportasi_lokal || 0,
+          biaya_visa_kerja: data.biaya_visa_kerja || 0,
+          biaya_tiket_keberangkatan: data.biaya_tiket_keberangkatan || 0,
+          biaya_tiket_pulang: data.biaya_tiket_pulang || 0,
+          biaya_akomodasi: data.biaya_akomodasi || 0,
+          biaya_pemeriksaan_kesehatan: data.biaya_pemeriksaan_kesehatan || 0,
+          biaya_jaminan_sosial: data.biaya_jaminan_sosial || 0,
+          biaya_apostille: data.biaya_apostille || 0,
+          biaya_lain_lain_1: data.biaya_lain_lain_1 || 0,
+          biaya_lain_lain_2: data.biaya_lain_lain_2 || 0,
+          keterangan_biaya_lain: data.keterangan_biaya_lain || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading cost component data:", error);
+    }
+  };
 
   const loadAgentCompanies = async () => {
     try {
@@ -287,6 +400,10 @@ export default function LoanApplicationForm({
       console.error("Error loading bank products:", error);
       setBankProducts([]);
     }
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateFormData = (field: keyof LoanApplicationInsert, value: any) => {
@@ -516,6 +633,25 @@ export default function LoanApplicationForm({
           return;
         }
 
+        // Update or insert komponen_biaya data
+        if (calculateTotalCosts().totalKeseluruhan > 0) {
+          const { error: costError } = await supabase
+            .from("komponen_biaya")
+            .upsert({
+              loan_application_id: editData.id,
+              user_id: user.id,
+              ...costData,
+              updated_at: new Date().toISOString(),
+            });
+
+          if (costError) {
+            console.error("Error updating cost components:", costError);
+            // Don't fail the whole submission for cost component errors
+          } else {
+            console.log("Cost components updated successfully");
+          }
+        }
+
         console.log("Application updated successfully:", updateResult);
         alert("Application updated successfully!");
       } else {
@@ -550,7 +686,31 @@ export default function LoanApplicationForm({
           return;
         }
 
+        const newApplicationId = insertResult[0]?.id;
         console.log("Application inserted successfully:", insertResult);
+
+        // Insert komponen_biaya data if there are cost components
+        if (newApplicationId && calculateTotalCosts().totalKeseluruhan > 0) {
+          console.log("Inserting cost components...");
+          const { error: costError } = await supabase
+            .from("komponen_biaya")
+            .insert([{
+              loan_application_id: newApplicationId,
+              user_id: user.id,
+              ...costData,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }]);
+
+          if (costError) {
+            console.error("Error inserting cost components:", costError);
+            // Don't fail the whole submission for cost component errors
+            alert(`Application submitted successfully, but there was an issue saving cost components: ${costError.message}`);
+          } else {
+            console.log("Cost components inserted successfully");
+          }
+        }
+
         alert(
           `${formData.submission_type} application submitted successfully! Your application ID: ${insertResult[0]?.id?.substring(0, 8)}...`,
         );
@@ -817,8 +977,9 @@ export default function LoanApplicationForm({
     ? ["personal", "documents", "loan"] // Simplified 3-step flow for KUR Wirausaha
     : [
         "personal",
-        "documents",
+        "documents", 
         "agent",
+        "komponen-biaya", // Moved before loan
         "loan",
         "document-other",
         "family",
@@ -924,14 +1085,48 @@ export default function LoanApplicationForm({
           )}
         </CardHeader>
         <CardContent>
+          <div className="mb-6">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+              {tabs.map((step, index) => (
+                <div key={index} className="flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                      index + 1 === currentIndex + 1
+                        ? "bg-blue-600 text-white"
+                        : index + 1 < currentIndex + 1
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-300 text-gray-600"
+                    }`}
+                  >
+                    {index + 1}
+                  </div>
+                  <div className="ml-2 text-xs sm:text-sm font-medium text-gray-700 max-w-[100px] sm:max-w-none">
+                    {step}
+                  </div>
+                  {index < tabs.length - 1 && (
+                    <div className="w-4 sm:w-8 h-0.5 bg-gray-300 mx-2"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Step {currentIndex + 1}: {tabs[currentIndex]}
+              </h2>
+            </div>
+          </div>
+
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
             <TabsList
-              className={`grid w-full ${isKurWirausaha ? "grid-cols-3" : "grid-cols-9"}`}
+              className={`grid w-full ${isKurWirausaha ? "grid-cols-3" : "grid-cols-10"}`}
             >
               <TabsTrigger value="personal">1. Data Personal</TabsTrigger>
               <TabsTrigger value="documents">2. Doc</TabsTrigger>
               {!isKurWirausaha && (
                 <TabsTrigger value="agent">Agent</TabsTrigger>
+              )}
+              {!isKurWirausaha && (
+                <TabsTrigger value="komponen-biaya">Komponen Biaya</TabsTrigger>
               )}
               <TabsTrigger value="loan">
                 {isKurWirausaha ? "3. Data Pinjaman" : "Loan"}
@@ -957,123 +1152,157 @@ export default function LoanApplicationForm({
                   <Label htmlFor="full_name">Full Name *</Label>
                   <Input
                     id="full_name"
-                    value={formData.full_name || ""}
-                    onChange={(e) =>
-                      updateFormData("full_name", e.target.value)
-                    }
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="gender">Gender *</Label>
-                  <Select
-                    value={formData.gender || ""}
-                    onValueChange={(value) => updateFormData("gender", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="age">Age *</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={formData.age || ""}
-                    onChange={(e) =>
-                      updateFormData("age", parseInt(e.target.value) || null)
-                    }
-                    placeholder="Enter your age"
+                    name="full_name"
+                    value={formData.full_name}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="birth_place">Birth Place *</Label>
+                  <Label htmlFor="nomor_sisko_pmi">ID PMI</Label>
                   <Input
-                    id="birth_place"
-                    value={formData.birth_place || ""}
-                    onChange={(e) =>
-                      updateFormData("birth_place", e.target.value)
-                    }
-                    placeholder="Enter your birth place"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="birth_date">Birth Date *</Label>
-                  <Input
-                    id="birth_date"
-                    type="date"
-                    value={formData.birth_date || ""}
-                    onChange={(e) =>
-                      updateFormData("birth_date", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone_number">Phone Number *</Label>
-                  <Input
-                    id="phone_number"
-                    value={formData.phone_number || ""}
-                    onChange={(e) =>
-                      updateFormData("phone_number", e.target.value)
-                    }
-                    placeholder="Enter your phone number"
+                    id="nomor_sisko_pmi"
+                    name="nomor_sisko_pmi"
+                    value={formData.nomor_sisko}
+                    onChange={handleInputChange}
+                    className="mt-1"
                   />
                 </div>
                 <div>
                   <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    value={formData.email || ""}
-                    onChange={(e) => updateFormData("email", e.target.value)}
-                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone_number">Phone Number *</Label>
+                  <Input
+                    id="phone_number"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
                   />
                 </div>
                 <div>
                   <Label htmlFor="nik_ktp">NIK KTP *</Label>
                   <Input
                     id="nik_ktp"
-                    value={formData.nik_ktp || ""}
-                    onChange={(e) => updateFormData("nik_ktp", e.target.value)}
-                    placeholder="Enter your NIK KTP"
+                    name="nik_ktp"
+                    value={formData.nik_ktp}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="last_education">Last Education *</Label>
+                  <Label htmlFor="place_of_birth">Place of Birth *</Label>
+                  <Input
+                    id="place_of_birth"
+                    name="place_of_birth"
+                    value={formData.birth_place}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                  <Input
+                    id="date_of_birth"
+                    name="date_of_birth"
+                    type="date"
+                    value={formData.birth_date}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gender">Gender *</Label>
                   <Select
-                    value={formData.last_education || ""}
+                    value={formData.gender}
                     onValueChange={(value) =>
-                      updateFormData("last_education", value)
+                      setFormData({ ...formData, gender: value })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select education level" />
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="SD">SD</SelectItem>
-                      <SelectItem value="SMP">SMP</SelectItem>
-                      <SelectItem value="SMA">SMA</SelectItem>
-                      <SelectItem value="D3">D3</SelectItem>
-                      <SelectItem value="S1">S1</SelectItem>
-                      <SelectItem value="S2">S2</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="nomor_sisko">Nomor Sisko PMI *</Label>
-                  <Input
-                    id="nomor_sisko"
-                    value={formData.nomor_sisko || ""}
-                    onChange={(e) =>
-                      updateFormData("nomor_sisko", e.target.value)
+                  <Label htmlFor="marital_status">Marital Status *</Label>
+                  <Select
+                    value={formData.marital_status}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, marital_status: value })
                     }
-                    placeholder="Enter your Sisko PMI number"
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                      <SelectItem value="widowed">Widowed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="education_level">Education Level *</Label>
+                  <Select
+                    value={formData.education_level}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, education_level: value })
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select education level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="elementary">Elementary</SelectItem>
+                      <SelectItem value="junior_high">Junior High</SelectItem>
+                      <SelectItem value="senior_high">Senior High</SelectItem>
+                      <SelectItem value="diploma">Diploma</SelectItem>
+                      <SelectItem value="bachelor">Bachelor</SelectItem>
+                      <SelectItem value="master">Master</SelectItem>
+                      <SelectItem value="doctorate">Doctorate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="religion">Religion</Label>
+                  <Input
+                    id="religion"
+                    name="religion"
+                    value={formData.religion}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nationality">Nationality *</Label>
+                  <Input
+                    id="nationality"
+                    name="nationality"
+                    value={formData.nationality}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1"
                   />
                 </div>
               </div>
@@ -1081,6 +1310,7 @@ export default function LoanApplicationForm({
                 <Label htmlFor="address_ktp">Address KTP</Label>
                 <Textarea
                   id="address_ktp"
+                  name="address_ktp"
                   value={formData.address_ktp || ""}
                   onChange={(e) =>
                     updateFormData("address_ktp", e.target.value)
@@ -1092,6 +1322,7 @@ export default function LoanApplicationForm({
                 <Label htmlFor="address_domicile">Address Domicile</Label>
                 <Textarea
                   id="address_domicile"
+                  name="address_domicile"
                   value={formData.address_domicile || ""}
                   onChange={(e) =>
                     updateFormData("address_domicile", e.target.value)
@@ -1340,7 +1571,7 @@ export default function LoanApplicationForm({
                       </label>
                       {files.tabel_angsuran_signed && (
                         <p className="mt-2 text-sm text-green-600">
-                          Selected: {files.tabel_angsuran_signed.name}
+                          Selected: {files.tabel_angsuran_signed?.name}
                         </p>
                       )}
                     </div>
@@ -1473,10 +1704,6 @@ export default function LoanApplicationForm({
                           : formData.submission_type || "-"}
                       </p>
                       <p>
-                        <span className="font-medium">Work Location:</span>{" "}
-                        {formData.work_location || "-"}
-                      </p>
-                      <p>
                         <span className="font-medium">
                           Country of Placement:
                         </span>{" "}
@@ -1527,7 +1754,7 @@ export default function LoanApplicationForm({
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-200">
+                <div className="mt-6 p-4 bg-blue-50 rounded border">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Please review all information
                     carefully before submitting. Once submitted, your
@@ -1712,6 +1939,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="nama_ibu_kandung">Nama Ibu Kandung *</Label>
                   <Input
                     id="nama_ibu_kandung"
+                    name="nama_ibu_kandung"
                     value={formData.nama_ibu_kandung || ""}
                     onChange={(e) =>
                       updateFormData("nama_ibu_kandung", e.target.value)
@@ -1723,6 +1951,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="nama_pasangan">Nama Pasangan</Label>
                   <Input
                     id="nama_pasangan"
+                    name="nama_pasangan"
                     value={formData.nama_pasangan || ""}
                     onChange={(e) =>
                       updateFormData("nama_pasangan", e.target.value)
@@ -1734,6 +1963,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="ktp_pasangan">KTP Pasangan</Label>
                   <Input
                     id="ktp_pasangan"
+                    name="ktp_pasangan"
                     value={formData.ktp_pasangan || ""}
                     onChange={(e) =>
                       updateFormData("ktp_pasangan", e.target.value)
@@ -1745,6 +1975,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="telp_pasangan">Telp Pasangan</Label>
                   <Input
                     id="telp_pasangan"
+                    name="telp_pasangan"
                     value={formData.telp_pasangan || ""}
                     onChange={(e) =>
                       updateFormData("telp_pasangan", e.target.value)
@@ -1757,6 +1988,7 @@ export default function LoanApplicationForm({
                 <Label htmlFor="alamat_pasangan">Alamat Pasangan</Label>
                 <Textarea
                   id="alamat_pasangan"
+                  name="alamat_pasangan"
                   value={formData.alamat_pasangan || ""}
                   onChange={(e) =>
                     updateFormData("alamat_pasangan", e.target.value)
@@ -1772,6 +2004,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="nama_pemberi_kerja">Nama Pemberi Kerja</Label>
                   <Input
                     id="nama_pemberi_kerja"
+                    name="nama_pemberi_kerja"
                     value={formData.nama_pemberi_kerja || ""}
                     onChange={(e) =>
                       updateFormData("nama_pemberi_kerja", e.target.value)
@@ -1783,6 +2016,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="telp_pemberi_kerja">Telp Pemberi Kerja</Label>
                   <Input
                     id="telp_pemberi_kerja"
+                    name="telp_pemberi_kerja"
                     value={formData.telp_pemberi_kerja || ""}
                     onChange={(e) =>
                       updateFormData("telp_pemberi_kerja", e.target.value)
@@ -1794,6 +2028,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="institution">Institution</Label>
                   <Input
                     id="institution"
+                    name="institution"
                     value={formData.institution || ""}
                     onChange={(e) =>
                       updateFormData("institution", e.target.value)
@@ -1805,6 +2040,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="major">Major</Label>
                   <Input
                     id="major"
+                    name="major"
                     value={formData.major || ""}
                     onChange={(e) => updateFormData("major", e.target.value)}
                     placeholder="Enter your major/field"
@@ -1814,6 +2050,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="work_experience">Work Experience</Label>
                   <Input
                     id="work_experience"
+                    name="work_experience"
                     value={formData.work_experience || ""}
                     onChange={(e) =>
                       updateFormData("work_experience", e.target.value)
@@ -1825,6 +2062,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="work_location">Work Location</Label>
                   <Input
                     id="work_location"
+                    name="work_location"
                     value={formData.work_location || ""}
                     onChange={(e) =>
                       updateFormData("work_location", e.target.value)
@@ -1838,6 +2076,7 @@ export default function LoanApplicationForm({
                   </Label>
                   <Input
                     id="tanggal_keberangkatan"
+                    name="tanggal_keberangkatan"
                     type="date"
                     value={formData.tanggal_keberangkatan || ""}
                     onChange={(e) =>
@@ -1852,6 +2091,7 @@ export default function LoanApplicationForm({
                 </Label>
                 <Textarea
                   id="alamat_pemberi_kerja"
+                  name="alamat_pemberi_kerja"
                   value={formData.alamat_pemberi_kerja || ""}
                   onChange={(e) =>
                     updateFormData("alamat_pemberi_kerja", e.target.value)
@@ -1872,6 +2112,35 @@ export default function LoanApplicationForm({
                     akan langsung diteruskan ke validator Lendana untuk proses
                     persetujuan.
                   </p>
+                </div>
+              )}
+
+              {/* Show total cost from komponen biaya if available */}
+              {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                    Estimasi Biaya dari Komponen Biaya
+                  </h3>
+                  <p className="text-blue-700 mb-2">
+                    Total estimasi biaya PMI: <strong>Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}</strong>
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    Jumlah pinjaman telah diisi otomatis berdasarkan total estimasi biaya. Anda dapat menyesuaikan jika diperlukan.
+                  </p>
+                </div>
+              )}
+
+              {/* Add button to auto-fill loan amount from cost calculation */}
+              {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => updateFormData("loan_amount", calculateTotalCosts().totalKeseluruhan)}
+                    className="text-sm"
+                  >
+                    Gunakan Total Estimasi Biaya (Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")})
+                  </Button>
                 </div>
               )}
 
@@ -1936,6 +2205,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="loan_amount">Loan Amount *</Label>
                   <Input
                     id="loan_amount"
+                    name="loan_amount"
                     type="number"
                     value={formData.loan_amount || ""}
                     onChange={(e) =>
@@ -1947,6 +2217,11 @@ export default function LoanApplicationForm({
                     placeholder="Enter loan amount"
                     required
                   />
+                  {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Otomatis diisi dari total estimasi biaya: Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="tenor_months">Tenor (Months) *</Label>
@@ -1973,6 +2248,7 @@ export default function LoanApplicationForm({
                   <Label htmlFor="bunga_bank">Bunga Bank (%)</Label>
                   <Input
                     id="bunga_bank"
+                    name="bunga_bank"
                     type="number"
                     step="0.01"
                     min="0"
@@ -2074,6 +2350,259 @@ export default function LoanApplicationForm({
                     )}
                   </div>
                 )}
+            </TabsContent>
+
+            <TabsContent value="komponen-biaya" className="space-y-6 mt-6">
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                  Komponen Biaya PMI
+                </h3>
+                <p className="text-blue-700">
+                  Silakan isi estimasi biaya-biaya yang diperlukan untuk penempatan PMI. 
+                  Informasi ini akan membantu dalam perhitungan kebutuhan pinjaman.
+                </p>
+              </div>
+
+              {/* Biaya Persiapan Penempatan */}
+              <div className="bg-white p-6 rounded-lg border">
+                <h4 className="text-lg font-semibold text-[#5680E9] mb-4">
+                  1. Biaya Persiapan Penempatan
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="biaya_pelatihan">a. Pelatihan</Label>
+                    <Input
+                      id="biaya_pelatihan"
+                      name="biaya_pelatihan"
+                      type="number"
+                      value={costData.biaya_pelatihan || ""}
+                      onChange={(e) => updateCostData("biaya_pelatihan", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya pelatihan"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_sertifikasi">b. Sertifikasi Kompetensi</Label>
+                    <Input
+                      id="biaya_sertifikasi"
+                      name="biaya_sertifikasi"
+                      type="number"
+                      value={costData.biaya_sertifikasi || ""}
+                      onChange={(e) => updateCostData("biaya_sertifikasi", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya sertifikasi"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_jasa_perusahaan">c. Jasa Perusahaan</Label>
+                    <Input
+                      id="biaya_jasa_perusahaan"
+                      name="biaya_jasa_perusahaan"
+                      type="number"
+                      value={costData.biaya_jasa_perusahaan || ""}
+                      onChange={(e) => updateCostData("biaya_jasa_perusahaan", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya jasa perusahaan"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_transportasi_lokal">d. Transportasi Lokal dari Daerah Asal ke Tempat Keberangkatan di Indonesia</Label>
+                    <Input
+                      id="biaya_transportasi_lokal"
+                      name="biaya_transportasi_lokal"
+                      type="number"
+                      value={costData.biaya_transportasi_lokal || ""}
+                      onChange={(e) => updateCostData("biaya_transportasi_lokal", parseInt(e.target.value) || 0)}
+                      placeholder="Dari daerah asal ke tempat keberangkatan"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_visa_kerja">e. Visa Kerja</Label>
+                    <Input
+                      id="biaya_visa_kerja"
+                      name="biaya_visa_kerja"
+                      type="number"
+                      value={costData.biaya_visa_kerja || ""}
+                      onChange={(e) => updateCostData("biaya_visa_kerja", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya visa kerja"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_tiket_keberangkatan">f. Tiket Keberangkatan</Label>
+                    <Input
+                      id="biaya_tiket_keberangkatan"
+                      name="biaya_tiket_keberangkatan"
+                      type="number"
+                      value={costData.biaya_tiket_keberangkatan || ""}
+                      onChange={(e) => updateCostData("biaya_tiket_keberangkatan", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya tiket keberangkatan"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_tiket_pulang">g. Tiket Pulang</Label>
+                    <Input
+                      id="biaya_tiket_pulang"
+                      name="biaya_tiket_pulang"
+                      type="number"
+                      value={costData.biaya_tiket_pulang || ""}
+                      onChange={(e) => updateCostData("biaya_tiket_pulang", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya tiket pulang"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_akomodasi">h. Akomodasi</Label>
+                    <Input
+                      id="biaya_akomodasi"
+                      name="biaya_akomodasi"
+                      type="number"
+                      value={costData.biaya_akomodasi || ""}
+                      onChange={(e) => updateCostData("biaya_akomodasi", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya akomodasi"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Biaya Berkaitan dengan Penempatan */}
+              <div className="bg-white p-6 rounded-lg border">
+                <h4 className="text-lg font-semibold text-[#5680E9] mb-4">
+                  2. Biaya Berkaitan dengan Penempatan
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="biaya_pemeriksaan_kesehatan">a. Pemeriksaan Kesehatan dan Psikologi</Label>
+                    <Input
+                      id="biaya_pemeriksaan_kesehatan"
+                      name="biaya_pemeriksaan_kesehatan"
+                      type="number"
+                      value={costData.biaya_pemeriksaan_kesehatan || ""}
+                      onChange={(e) => updateCostData("biaya_pemeriksaan_kesehatan", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya pemeriksaan kesehatan"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_jaminan_sosial">b. Jaminan Sosial Pekerja Migran Indonesia</Label>
+                    <Input
+                      id="biaya_jaminan_sosial"
+                      name="biaya_jaminan_sosial"
+                      type="number"
+                      value={costData.biaya_jaminan_sosial || ""}
+                      onChange={(e) => updateCostData("biaya_jaminan_sosial", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya jaminan sosial"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_apostille">c. Apostille</Label>
+                    <Input
+                      id="biaya_apostille"
+                      name="biaya_apostille"
+                      type="number"
+                      value={costData.biaya_apostille || ""}
+                      onChange={(e) => updateCostData("biaya_apostille", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya apostille"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Biaya Lain-lain */}
+              <div className="bg-white p-6 rounded-lg border">
+                <h4 className="text-lg font-semibold text-[#5680E9] mb-4">
+                  3. Biaya Lain-lain
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label htmlFor="biaya_lain_lain_1">Biaya Lain-lain 1</Label>
+                    <Input
+                      id="biaya_lain_lain_1"
+                      name="biaya_lain_lain_1"
+                      type="number"
+                      value={costData.biaya_lain_lain_1 || ""}
+                      onChange={(e) => updateCostData("biaya_lain_lain_1", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya lain-lain"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="biaya_lain_lain_2">Biaya Lain-lain 2</Label>
+                    <Input
+                      id="biaya_lain_lain_2"
+                      name="biaya_lain_lain_2"
+                      type="number"
+                      value={costData.biaya_lain_lain_2 || ""}
+                      onChange={(e) => updateCostData("biaya_lain_lain_2", parseInt(e.target.value) || 0)}
+                      placeholder="Masukkan biaya lain-lain"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="keterangan_biaya_lain">Keterangan Biaya Lain-lain</Label>
+                    <Textarea
+                      id="keterangan_biaya_lain"
+                      name="keterangan_biaya_lain"
+                      value={costData.keterangan_biaya_lain}
+                      onChange={(e) => updateCostData("keterangan_biaya_lain", e.target.value)}
+                      placeholder="Jelaskan detail biaya lain-lain jika ada"
+                      className="mt-1"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Estimasi Biaya */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                <h4 className="text-lg font-semibold text-green-800 mb-4">
+                  Total Estimasi Biaya
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm text-green-600 mb-1">Biaya Persiapan Penempatan</p>
+                    <p className="text-xl font-bold text-green-800">
+                      Rp {calculateTotalCosts().biayaPersiapan.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-green-600 mb-1">Biaya Penempatan</p>
+                    <p className="text-xl font-bold text-green-800">
+                      Rp {calculateTotalCosts().biayaPenempatan.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-green-600 mb-1">Biaya Lain-lain</p>
+                    <p className="text-xl font-bold text-green-800">
+                      Rp {calculateTotalCosts().biayaLainLain.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-green-600 mb-1">Total Keseluruhan</p>
+                    <p className="text-2xl font-bold text-green-800">
+                      Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 p-4 bg-white rounded border">
+                  <p className="text-sm text-gray-600">
+                    <strong>Catatan:</strong> Total estimasi biaya ini akan membantu dalam menentukan 
+                    jumlah pinjaman yang dibutuhkan. Pastikan semua komponen biaya telah diisi dengan akurat.
+                  </p>
+                  {calculateTotalCosts().totalKeseluruhan > 0 && (
+                    <p className="text-sm text-blue-600 mt-2">
+                      <strong>Saran:</strong> Pertimbangkan untuk mengajukan pinjaman sebesar 
+                      Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")} 
+                      atau lebih untuk menutupi seluruh biaya penempatan PMI.
+                    </p>
+                  )}
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
 

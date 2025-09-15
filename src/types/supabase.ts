@@ -632,6 +632,92 @@ export type Database = {
           },
         ]
       }
+      komponen_biaya: {
+        Row: {
+          biaya_akomodasi: number | null
+          biaya_apostille: number | null
+          biaya_jaminan_sosial: number | null
+          biaya_jasa_perusahaan: number | null
+          biaya_lain_lain_1: number | null
+          biaya_lain_lain_2: number | null
+          biaya_pelatihan: number | null
+          biaya_pemeriksaan_kesehatan: number | null
+          biaya_sertifikasi: number | null
+          biaya_tiket_keberangkatan: number | null
+          biaya_tiket_pulang: number | null
+          biaya_transportasi_lokal: number | null
+          biaya_visa_kerja: number | null
+          created_at: string | null
+          id: string
+          keterangan_biaya_lain: string | null
+          loan_application_id: string | null
+          total_biaya_lain_lain: number | null
+          total_biaya_penempatan: number | null
+          total_biaya_persiapan: number | null
+          total_keseluruhan: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          biaya_akomodasi?: number | null
+          biaya_apostille?: number | null
+          biaya_jaminan_sosial?: number | null
+          biaya_jasa_perusahaan?: number | null
+          biaya_lain_lain_1?: number | null
+          biaya_lain_lain_2?: number | null
+          biaya_pelatihan?: number | null
+          biaya_pemeriksaan_kesehatan?: number | null
+          biaya_sertifikasi?: number | null
+          biaya_tiket_keberangkatan?: number | null
+          biaya_tiket_pulang?: number | null
+          biaya_transportasi_lokal?: number | null
+          biaya_visa_kerja?: number | null
+          created_at?: string | null
+          id?: string
+          keterangan_biaya_lain?: string | null
+          loan_application_id?: string | null
+          total_biaya_lain_lain?: number | null
+          total_biaya_penempatan?: number | null
+          total_biaya_persiapan?: number | null
+          total_keseluruhan?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          biaya_akomodasi?: number | null
+          biaya_apostille?: number | null
+          biaya_jaminan_sosial?: number | null
+          biaya_jasa_perusahaan?: number | null
+          biaya_lain_lain_1?: number | null
+          biaya_lain_lain_2?: number | null
+          biaya_pelatihan?: number | null
+          biaya_pemeriksaan_kesehatan?: number | null
+          biaya_sertifikasi?: number | null
+          biaya_tiket_keberangkatan?: number | null
+          biaya_tiket_pulang?: number | null
+          biaya_transportasi_lokal?: number | null
+          biaya_visa_kerja?: number | null
+          created_at?: string | null
+          id?: string
+          keterangan_biaya_lain?: string | null
+          loan_application_id?: string | null
+          total_biaya_lain_lain?: number | null
+          total_biaya_penempatan?: number | null
+          total_biaya_persiapan?: number | null
+          total_keseluruhan?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "komponen_biaya_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_applications: {
         Row: {
           address_domicile: string | null

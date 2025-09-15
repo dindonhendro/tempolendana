@@ -66,56 +66,122 @@ import {
 } from "lucide-react";
 
 function App() {
+  // Core auth state - must be first and in consistent order
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
+  // Admin section state
+  const [activeAdminSection, setActiveAdminSection] = useState<string | null>(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  // Data state - keep consistent order
+  const [banks, setBanks] = useState<Tables<"banks">[]>([]);
+  const [agentCompanies, setAgentCompanies] = useState<Tables<"agent_companies">[]>([]);
+  const [bankBranches, setBankBranches] = useState<Tables<"bank_branches">[]>([]);
+  const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>([]);
+  const [bankStaff, setBankStaff] = useState<Tables<"bank_staff">[]>([]);
+  const [agentStaff, setAgentStaff] = useState<Tables<"agent_staff">[]>([]);
+  const [insuranceCompanies, setInsuranceCompanies] = useState<Tables<"insurance_companies">[]>([]);
+  const [collectorCompanies, setCollectorCompanies] = useState<Tables<"collector_companies">[]>([]);
+  const [allApplications, setAllApplications] = useState<Tables<"loan_applications">[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<Tables<"loan_applications">[]>([]);
+
+  // Edit state - keep consistent order
+  const [editingBank, setEditingBank] = useState<Tables<"banks"> | null>(null);
+  const [editingAgent, setEditingAgent] = useState<Tables<"agent_companies"> | null>(null);
+  const [editingBranch, setEditingBranch] = useState<Tables<"bank_branches"> | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Tables<"bank_products"> | null>(null);
+  const [editingStaff, setEditingStaff] = useState<Tables<"bank_staff"> | null>(null);
+  const [editingInsurance, setEditingInsurance] = useState<Tables<"insurance_companies"> | null>(null);
+  const [editingCollector, setEditingCollector] = useState<Tables<"collector_companies"> | null>(null);
+  const [editingApplication, setEditingApplication] = useState<Tables<"loan_applications"> | null>(null);
+
+  // Form visibility state - keep consistent order
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [showAgentForm, setShowAgentForm] = useState(false);
+  const [showBranchForm, setShowBranchForm] = useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [showStaffForm, setShowStaffForm] = useState(false);
+  const [showInsuranceForm, setShowInsuranceForm] = useState(false);
+  const [showCollectorForm, setShowCollectorForm] = useState(false);
+  const [showApplicationEditDialog, setShowApplicationEditDialog] = useState(false);
+
+  // Search and system stats state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [systemStats, setSystemStats] = useState<{
+    totalUsers: number;
+    totalApplications: number;
+    totalBanks: number;
+    totalAgents: number;
+    pendingApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    recentApplications: any[];
+  } | null>(null);
+
+  // ALWAYS call useRoutes - this must be called unconditionally
+  const tempoRoutes = useRoutes(routes);
+
+  // Auth initialization effect - MUST be first useEffect
   useEffect(() => {
     let isMounted = true;
-    let initTimeout: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log("Starting auth initialization...");
 
-        // Set a reasonable timeout for auth initialization
-        initTimeout = setTimeout(() => {
-          if (isMounted && !authInitialized) {
-            console.warn("Auth initialization timeout");
-            setAuthError("Connection timeout - please refresh the page");
+        // Set a timeout to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          if (isMounted && loading) {
+            console.warn("Auth initialization timeout - proceeding without auth");
             setUser(null);
             setLoading(false);
             setAuthInitialized(true);
+            setAuthError(null);
           }
-        }, 5000); // Reduced from 8000ms to 5000ms
+        }, 2000); // Reduced to 2 seconds
 
-        const currentUser = await getCurrentUser();
+        try {
+          const currentUser = await getCurrentUser();
+          
+          if (isMounted) {
+            clearTimeout(timeoutId);
+            setUser(currentUser);
+            setLoading(false);
+            setAuthInitialized(true);
+            setAuthError(null);
 
-        if (isMounted) {
-          clearTimeout(initTimeout);
-          setUser(currentUser);
-          setLoading(false);
-          setAuthInitialized(true);
-          setAuthError(null);
-
-          if (currentUser) {
-            console.log(
-              "User authenticated:",
-              currentUser.email,
-              currentUser.role,
-            );
-          } else {
-            console.log("No authenticated user found");
+            if (currentUser) {
+              console.log(
+                "User authenticated:",
+                currentUser.email,
+                currentUser.role,
+              );
+            } else {
+              console.log("No authenticated user found");
+            }
+          }
+        } catch (authError) {
+          console.warn("Auth initialization failed, continuing without auth:", authError);
+          if (isMounted) {
+            clearTimeout(timeoutId);
+            setUser(null);
+            setAuthError(null);
+            setLoading(false);
+            setAuthInitialized(true);
           }
         }
       } catch (error: any) {
         if (isMounted) {
           console.error("Error in auth initialization:", error);
-          clearTimeout(initTimeout);
+          clearTimeout(timeoutId);
 
-          // Simplified error handling - no automatic retries
-          setAuthError(error.message || "Authentication failed");
+          // Don't show auth errors to user, just continue
+          setAuthError(null);
           setUser(null);
           setLoading(false);
           setAuthInitialized(true);
@@ -126,7 +192,7 @@ function App() {
     // Initialize auth immediately
     initializeAuth();
 
-    // Listen for auth changes with simplified error handling
+    // Simplified auth state change handler
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -135,11 +201,21 @@ function App() {
       console.log("Auth state change:", event, session?.user?.id);
 
       try {
-        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          console.log("Processing sign in or token refresh");
-          const currentUser = await getCurrentUser();
+        // Handle auth changes more efficiently
+        if (event === "SIGNED_IN" && session?.user) {
+          console.log("User signed in, updating state");
           if (isMounted) {
-            setUser(currentUser);
+            // Use session data directly for faster response
+            const quickUser = {
+              id: session.user.id,
+              email: session.user.email || "",
+              full_name: session.user.user_metadata?.full_name || session.user.email || "",
+              role: session.user.user_metadata?.role || "user",
+              created_at: session.user.created_at || new Date().toISOString(),
+              updated_at: session.user.updated_at || new Date().toISOString(),
+            } as User;
+            
+            setUser(quickUser);
             setAuthError(null);
             setLoading(false);
             setAuthInitialized(true);
@@ -156,7 +232,8 @@ function App() {
       } catch (error: any) {
         console.error("Error in auth state change handler:", error);
         if (isMounted) {
-          setAuthError("Authentication error occurred");
+          // Don't show errors, just continue
+          setAuthError(null);
           setLoading(false);
           setAuthInitialized(true);
         }
@@ -165,10 +242,10 @@ function App() {
 
     return () => {
       isMounted = false;
-      if (initTimeout) clearTimeout(initTimeout);
+      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, []); // Removed retryCount dependency
+  }, []);
 
   const checkUser = async () => {
     try {
@@ -182,8 +259,6 @@ function App() {
       setUser(null);
     }
   };
-
-  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -206,61 +281,6 @@ function App() {
       }, 100);
     }
   };
-
-  const [activeAdminSection, setActiveAdminSection] = useState<string | null>(
-    null,
-  );
-  const [banks, setBanks] = useState<Tables<"banks">[]>([]);
-  const [agentCompanies, setAgentCompanies] = useState<
-    Tables<"agent_companies">[]
-  >([]);
-  const [bankBranches, setBankBranches] = useState<Tables<"bank_branches">[]>(
-    [],
-  );
-  const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>(
-    [],
-  );
-  const [bankStaff, setBankStaff] = useState<Tables<"bank_staff">[]>([]);
-  const [agentStaff, setAgentStaff] = useState<Tables<"agent_staff">[]>([]);
-  const [insuranceCompanies, setInsuranceCompanies] = useState<
-    Tables<"insurance_companies">[]
-  >([]);
-  const [collectorCompanies, setCollectorCompanies] = useState<
-    Tables<"collector_companies">[]
-  >([]);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [editingBank, setEditingBank] = useState<Tables<"banks"> | null>(null);
-  const [editingAgent, setEditingAgent] =
-    useState<Tables<"agent_companies"> | null>(null);
-  const [editingBranch, setEditingBranch] =
-    useState<Tables<"bank_branches"> | null>(null);
-  const [editingProduct, setEditingProduct] =
-    useState<Tables<"bank_products"> | null>(null);
-  const [editingStaff, setEditingStaff] = useState<Tables<"bank_staff"> | null>(
-    null,
-  );
-  const [editingInsurance, setEditingInsurance] =
-    useState<Tables<"insurance_companies"> | null>(null);
-  const [editingCollector, setEditingCollector] =
-    useState<Tables<"collector_companies"> | null>(null);
-  const [showBankForm, setShowBankForm] = useState(false);
-  const [showAgentForm, setShowAgentForm] = useState(false);
-  const [showBranchForm, setShowBranchForm] = useState(false);
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [showStaffForm, setShowStaffForm] = useState(false);
-  const [showInsuranceForm, setShowInsuranceForm] = useState(false);
-  const [showCollectorForm, setShowCollectorForm] = useState(false);
-  const [allApplications, setAllApplications] = useState<
-    Tables<"loan_applications">[]
-  >([]);
-  const [editingApplication, setEditingApplication] =
-    useState<Tables<"loan_applications"> | null>(null);
-  const [showApplicationEditDialog, setShowApplicationEditDialog] =
-    useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredApplications, setFilteredApplications] = useState<
-    Tables<"loan_applications">[]
-  >([]);
 
   const fetchBanks = async () => {
     try {
@@ -801,17 +821,6 @@ function App() {
     }
   };
 
-  const [systemStats, setSystemStats] = useState<{
-    totalUsers: number;
-    totalApplications: number;
-    totalBanks: number;
-    totalAgents: number;
-    pendingApplications: number;
-    approvedApplications: number;
-    rejectedApplications: number;
-    recentApplications: any[];
-  } | null>(null);
-
   const fetchSystemStats = async () => {
     try {
       setAdminLoading(true);
@@ -934,46 +943,46 @@ function App() {
     }
   };
 
-  const filterApplications = (
-    applications: Tables<"loan_applications">[],
-    term: string,
-  ) => {
-    if (!term.trim()) {
-      return applications;
-    }
+  // Filter applications effect - must be second useEffect
+  useEffect(() => {
+    const filterApplications = (
+      applications: Tables<"loan_applications">[],
+      term: string,
+    ) => {
+      if (!term.trim()) {
+        return applications;
+      }
 
-    const searchTerm = term.toLowerCase();
-    return applications.filter((app) => {
-      // Search by applicant name
-      if (app.full_name?.toLowerCase().includes(searchTerm)) return true;
+      const searchTerm = term.toLowerCase();
+      return applications.filter((app) => {
+        // Search by applicant name
+        if (app.full_name?.toLowerCase().includes(searchTerm)) return true;
 
-      // Search by email
-      if (app.email?.toLowerCase().includes(searchTerm)) return true;
+        // Search by email
+        if (app.email?.toLowerCase().includes(searchTerm)) return true;
 
-      // Search by phone
-      if (app.phone_number?.toLowerCase().includes(searchTerm)) return true;
+        // Search by phone
+        if (app.phone_number?.toLowerCase().includes(searchTerm)) return true;
 
-      // Search by status
-      if (app.status?.toLowerCase().includes(searchTerm)) return true;
+        // Search by status
+        if (app.status?.toLowerCase().includes(searchTerm)) return true;
 
-      // Search by agent company name
-      if (
-        (app as any).agent_companies?.name?.toLowerCase().includes(searchTerm)
-      )
-        return true;
+        // Search by agent company name
+        if (
+          (app as any).agent_companies?.name?.toLowerCase().includes(searchTerm)
+        )
+          return true;
 
-      // Search by NIK KTP
-      if (app.nik_ktp?.toLowerCase().includes(searchTerm)) return true;
+        // Search by NIK KTP
+        if (app.nik_ktp?.toLowerCase().includes(searchTerm)) return true;
 
-      // Search by work location
-      if (app.work_location?.toLowerCase().includes(searchTerm)) return true;
+        // Search by work location
+        if (app.work_location?.toLowerCase().includes(searchTerm)) return true;
 
-      return false;
-    });
-  };
+        return false;
+      });
+    };
 
-  // Update filtered applications when search term or all applications change
-  React.useEffect(() => {
     const filtered = filterApplications(allApplications, searchTerm);
     setFilteredApplications(filtered);
   }, [allApplications, searchTerm]);
@@ -3103,24 +3112,16 @@ function App() {
     }
   };
 
-  if (loading && !authInitialized) {
+  if (loading || !authInitialized) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#5680E9] to-[#8860D0] flex items-center justify-center">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold mb-2">Lendana PMI</h2>
           <p className="text-sm opacity-90">Initializing application...</p>
-          {authError && (
-            <div className="mt-4 p-3 bg-red-500/20 border border-red-300 rounded text-red-100 text-sm max-w-md">
-              <p>{authError}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors"
-              >
-                Refresh Page
-              </button>
-            </div>
-          )}
+          <div className="mt-4 text-xs opacity-75">
+            <p>If this takes too long, the app will continue automatically</p>
+          </div>
         </div>
       </div>
     );
@@ -3206,7 +3207,8 @@ function App() {
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        {/* Always render tempo routes when in tempo environment */}
+        {import.meta.env.VITE_TEMPO === "true" && tempoRoutes}
       </>
     </Suspense>
   );
