@@ -304,6 +304,17 @@ export default function LoanApplicationForm({
     }
   }, [editData?.id]);
 
+  // Add useEffect to load bank products when bank or submission type changes
+  useEffect(() => {
+    if (selectedBankId && (formData.submission_type || isKurWirausaha)) {
+      const submissionType = isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : formData.submission_type;
+      console.log("Loading bank products for:", { selectedBankId, submissionType });
+      loadBankProducts(selectedBankId, submissionType);
+    } else {
+      setBankProducts([]);
+    }
+  }, [selectedBankId, formData.submission_type, isKurWirausaha]);
+
   // Add function to load cost component data
   const loadCostComponentData = async (loanApplicationId: string) => {
     try {
@@ -404,6 +415,21 @@ export default function LoanApplicationForm({
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Fix the input change handler to work with both direct calls and event objects
+  const handleInputChangeEvent = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    let processedValue = value;
+    
+    // Handle different input types
+    if (type === 'number') {
+      processedValue = value === '' ? null : (type === 'number' ? parseFloat(value) : parseInt(value));
+    } else if (type === 'date') {
+      processedValue = value || null;
+    }
+    
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
   };
 
   const updateFormData = (field: keyof LoanApplicationInsert, value: any) => {
@@ -1090,17 +1116,23 @@ export default function LoanApplicationForm({
               {tabs.map((step, index) => (
                 <div key={index} className="flex items-center">
                   <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium cursor-pointer transition-colors hover:bg-blue-500 hover:text-white ${
                       index + 1 === currentIndex + 1
                         ? "bg-blue-600 text-white"
                         : index + 1 < currentIndex + 1
                         ? "bg-green-600 text-white"
                         : "bg-gray-300 text-gray-600"
                     }`}
+                    onClick={() => setCurrentTab(tabs[index])}
+                    title={`Go to step ${index + 1}: ${step}`}
                   >
                     {index + 1}
                   </div>
-                  <div className="ml-2 text-xs sm:text-sm font-medium text-gray-700 max-w-[100px] sm:max-w-none">
+                  <div 
+                    className="ml-2 text-xs sm:text-sm font-medium text-gray-700 max-w-[100px] sm:max-w-none cursor-pointer hover:text-blue-600"
+                    onClick={() => setCurrentTab(tabs[index])}
+                    title={`Go to step ${index + 1}: ${step}`}
+                  >
                     {step}
                   </div>
                   {index < tabs.length - 1 && (
@@ -1117,35 +1149,6 @@ export default function LoanApplicationForm({
           </div>
 
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList
-              className={`grid w-full ${isKurWirausaha ? "grid-cols-3" : "grid-cols-10"}`}
-            >
-              <TabsTrigger value="personal">1. Data Personal</TabsTrigger>
-              <TabsTrigger value="documents">2. Doc</TabsTrigger>
-              {!isKurWirausaha && (
-                <TabsTrigger value="agent">Agent</TabsTrigger>
-              )}
-              {!isKurWirausaha && (
-                <TabsTrigger value="komponen-biaya">Komponen Biaya</TabsTrigger>
-              )}
-              <TabsTrigger value="loan">
-                {isKurWirausaha ? "3. Data Pinjaman" : "Loan"}
-              </TabsTrigger>
-              {!isKurWirausaha && (
-                <TabsTrigger value="document-other">Doc Other</TabsTrigger>
-              )}
-              {!isKurWirausaha && (
-                <TabsTrigger value="family">Family</TabsTrigger>
-              )}
-              {!isKurWirausaha && <TabsTrigger value="work">Work</TabsTrigger>}
-              {!isKurWirausaha && (
-                <TabsTrigger value="installment">Angsuran</TabsTrigger>
-              )}
-              {!isKurWirausaha && (
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-              )}
-            </TabsList>
-
             <TabsContent value="personal" className="space-y-4 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1153,19 +1156,19 @@ export default function LoanApplicationForm({
                   <Input
                     id="full_name"
                     name="full_name"
-                    value={formData.full_name}
-                    onChange={handleInputChange}
+                    value={formData.full_name || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="nomor_sisko_pmi">ID PMI</Label>
+                  <Label htmlFor="nomor_sisko">ID PMI</Label>
                   <Input
-                    id="nomor_sisko_pmi"
-                    name="nomor_sisko_pmi"
-                    value={formData.nomor_sisko}
-                    onChange={handleInputChange}
+                    id="nomor_sisko"
+                    name="nomor_sisko"
+                    value={formData.nomor_sisko || ""}
+                    onChange={handleInputChangeEvent}
                     className="mt-1"
                   />
                 </div>
@@ -1175,8 +1178,8 @@ export default function LoanApplicationForm({
                     id="email"
                     name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    value={formData.email || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
@@ -1186,8 +1189,8 @@ export default function LoanApplicationForm({
                   <Input
                     id="phone_number"
                     name="phone_number"
-                    value={formData.phone_number}
-                    onChange={handleInputChange}
+                    value={formData.phone_number || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
@@ -1197,31 +1200,43 @@ export default function LoanApplicationForm({
                   <Input
                     id="nik_ktp"
                     name="nik_ktp"
-                    value={formData.nik_ktp}
-                    onChange={handleInputChange}
+                    value={formData.nik_ktp || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="place_of_birth">Place of Birth *</Label>
+                  <Label htmlFor="birth_place">Place of Birth *</Label>
                   <Input
-                    id="place_of_birth"
-                    name="place_of_birth"
-                    value={formData.birth_place}
-                    onChange={handleInputChange}
+                    id="birth_place"
+                    name="birth_place"
+                    value={formData.birth_place || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                  <Label htmlFor="birth_date">Date of Birth *</Label>
                   <Input
-                    id="date_of_birth"
-                    name="date_of_birth"
+                    id="birth_date"
+                    name="birth_date"
                     type="date"
-                    value={formData.birth_date}
-                    onChange={handleInputChange}
+                    value={formData.birth_date || ""}
+                    onChange={handleInputChangeEvent}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="age">Age *</Label>
+                  <Input
+                    id="age"
+                    name="age"
+                    type="number"
+                    value={formData.age || ""}
+                    onChange={handleInputChangeEvent}
                     required
                     className="mt-1"
                   />
@@ -1229,7 +1244,7 @@ export default function LoanApplicationForm({
                 <div>
                   <Label htmlFor="gender">Gender *</Label>
                   <Select
-                    value={formData.gender}
+                    value={formData.gender || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, gender: value })
                     }
@@ -1244,30 +1259,11 @@ export default function LoanApplicationForm({
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="marital_status">Marital Status *</Label>
+                  <Label htmlFor="last_education">Education Level *</Label>
                   <Select
-                    value={formData.marital_status}
+                    value={formData.last_education || ""}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, marital_status: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="education_level">Education Level *</Label>
-                  <Select
-                    value={formData.education_level}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, education_level: value })
+                      setFormData({ ...formData, last_education: value })
                     }
                   >
                     <SelectTrigger className="mt-1">
@@ -1284,27 +1280,6 @@ export default function LoanApplicationForm({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="religion">Religion</Label>
-                  <Input
-                    id="religion"
-                    name="religion"
-                    value={formData.religion}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="nationality">Nationality *</Label>
-                  <Input
-                    id="nationality"
-                    name="nationality"
-                    value={formData.nationality}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1"
-                  />
-                </div>
               </div>
               <div>
                 <Label htmlFor="address_ktp">Address KTP</Label>
@@ -1312,9 +1287,7 @@ export default function LoanApplicationForm({
                   id="address_ktp"
                   name="address_ktp"
                   value={formData.address_ktp || ""}
-                  onChange={(e) =>
-                    updateFormData("address_ktp", e.target.value)
-                  }
+                  onChange={handleInputChangeEvent}
                   placeholder="Enter your KTP address"
                 />
               </div>
@@ -1324,9 +1297,7 @@ export default function LoanApplicationForm({
                   id="address_domicile"
                   name="address_domicile"
                   value={formData.address_domicile || ""}
-                  onChange={(e) =>
-                    updateFormData("address_domicile", e.target.value)
-                  }
+                  onChange={handleInputChangeEvent}
                   placeholder="Enter your domicile address"
                 />
               </div>
