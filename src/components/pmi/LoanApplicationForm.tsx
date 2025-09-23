@@ -23,6 +23,7 @@ import {
 import { Upload, CheckCircle, Printer, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database, Tables } from "@/types/supabase";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type LoanApplicationInsert =
   Database["public"]["Tables"]["loan_applications"]["Insert"];
@@ -277,6 +278,11 @@ export default function LoanApplicationForm({
     tabel_angsuran_signed: null,
   });
 
+  // Consent checkbox state
+  const [consentLoanApplication, setConsentLoanApplication] = useState(false);
+  const [consentDataSharing, setConsentDataSharing] = useState(false);
+  const [consentCreditCheck, setConsentCreditCheck] = useState(false);
+
   // Prevent session timeout by keeping auth alive
   useEffect(() => {
     const keepAlive = setInterval(async () => {
@@ -488,13 +494,22 @@ export default function LoanApplicationForm({
 
     try {
       console.log("Starting form submission...");
-      console.log("Form data:", {
-        submission_type: formData.submission_type,
-        full_name: formData.full_name,
-        email: formData.email,
-        loan_amount: formData.loan_amount,
-        tenor_months: formData.tenor_months,
-      });
+
+      // Validate consent checkboxes
+      if (!consentLoanApplication) {
+        alert("Anda harus menyetujui persetujuan pengajuan pinjaman untuk melanjutkan");
+        return;
+      }
+
+      if (!consentDataSharing) {
+        alert("Anda harus menyetujui pembagian data dengan bank mitra untuk melanjutkan");
+        return;
+      }
+
+      if (!consentCreditCheck) {
+        alert("Anda harus menyetujui pemeriksaan riwayat kredit untuk melanjutkan");
+        return;
+      }
 
       // Validate required fields
       if (!formData.submission_type) {
@@ -1737,6 +1752,89 @@ export default function LoanApplicationForm({
                   </p>
                 </div>
               </div>
+
+              {/* Consent Checkboxes - Add before submit button */}
+              <div className="space-y-4 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-semibold text-blue-800 mb-4">
+                  Persetujuan dan Consent Pengajuan Pinjaman
+                </h3>
+                
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="consent-loan-application"
+                    checked={consentLoanApplication}
+                    onCheckedChange={(checked) => setConsentLoanApplication(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="consent-loan-application"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Persetujuan Pengajuan Pinjaman KUR PMI *
+                    </label>
+                    <p className="text-xs text-blue-700">
+                      Saya dengan ini mengajukan pinjaman KUR PMI dan menyatakan bahwa semua informasi 
+                      yang saya berikan adalah benar dan akurat. Saya memahami bahwa informasi palsu 
+                      dapat mengakibatkan penolakan aplikasi atau tindakan hukum.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="consent-data-sharing"
+                    checked={consentDataSharing}
+                    onCheckedChange={(checked) => setConsentDataSharing(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="consent-data-sharing"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Persetujuan Pembagian Data dengan Bank Mitra *
+                    </label>
+                    <p className="text-xs text-blue-700">
+                      Saya menyetujui PT. Lendana Digitalindo Nusantara untuk membagikan data aplikasi 
+                      pinjaman saya kepada bank mitra (BNI, Mandiri, BRI, BTN, Bank Nano, BPR) untuk 
+                      keperluan evaluasi dan persetujuan pinjaman.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="consent-credit-check"
+                    checked={consentCreditCheck}
+                    onCheckedChange={(checked) => setConsentCreditCheck(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="consent-credit-check"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      Persetujuan Pemeriksaan Riwayat Kredit (SLIK/BI Checking) *
+                    </label>
+                    <p className="text-xs text-blue-700">
+                      Saya memberikan izin kepada bank mitra untuk melakukan pemeriksaan riwayat kredit 
+                      saya melalui Sistem Layanan Informasi Keuangan (SLIK) Bank Indonesia atau sistem 
+                      serupa untuk keperluan evaluasi kelayakan kredit.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs text-blue-600 mt-4 p-3 bg-white rounded border">
+                  <p className="font-medium mb-2">Informasi Penting:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Semua persetujuan di atas wajib disetujui untuk melanjutkan pengajuan pinjaman</li>
+                    <li>Data Anda akan diproses sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi</li>
+                    <li>Lendana terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK) sebagai Platform Agregator Teknologi Finansial</li>
+                    <li>Anda dapat mencabut persetujuan ini kapan saja dengan menghubungi customer service kami</li>
+                  </ul>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="agent" className="space-y-4 mt-6">
@@ -2595,7 +2693,9 @@ export default function LoanApplicationForm({
                   !formData.full_name ||
                   !formData.email ||
                   (currentTab === "loan" &&
-                    (!formData.loan_amount || !formData.tenor_months))
+                    (!formData.loan_amount || !formData.tenor_months)) ||
+                  (currentTab === "summary" && 
+                    (!consentLoanApplication || !consentDataSharing || !consentCreditCheck))
                 }
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >
@@ -2612,7 +2712,10 @@ export default function LoanApplicationForm({
                   isSubmitting ||
                   !formData.submission_type ||
                   !formData.full_name ||
-                  !formData.email
+                  !formData.email ||
+                  !consentLoanApplication ||
+                  !consentDataSharing ||
+                  !consentCreditCheck
                 }
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >

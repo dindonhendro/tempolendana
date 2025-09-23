@@ -21,6 +21,7 @@ import {
   getCollectorCompanies,
 } from "@/lib/supabase";
 import { Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AuthFormProps {
   onAuthSuccess?: () => void;
@@ -55,6 +56,11 @@ export default function AuthForm({
   const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
   const [collectorCompanyId, setCollectorCompanyId] = useState("");
   const [collectorCompanies, setCollectorCompanies] = useState<any[]>([]);
+
+  // Consent checkboxes state
+  const [consentDataProcessing, setConsentDataProcessing] = useState(false);
+  const [consentTermsConditions, setConsentTermsConditions] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
 
   // Load agent companies and banks on component mount
   React.useEffect(() => {
@@ -174,6 +180,19 @@ export default function AuthForm({
       return;
     }
 
+    // Validate consent checkboxes
+    if (!consentDataProcessing) {
+      setError("Anda harus menyetujui pemrosesan data pribadi untuk melanjutkan");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!consentTermsConditions) {
+      setError("Anda harus menyetujui syarat dan ketentuan untuk melanjutkan");
+      setIsLoading(false);
+      return;
+    }
+
     if ((role === "agent" || role === "checker_agent") && !agentCompanyId) {
       setError("Please select an agent company");
       setIsLoading(false);
@@ -225,6 +244,9 @@ export default function AuthForm({
       setBranchId("");
       setInsuranceCompanyId("");
       setCollectorCompanyId("");
+      setConsentDataProcessing(false);
+      setConsentTermsConditions(false);
+      setConsentMarketing(false);
     } catch (error: any) {
       setError(error.message || "Failed to create account");
     } finally {
@@ -527,10 +549,83 @@ export default function AuthForm({
                   </div>
                 )}
 
+                {/* Consent Checkboxes */}
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-medium text-gray-800">Persetujuan dan Consent</h4>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="consent-data-processing"
+                      checked={consentDataProcessing}
+                      onCheckedChange={(checked) => setConsentDataProcessing(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="consent-data-processing"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Persetujuan Pemrosesan Data Pribadi *
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Saya menyetujui PT. Lendana Digitalindo Nusantara untuk memproses data pribadi saya 
+                        sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi untuk 
+                        keperluan layanan KUR PMI.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="consent-terms"
+                      checked={consentTermsConditions}
+                      onCheckedChange={(checked) => setConsentTermsConditions(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="consent-terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Syarat dan Ketentuan *
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Saya telah membaca dan menyetujui syarat dan ketentuan layanan Lendana Financial 
+                        Access Platform serta kebijakan privasi yang berlaku.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="consent-marketing"
+                      checked={consentMarketing}
+                      onCheckedChange={(checked) => setConsentMarketing(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="consent-marketing"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Komunikasi Pemasaran (Opsional)
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Saya bersedia menerima informasi produk dan layanan terbaru dari Lendana 
+                        melalui email, SMS, atau WhatsApp.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-gray-500 mt-2">
+                    <p>* Wajib disetujui untuk melanjutkan pendaftaran</p>
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full bg-[#5680E9] hover:bg-[#5680E9]/90"
-                  disabled={isLoading}
+                  disabled={isLoading || !consentDataProcessing || !consentTermsConditions}
                 >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
