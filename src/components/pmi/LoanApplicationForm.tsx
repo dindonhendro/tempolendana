@@ -694,7 +694,7 @@ export default function LoanApplicationForm({
         }
 
         console.log("Application updated successfully:", updateResult);
-        alert("Application updated successfully!");
+        alert(`Application updated successfully! Transaction ID: ${updateResult[0]?.transaction_id || 'N/A'}`);
       } else {
         console.log("Inserting new application...");
         // Insert new application
@@ -728,6 +728,7 @@ export default function LoanApplicationForm({
         }
 
         const newApplicationId = insertResult[0]?.id;
+        const transactionId = insertResult[0]?.transaction_id;
         console.log("Application inserted successfully:", insertResult);
 
         // Insert komponen_biaya data if there are cost components
@@ -746,14 +747,15 @@ export default function LoanApplicationForm({
           if (costError) {
             console.error("Error inserting cost components:", costError);
             // Don't fail the whole submission for cost component errors
-            alert(`Application submitted successfully, but there was an issue saving cost components: ${costError.message}`);
+            alert(`Application submitted successfully with Transaction ID: ${transactionId}, but there was an issue saving cost components: ${costError.message}`);
           } else {
             console.log("Cost components inserted successfully");
           }
         }
 
+        // Show success message with transaction ID
         alert(
-          `${formData.submission_type} application submitted successfully! Your application ID: ${insertResult[0]?.id?.substring(0, 8)}...`,
+          `${formData.submission_type} application submitted successfully!\n\nTransaction ID: ${transactionId}\nApplication ID: ${insertResult[0]?.id?.substring(0, 8)}...\n\nPlease save your Transaction ID for tracking purposes.`,
         );
       }
 

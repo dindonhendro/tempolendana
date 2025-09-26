@@ -773,6 +773,7 @@ export type Database = {
           telp_pasangan: string | null
           telp_pemberi_kerja: string | null
           tenor_months: number | null
+          transaction_id: string | null
           updated_at: string
           user_id: string | null
           validated_by_lendana: string | null
@@ -834,6 +835,7 @@ export type Database = {
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null
           tenor_months?: number | null
+          transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
           validated_by_lendana?: string | null
@@ -895,6 +897,7 @@ export type Database = {
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null
           tenor_months?: number | null
+          transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
           validated_by_lendana?: string | null
@@ -958,7 +961,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_transaction_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
