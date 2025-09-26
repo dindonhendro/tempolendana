@@ -748,6 +748,7 @@ export type Database = {
           id: string
           info_slik_bank_url: string | null
           institution: string | null
+          ip_address: unknown | null
           ktp_pasangan: string | null
           ktp_photo_url: string | null
           last_education: string | null
@@ -810,6 +811,7 @@ export type Database = {
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
+          ip_address?: unknown | null
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
           last_education?: string | null
@@ -872,6 +874,7 @@ export type Database = {
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
+          ip_address?: unknown | null
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
           last_education?: string | null

@@ -527,6 +527,70 @@ export default function LoanApplicationForm({
         return;
       }
 
+      // Get user's IP address
+      let userIpAddress = null;
+      try {
+        console.log("Attempting to capture user IP address...");
+        
+        // Try multiple IP services for better reliability
+        const ipServices = [
+          'https://api.ipify.org?format=json',
+          'https://ipapi.co/json/',
+          'https://api.ip.sb/jsonip'
+        ];
+        
+        for (const service of ipServices) {
+          try {
+            const ipResponse = await fetch(service, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+              },
+              timeout: 5000 // 5 second timeout
+            });
+            
+            if (ipResponse.ok) {
+              const ipData = await ipResponse.json();
+              userIpAddress = ipData.ip || ipData.query || ipData.ip_addr;
+              
+              if (userIpAddress) {
+                console.log("User IP address captured successfully:", userIpAddress);
+                break; // Exit loop if we got an IP
+              }
+            }
+          } catch (serviceError) {
+            console.warn(`Failed to get IP from ${service}:`, serviceError);
+            continue; // Try next service
+          }
+        }
+        
+        // Fallback: try to get IP from browser if available
+        if (!userIpAddress) {
+          try {
+            // This is a fallback that might work in some environments
+            const rtcResponse = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
+            const rtcText = await rtcResponse.text();
+            const ipMatch = rtcText.match(/ip=([^\n]+)/);
+            if (ipMatch) {
+              userIpAddress = ipMatch[1];
+              console.log("IP captured from Cloudflare trace:", userIpAddress);
+            }
+          } catch (rtcError) {
+            console.warn("Cloudflare trace IP capture failed:", rtcError);
+          }
+        }
+        
+        // Final fallback - use a placeholder IP if all methods fail
+        if (!userIpAddress) {
+          userIpAddress = "0.0.0.0"; // Placeholder IP
+          console.warn("Could not capture real IP address, using placeholder");
+        }
+        
+      } catch (ipError) {
+        console.warn("All IP capture methods failed:", ipError);
+        userIpAddress = "0.0.0.0"; // Fallback IP
+      }
+
       // Get current user
       const {
         data: { user },
@@ -619,13 +683,14 @@ export default function LoanApplicationForm({
         }
       }
 
-      // Prepare final data with proper date handling
+      // Prepare final data with proper date handling and IP address
       const finalData: LoanApplicationInsert = {
         ...formData,
         ...documentUrls,
         user_id: user.id,
         ktp_photo_url: ktpUrl,
         self_photo_url: selfieUrl,
+        ip_address: userIpAddress, // Ensure IP address is included
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         // For KUR Wirausaha, bypass agent and set special agent ID or null
@@ -646,6 +711,7 @@ export default function LoanApplicationForm({
         full_name: finalData.full_name,
         email: finalData.email,
         user_id: finalData.user_id,
+        ip_address: finalData.ip_address, // Log IP address specifically
         loan_amount: finalData.loan_amount,
         tenor_months: finalData.tenor_months,
         status: finalData.status,
@@ -654,6 +720,14 @@ export default function LoanApplicationForm({
         self_photo_url: selfieUrl ? "[FILE_UPLOADED]" : null,
         document_count: Object.keys(documentUrls).length,
       });
+
+      // Validate that IP address is present before submission
+      if (!finalData.ip_address) {
+        console.warn("IP address is missing from final data, setting fallback");
+        finalData.ip_address = "0.0.0.0";
+      }
+
+      console.log("IP address validation - Final IP:", finalData.ip_address);
 
       // Submit to database (insert or update)
       if (editData) {
