@@ -1099,8 +1099,7 @@ export default function LoanApplicationForm({
         "komponen-biaya", // Moved before loan
         "loan",
         "document-other",
-        "family",
-        "work",
+        "work", // Removed "family" step
         "installment",
         "summary",
       ];
@@ -1131,10 +1130,6 @@ export default function LoanApplicationForm({
       ) {
         missingFields.push("Grace Period (Months)");
       }
-    }
-
-    if (currentTab === "family") {
-      if (!formData.nama_ibu_kandung) missingFields.push("Nama Ibu Kandung");
     }
 
     if (missingFields.length > 0) {
@@ -2075,71 +2070,6 @@ export default function LoanApplicationForm({
                     </div>
                   </div>
                 ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="family" className="space-y-4 mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="nama_ibu_kandung">Nama Ibu Kandung *</Label>
-                  <Input
-                    id="nama_ibu_kandung"
-                    name="nama_ibu_kandung"
-                    value={formData.nama_ibu_kandung || ""}
-                    onChange={(e) =>
-                      updateFormData("nama_ibu_kandung", e.target.value)
-                    }
-                    placeholder="Enter mother's name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="nama_pasangan">Nama Pasangan</Label>
-                  <Input
-                    id="nama_pasangan"
-                    name="nama_pasangan"
-                    value={formData.nama_pasangan || ""}
-                    onChange={(e) =>
-                      updateFormData("nama_pasangan", e.target.value)
-                    }
-                    placeholder="Enter spouse's name (optional)"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="ktp_pasangan">KTP Pasangan</Label>
-                  <Input
-                    id="ktp_pasangan"
-                    name="ktp_pasangan"
-                    value={formData.ktp_pasangan || ""}
-                    onChange={(e) =>
-                      updateFormData("ktp_pasangan", e.target.value)
-                    }
-                    placeholder="Enter spouse's KTP (optional)"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="telp_pasangan">Telp Pasangan</Label>
-                  <Input
-                    id="telp_pasangan"
-                    name="telp_pasangan"
-                    value={formData.telp_pasangan || ""}
-                    onChange={(e) =>
-                      updateFormData("telp_pasangan", e.target.value)
-                    }
-                    placeholder="Enter spouse's phone (optional)"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="alamat_pasangan">Alamat Pasangan</Label>
-                <Textarea
-                  id="alamat_pasangan"
-                  name="alamat_pasangan"
-                  value={formData.alamat_pasangan || ""}
-                  onChange={(e) =>
-                    updateFormData("alamat_pasangan", e.target.value)
-                  }
-                  placeholder="Enter spouse's address (optional)"
-                />
               </div>
             </TabsContent>
 
