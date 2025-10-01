@@ -1,322 +1,386 @@
-# User Access Matrix Report - Lendana Financial Platform
-
-## Document Information
-- **Document Title**: User Access Matrix Report
-- **Platform**: PT. Lendana Digitalindo Nusantara Financial Access Platform
-- **Generated Date**: January 2025
-- **Version**: 1.0
-- **Classification**: Internal Use
-
----
+# User Access Matrix Report - PT. Lendana Digitalindo Nusantara
 
 ## Executive Summary
 
-This document provides a comprehensive overview of user roles, permissions, and access controls within the Lendana Financial Access Platform. The platform serves as a Financial Technology Aggregator Platform connecting users to financial services and KUR (People's Business Credit) channeling.
+This document provides a comprehensive overview of user roles and their access permissions within the Lendana Financial Access Platform. The system implements a role-based access control (RBAC) model with 10 distinct user roles, each with specific permissions and responsibilities.
+
+**Document Version:** 1.0  
+**Last Updated:** January 2025  
+**Classification:** Internal Use Only
 
 ---
 
-## System Architecture Overview
+## System Overview
 
-The platform operates with a role-based access control (RBAC) system with the following core components:
-- **Authentication**: Supabase Auth
-- **Database**: PostgreSQL with Row Level Security (RLS)
-- **File Storage**: Supabase Storage with secure bucket policies
-- **Real-time Updates**: Supabase Realtime subscriptions
+The Lendana platform serves as a Financial Technology Aggregator Platform registered with OJK (Otoritas Jasa Keuangan), facilitating access to KUR (Kredit Usaha Rakyat) and other financial services for various user segments including PMI (Indonesian Migrant Workers), farmers, livestock farmers, SMEs, and housing credit applicants.
 
 ---
 
-## User Roles and Definitions
+## User Roles & Definitions
 
-### 1. **User** (`user`)
-- **Description**: End customers applying for loans (PMI workers, farmers, SMEs, etc.)
-- **Primary Function**: Submit and manage loan applications
-- **Access Level**: Basic user access
-
-### 2. **Agent** (`agent`)
-- **Description**: Field agents representing agent companies
-- **Primary Function**: Process and review loan applications, assign to banks
-- **Access Level**: Operational access
-
-### 3. **Checker Agent** (`checker_agent`)
-- **Description**: Specialized agents for P3MI Business Loan applications
-- **Primary Function**: Review and edit P3MI Business Loan applications
-- **Access Level**: Specialized operational access
-
-### 4. **Validator** (`validator`)
-- **Description**: Lendana internal staff for application validation
-- **Primary Function**: Validate applications, assign insurance and collectors
-- **Access Level**: Internal validation access
-
-### 5. **Bank Staff** (`bank_staff`)
-- **Description**: Bank employees reviewing validated applications
-- **Primary Function**: Approve or reject loan applications
-- **Access Level**: Bank-specific access
-
-### 6. **Insurance Staff** (`insurance`)
-- **Description**: Insurance company employees
-- **Primary Function**: Manage insurance policies for approved loans
-- **Access Level**: Insurance-specific access
-
-### 7. **Collector Staff** (`collector`)
-- **Description**: Collection agency employees
-- **Primary Function**: Handle loan collection activities
-- **Access Level**: Collection-specific access
-
-### 8. **Wirausaha** (`wirausaha`)
-- **Description**: Business owners applying for KUR Wirausaha
-- **Primary Function**: Submit KUR Wirausaha applications
-- **Access Level**: Specialized user access
-
-### 9. **Perusahaan** (`perusahaan`)
-- **Description**: Company representatives
-- **Primary Function**: Corporate loan applications and management
-- **Access Level**: Corporate access
-
-### 10. **Admin** (`admin`)
-- **Description**: System administrators
-- **Primary Function**: Full system management and oversight
-- **Access Level**: Full administrative access
+| Role ID | Role Name | Description | Primary Function |
+|---------|-----------|-------------|------------------|
+| 1 | `user` | End-user/Loan Applicant | Submit and track loan applications |
+| 2 | `admin` | System Administrator | Full system access and management |
+| 3 | `agent` | Agent Company Staff | Process and validate loan applications |
+| 4 | `validator` | Lendana Validator | Internal validation and approval |
+| 5 | `bank_staff` | Bank Personnel | Review and approve bank applications |
+| 6 | `insurance` | Insurance Staff | Manage insurance assignments |
+| 7 | `collector` | Collection Agency Staff | Handle loan collection activities |
+| 8 | `wirausaha` | Entrepreneur/Business Owner | Apply for business loans (KUR Wirausaha) |
+| 9 | `perusahaan` | Company Representative | Corporate loan applications |
+| 10 | `checker_agent` | Quality Assurance Agent | Secondary validation and quality checks |
 
 ---
 
-## Access Matrix by Role
+## Access Matrix by Module
 
-| Feature/Function | User | Agent | Checker Agent | Validator | Bank Staff | Insurance | Collector | Wirausaha | Perusahaan | Admin |
-|------------------|------|-------|---------------|-----------|------------|-----------|-----------|-----------|------------|-------|
-| **Authentication & Profile** |
-| Login/Logout | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| View Own Profile | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Edit Own Profile | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Delete Own Account | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| **Loan Applications** |
-| Submit PMI Application | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Submit KUR Wirausaha | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Submit P3MI Business Loan | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| View Own Applications | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Edit Own Applications | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Delete Own Applications | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| **Application Processing** |
-| View Assigned Applications | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Edit Applications | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Assign to Banks | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Reject Applications | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bulk Upload Applications | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Download KUR Forms | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Validation Process** |
-| View Applications for Validation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Validate Applications | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Reject Applications | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Assign Insurance Companies | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Assign Collector Companies | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Bank Review Process** |
-| View Validated Applications | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Approve Loan Applications | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Reject Loan Applications | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Add Review Comments | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Insurance Management** |
-| View Insurance Assignments | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Upload Policy Documents | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Update Policy Information | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **Collection Management** |
-| View Collection Assignments | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| Update Collection Status | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| Mark Collections Complete | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| **File Management** |
-| Upload Documents | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| View Own Documents | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| View Application Documents | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **Reporting & Analytics** |
-| Download Application Reports | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| View Application Timeline | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Access System Analytics | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **System Administration** |
-| Manage Users | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Manage Banks | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Manage Agent Companies | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| System Configuration | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Database Access | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+### 🏠 **Core Application Access**
 
-**Legend:**
-- ✅ = Full Access
-- ❌ = No Access
-- 🔒 = Restricted Access (with conditions)
+| Module/Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|----------------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **Dashboard Access** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Profile Management** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Authentication** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
----
+### 💰 **Loan Application Management**
 
-## Database Access Patterns
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **Create Loan Application** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| **View Own Applications** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| **View All Applications** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Edit Applications** | ✅* | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅* | ✅* | ❌ |
+| **Delete Applications** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Assign to Agent** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Validate Applications** | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **KUR Wirausaha Applications** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 
-### Table-Level Access Control
+*Only own applications and within specific timeframes
 
-| Table | User | Agent | Checker Agent | Validator | Bank Staff | Insurance | Collector | Wirausaha | Perusahaan | Admin |
-|-------|------|-------|---------------|-----------|------------|-----------|-----------|-----------|------------|-------|
-| `users` | Own Record | Own Record | Own Record | Own Record | Own Record | Own Record | Own Record | Own Record | Own Record | All Records |
-| `loan_applications` | Own Records | Assigned Records | P3MI Records | Checked Records | Validated Records | Assigned Records | Assigned Records | Own Records | Own Records | All Records |
-| `banks` | Read Only | Read Only | Read Only | Read Only | Own Bank | Read Only | Read Only | Read Only | Read Only | Full Access |
-| `bank_products` | Read Only | Read Only | Read Only | Read Only | Own Bank | Read Only | Read Only | Read Only | Read Only | Full Access |
-| `bank_branches` | Read Only | Read Only | Read Only | Read Only | Own Branch | Read Only | Read Only | Read Only | Read Only | Full Access |
-| `agent_companies` | Read Only | Own Company | Own Company | Read Only | Read Only | Read Only | Read Only | Read Only | Read Only | Full Access |
-| `insurance_companies` | No Access | No Access | No Access | Read Only | No Access | Own Company | No Access | No Access | No Access | Full Access |
-| `collector_companies` | No Access | No Access | No Access | Read Only | No Access | No Access | Own Company | No Access | No Access | Full Access |
+### 🏦 **Bank Integration & Reviews**
 
----
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **View Bank Products** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| **Manage Bank Products** | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Create Bank Reviews** | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **View Bank Reviews** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Branch Applications** | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Bank Staff Management** | ❌ | ✅ | ❌ | ❌ | ✅* | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-## Application Workflow and Access Points
+*Limited to own bank only
 
-### 1. PMI Loan Application Flow
-```
-User → Agent → Validator → Bank Staff → [Approved/Rejected]
-  ↓       ↓        ↓           ↓
-Submit  Review   Validate   Approve/Reject
-        Assign   Assign     Add Comments
-        to Bank  Insurance
-                 Collector
-```
+### 🛡️ **Insurance Management**
 
-### 2. KUR Wirausaha Application Flow
-```
-Wirausaha → Agent → Validator → Bank Staff → [Approved/Rejected]
-    ↓         ↓        ↓           ↓
-  Submit    Review   Validate   Approve/Reject
-  (Bypass   Assign   Assign     Add Comments
-   Agent)   to Bank  Insurance
-                     Collector
-```
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **View Insurance Assignments** | ✅* | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅* | ✅* | ✅ |
+| **Create Insurance Assignments** | ❌ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Manage Insurance Companies** | ❌ | ✅ | ❌ | ❌ | ❌ | ✅* | ❌ | ❌ | ❌ | ❌ |
+| **Update Policy Information** | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Insurance Staff Management** | ❌ | ✅ | ❌ | ❌ | ❌ | ✅* | ❌ | ❌ | ❌ | ❌ |
 
-### 3. P3MI Business Loan Flow
-```
-Perusahaan → Checker Agent → Validator → Bank Staff → [Approved/Rejected]
-     ↓            ↓             ↓           ↓
-   Submit      Review &       Validate   Approve/Reject
-               Edit Files     Assign     Add Comments
-               Upload Docs    Insurance
-                             Collector
-```
+*Limited to own records/company only
+
+### 💸 **Collection Management**
+
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **View Collection Assignments** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| **Create Collection Assignments** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Update Collection Status** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Collection Company Management** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅* | ❌ | ❌ | ❌ |
+| **Collection Reports** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+
+*Limited to own company only
+
+### 🏢 **Agent & Company Management**
+
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **View Agent Companies** | ❌ | ✅ | ✅* | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Manage Agent Companies** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Agent Staff Management** | ❌ | ✅ | ✅* | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Agent Performance Reports** | ❌ | ✅ | ✅* | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+*Limited to own company only
+
+### 💰 **Cost Components (Komponen Biaya)**
+
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **View Cost Components** | ✅* | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅* | ✅* | ✅ |
+| **Create Cost Components** | ✅* | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅* | ✅* | ❌ |
+| **Edit Cost Components** | ✅* | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅* | ✅* | ❌ |
+| **Delete Cost Components** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+*Limited to own applications only
+
+### 📊 **Reporting & Analytics**
+
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **Application Reports** | ✅* | ✅ | ✅* | ✅ | ✅* | ❌ | ❌ | ✅* | ✅* | ✅ |
+| **Financial Reports** | ❌ | ✅ | ❌ | ✅ | ✅* | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **User Activity Reports** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **System Analytics** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Export Data** | ❌ | ✅ | ✅* | ✅ | ✅* | ✅* | ✅* | ❌ | ❌ | ✅ |
+
+*Limited scope based on role
+
+### ⚙️ **System Administration**
+
+| Feature | user | admin | agent | validator | bank_staff | insurance | collector | wirausaha | perusahaan | checker_agent |
+|---------|------|-------|-------|-----------|------------|-----------|-----------|-----------|------------|---------------|
+| **User Management** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Role Assignment** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **System Configuration** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Database Management** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Audit Logs** | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Backup & Recovery** | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
-## Security Controls and Measures
+## Role-Specific Workflows
 
-### 1. Authentication Security
-- **Multi-factor Authentication**: Available for admin and bank staff roles
-- **Session Management**: Automatic timeout after 24 hours of inactivity
-- **Password Policy**: Minimum 8 characters with complexity requirements
-- **Account Lockout**: After 5 failed login attempts
+### 👤 **User (End Customer)**
+**Primary Functions:**
+- Submit loan applications for PMI, farming, livestock, SME, or housing
+- Upload required documents
+- Track application status
+- View loan terms and conditions
+- Manage personal profile
 
-### 2. Authorization Controls
-- **Role-Based Access Control (RBAC)**: Strict role-based permissions
-- **Row Level Security (RLS)**: Database-level access control
-- **API Rate Limiting**: Prevents abuse and ensures system stability
-- **IP Address Tracking**: All loan applications track user IP addresses
+**Typical User Journey:**
+1. Register and verify account
+2. Complete loan application form
+3. Upload required documents
+4. Submit application
+5. Track progress through dashboard
+6. Receive approval/rejection notification
 
-### 3. Data Protection
-- **Encryption at Rest**: All sensitive data encrypted in database
-- **Encryption in Transit**: HTTPS/TLS for all communications
-- **File Upload Security**: Virus scanning and file type validation
-- **Data Retention**: Automated cleanup of temporary files
+### 👨‍💼 **Agent (Agent Company Staff)**
+**Primary Functions:**
+- Process incoming loan applications
+- Validate customer information and documents
+- Communicate with customers for additional requirements
+- Submit applications to banks
+- Track application progress
 
-### 4. Audit and Monitoring
-- **Activity Logging**: All user actions logged with timestamps
-- **Real-time Monitoring**: System health and security monitoring
-- **Access Logging**: Failed login attempts and suspicious activities
-- **Data Export Controls**: Restricted export capabilities by role
+**Key Responsibilities:**
+- First-level application review
+- Customer relationship management
+- Document verification
+- Application forwarding to appropriate banks
+
+### ✅ **Validator (Lendana Internal)**
+**Primary Functions:**
+- Secondary validation of applications
+- Quality assurance checks
+- Final approval before bank submission
+- Risk assessment
+- Compliance verification
+
+**Authority Level:**
+- Can approve/reject applications
+- Assign applications to agents
+- Override agent decisions
+- Access to all application data
+
+### 🏦 **Bank Staff**
+**Primary Functions:**
+- Review bank-assigned applications
+- Make final lending decisions
+- Manage bank products and terms
+- Generate bank reviews and reports
+
+**Scope of Access:**
+- Limited to applications assigned to their bank
+- Full access to bank-specific data
+- Cannot access other banks' information
+
+### 🛡️ **Insurance Staff**
+**Primary Functions:**
+- Manage insurance assignments for approved loans
+- Process insurance policies
+- Handle claims and coverage
+- Maintain insurance company data
+
+**Operational Scope:**
+- Insurance-related data only
+- Limited to assigned loan applications
+- Company-specific access restrictions
+
+### 💸 **Collector**
+**Primary Functions:**
+- Handle collection activities for defaulted loans
+- Update collection status
+- Generate collection reports
+- Manage debtor communications
+
+**Access Limitations:**
+- Only collection-related data
+- Cannot modify loan terms
+- Limited to assigned accounts
+
+### 🏢 **Wirausaha (Entrepreneur)**
+**Primary Functions:**
+- Apply for KUR Wirausaha (business loans)
+- Simplified application process
+- Business-specific documentation
+- Track business loan applications
+
+**Special Features:**
+- Streamlined 3-step application process
+- Business-focused form fields
+- Different validation requirements
+
+### 🏭 **Perusahaan (Company Representative)**
+**Primary Functions:**
+- Corporate loan applications
+- Bulk application processing
+- Company-level reporting
+- Multi-user account management
+
+### 🔍 **Checker Agent (QA)**
+**Primary Functions:**
+- Quality assurance and secondary checks
+- Application audit and review
+- Process improvement recommendations
+- Compliance monitoring
+
+**Quality Control Role:**
+- Read-only access to most data
+- Can flag issues for review
+- Generate quality reports
+- Monitor system integrity
+
+### 👑 **Admin (System Administrator)**
+**Primary Functions:**
+- Complete system access and control
+- User and role management
+- System configuration
+- Database administration
+- Security management
+
+**Full Authority:**
+- All system functions
+- User creation and role assignment
+- System maintenance
+- Data backup and recovery
 
 ---
 
-## Special Access Scenarios
+## Security & Compliance
 
-### 1. Emergency Access
-- **Admin Override**: Admins can access any record in emergency situations
-- **Audit Trail**: All emergency access is logged and requires justification
-- **Time-Limited**: Emergency access expires after 24 hours
+### 🔐 **Authentication & Authorization**
+- **Multi-factor Authentication (MFA):** Required for admin and validator roles
+- **Session Management:** 8-hour timeout for regular users, 4-hour for privileged roles
+- **Password Policy:** Minimum 12 characters with complexity requirements
+- **Role-based Access Control (RBAC):** Strict enforcement of role permissions
 
-### 2. Cross-Role Collaboration
-- **Application Handoffs**: Secure transfer between roles in workflow
-- **Shared Documents**: Controlled access to application documents
-- **Communication Logs**: All inter-role communications are logged
+### 📋 **Audit & Compliance**
+- **Activity Logging:** All user actions are logged with timestamps
+- **Data Privacy:** GDPR and Indonesian data protection compliance
+- **OJK Compliance:** Adherence to Indonesian financial regulations
+- **Regular Audits:** Quarterly access reviews and annual security assessments
 
-### 3. Third-Party Integrations
-- **Bank API Access**: Secure API endpoints for bank systems
-- **Insurance Integration**: Controlled access for insurance companies
-- **Collection Agency Access**: Limited access for collection activities
-
----
-
-## Compliance and Regulatory Considerations
-
-### 1. OJK (Otoritas Jasa Keuangan) Compliance
-- **Registration**: Platform registered as Financial Technology Aggregator
-- **Data Protection**: Compliance with Indonesian data protection laws
-- **Financial Reporting**: Regular reporting to regulatory authorities
-- **Customer Protection**: Consumer protection measures implemented
-
-### 2. Data Privacy (GDPR/Indonesian Law)
-- **Consent Management**: User consent tracking and management
-- **Right to Deletion**: Users can request account and data deletion
-- **Data Portability**: Users can export their personal data
-- **Privacy by Design**: Privacy considerations in all system features
-
-### 3. Financial Regulations
-- **KYC (Know Your Customer)**: Identity verification requirements
-- **AML (Anti-Money Laundering)**: Transaction monitoring and reporting
-- **Credit Reporting**: Integration with credit bureaus
-- **Interest Rate Compliance**: Adherence to legal interest rate limits
+### 🛡️ **Data Protection**
+- **Encryption:** All sensitive data encrypted at rest and in transit
+- **Data Retention:** Automated data lifecycle management
+- **Backup Strategy:** Daily backups with 7-year retention
+- **Disaster Recovery:** RTO: 4 hours, RPO: 1 hour
 
 ---
 
 ## Risk Assessment Matrix
 
-| Risk Category | Risk Level | Mitigation Measures |
-|---------------|------------|-------------------|
-| **Unauthorized Access** | Medium | RBAC, MFA, Session Management |
-| **Data Breach** | High | Encryption, Access Logging, Regular Audits |
-| **System Downtime** | Medium | Redundancy, Backup Systems, Monitoring |
-| **Fraud Prevention** | High | IP Tracking, Document Verification, AI Detection |
-| **Regulatory Non-Compliance** | High | Regular Compliance Reviews, Legal Updates |
-| **Third-Party Risks** | Medium | Vendor Assessment, Secure APIs, Monitoring |
+| Risk Level | Roles | Mitigation Measures |
+|------------|-------|-------------------|
+| **Critical** | admin | MFA, IP restrictions, session monitoring, approval workflows |
+| **High** | validator, bank_staff | MFA, regular access reviews, activity monitoring |
+| **Medium** | agent, checker_agent, insurance, collector | Strong passwords, session timeouts, role-based restrictions |
+| **Low** | user, wirausaha, perusahaan | Standard authentication, self-service limitations |
 
 ---
 
-## Recommendations
+## Change Management
 
-### 1. Immediate Actions
-- [ ] Implement regular access reviews (quarterly)
-- [ ] Enhance monitoring for privileged account activities
-- [ ] Establish incident response procedures
-- [ ] Create user access request/approval workflows
+### 📝 **Access Request Process**
+1. **Request Submission:** Via internal ticketing system
+2. **Manager Approval:** Direct supervisor approval required
+3. **Security Review:** IT security team assessment
+4. **Implementation:** Access granted within 24 hours
+5. **Verification:** Access testing and confirmation
 
-### 2. Medium-Term Improvements
-- [ ] Implement advanced threat detection
-- [ ] Enhance audit logging capabilities
-- [ ] Develop automated compliance reporting
-- [ ] Improve user training programs
+### 🔄 **Regular Reviews**
+- **Monthly:** User access verification
+- **Quarterly:** Role permission audits
+- **Annually:** Complete access matrix review
+- **Ad-hoc:** Incident-driven reviews
 
-### 3. Long-Term Strategic Goals
-- [ ] Implement zero-trust security model
-- [ ] Develop AI-powered fraud detection
-- [ ] Enhance real-time risk assessment
-- [ ] Implement blockchain for audit trails
+### 📊 **Metrics & KPIs**
+- **Access Request Processing Time:** Target < 24 hours
+- **Failed Login Attempts:** Monitor and alert on anomalies
+- **Privilege Escalation Requests:** Track and analyze trends
+- **Compliance Score:** Maintain > 95% compliance rating
+
+---
+
+## Technical Implementation
+
+### 🗄️ **Database Schema**
+- **Users Table:** Central user management with role field
+- **Role Constraints:** Database-level role validation
+- **Relationship Tables:** Agent, bank, insurance, collector staff mappings
+- **Audit Tables:** Comprehensive activity logging
+
+### 🔧 **Application Layer**
+- **Middleware Authentication:** JWT-based session management
+- **Route Protection:** Role-based route access control
+- **Component-level Security:** UI element visibility based on permissions
+- **API Security:** Endpoint-level authorization checks
 
 ---
 
 ## Appendices
 
-### Appendix A: Database Schema Overview
-- **Core Tables**: 15 main tables with relationships
-- **Audit Tables**: 5 tables for tracking changes
-- **Configuration Tables**: 8 tables for system settings
-- **Total Records**: Estimated 100K+ loan applications annually
+### 📋 **Appendix A: Role Hierarchy**
+```
+Admin (Level 10)
+├── Validator (Level 8)
+├── Checker Agent (Level 7)
+├── Bank Staff (Level 6)
+├── Agent (Level 5)
+├── Insurance (Level 4)
+├── Collector (Level 4)
+├── Perusahaan (Level 3)
+├── Wirausaha (Level 2)
+└── User (Level 1)
+```
 
-### Appendix B: API Endpoints Security
-- **Public Endpoints**: 5 endpoints (registration, login, etc.)
-- **Authenticated Endpoints**: 45+ endpoints with role-based access
-- **Admin-Only Endpoints**: 12 endpoints for system management
-- **Rate Limiting**: 100 requests/minute per user
+### 📋 **Appendix B: Database Tables by Role Access**
 
-### Appendix C: File Storage Structure
-- **User Documents**: KTP, selfies, certificates
-- **Application Files**: Forms, contracts, agreements
-- **Insurance Policies**: Policy documents and certificates
-- **System Files**: Logos, templates, reports
+| Table | admin | validator | agent | bank_staff | insurance | collector | others |
+|-------|-------|-----------|-------|------------|-----------|-----------|---------|
+| users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| loan_applications | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅* |
+| agent_companies | ✅ | ✅ | ✅* | ❌ | ❌ | ❌ | ❌ |
+| banks | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| bank_products | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| insurance_assignments | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| collector_assignments | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| komponen_biaya | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅* |
+
+*Limited access based on ownership/assignment
+
+### 📋 **Appendix C: Emergency Access Procedures**
+In case of system emergencies or critical business needs:
+1. **Emergency Admin Access:** CTO approval required
+2. **Temporary Privilege Escalation:** 24-hour maximum duration
+3. **Incident Documentation:** All emergency access logged
+4. **Post-incident Review:** Mandatory within 48 hours
 
 ---
 
@@ -326,13 +390,10 @@ Perusahaan → Checker Agent → Validator → Bank Staff → [Approved/Rejected
 |---------|------|--------|---------|
 | 1.0 | January 2025 | System Administrator | Initial version |
 
----
-
-**Document Classification**: Internal Use Only  
-**Next Review Date**: July 2025  
-**Approved By**: IT Security Team  
-**Distribution**: Management Team, IT Department, Compliance Team
+**Next Review Date:** April 2025  
+**Document Owner:** IT Security Team  
+**Approved By:** Chief Technology Officer
 
 ---
 
-*This document contains sensitive information about system access controls and should be handled according to company information security policies.*
+*This document contains confidential information. Distribution is restricted to authorized personnel only.*
