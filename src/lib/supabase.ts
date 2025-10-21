@@ -154,7 +154,15 @@ export const getCurrentUser = async (): Promise<User | null> => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError) {
-      console.error("Auth error:", authError);
+      // Silently handle auth session missing errors
+      if (authError.message?.includes('Auth session missing') || 
+          authError.message?.includes('session_missing') ||
+          authError.name === 'AuthSessionMissingError') {
+        console.log("No active session found");
+        return null;
+      }
+      
+      console.warn("Auth error (non-critical):", authError.message);
       // If it's a network error, return null instead of throwing
       if (authError.message?.includes('Failed to fetch') || authError.message?.includes('timeout')) {
         console.warn("Network error during auth, returning null");
@@ -206,8 +214,15 @@ export const getCurrentUser = async (): Promise<User | null> => {
         updated_at: user.updated_at || new Date().toISOString(),
       } as User;
     }
-  } catch (error) {
-    console.error("Error in getCurrentUser:", error);
+  } catch (error: any) {
+    // Silently handle session missing errors
+    if (error?.message?.includes('Auth session missing') || 
+        error?.message?.includes('session_missing') ||
+        error?.name === 'AuthSessionMissingError') {
+      console.log("No active session (caught in outer try-catch)");
+      return null;
+    }
+    console.warn("Error in getCurrentUser (non-critical):", error?.message || error);
     return null; // Don't throw, just return null to prevent app crashes
   }
 };

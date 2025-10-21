@@ -147,6 +147,7 @@ export type Database = {
           min_amount: number
           min_tenor: number
           name: string
+          product_description: string | null
           type: string
           updated_at: string
         }
@@ -160,6 +161,7 @@ export type Database = {
           min_amount: number
           min_tenor: number
           name: string
+          product_description?: string | null
           type: string
           updated_at?: string
         }
@@ -173,6 +175,7 @@ export type Database = {
           min_amount?: number
           min_tenor?: number
           name?: string
+          product_description?: string | null
           type?: string
           updated_at?: string
         }

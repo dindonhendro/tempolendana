@@ -55,6 +55,7 @@ export default function LoanApplicationForm({
   const [selectedBankProductId, setSelectedBankProductId] =
     useState<string>("");
   const [selectedProductType, setSelectedProductType] = useState<string>("");
+  const [selectedProductDescription, setSelectedProductDescription] = useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
@@ -2398,7 +2399,12 @@ export default function LoanApplicationForm({
                     <Label htmlFor="bank_product">Select Bank Product</Label>
                     <Select
                       value={selectedBankProductId}
-                      onValueChange={setSelectedBankProductId}
+                      onValueChange={(value) => {
+                        setSelectedBankProductId(value);
+                        // Find and set the product description
+                        const selectedProduct = bankProducts.find(p => p.id === value);
+                        setSelectedProductDescription(selectedProduct?.product_description || "");
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Choose a product" />
@@ -2422,6 +2428,16 @@ export default function LoanApplicationForm({
                           : formData.submission_type}{" "}
                         yang tersedia untuk bank ini.
                       </p>
+                    )}
+                    
+                    {/* Product Description Display */}
+                    {selectedProductDescription && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-semibold text-blue-800 mb-2">Deskripsi Produk</h4>
+                        <p className="text-sm text-blue-700 whitespace-pre-wrap">
+                          {selectedProductDescription}
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
