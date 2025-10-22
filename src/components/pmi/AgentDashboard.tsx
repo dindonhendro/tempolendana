@@ -33,6 +33,7 @@ import {
   Edit,
   ExternalLink,
   File,
+  Shield,
 } from "lucide-react";
 import {
   supabase,
@@ -85,6 +86,11 @@ export default function AgentDashboard({
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [downloadingForm, setDownloadingForm] = useState<string | null>(null);
 
+  // Insurance assignment states
+  const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
+  const [selectedInsuranceCompany, setSelectedInsuranceCompany] = useState<string>("");
+  const [assigningToInsurance, setAssigningToInsurance] = useState<string | null>(null);
+
   // Bulk upload states
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -101,6 +107,7 @@ export default function AgentDashboard({
   useEffect(() => {
     fetchApplications();
     fetchBanks();
+    fetchInsuranceCompanies();
   }, []);
 
   useEffect(() => {
@@ -271,6 +278,61 @@ export default function AgentDashboard({
       setBanks(banksData);
     } catch (error) {
       console.error("Error fetching banks:", error);
+    }
+  };
+
+  const fetchInsuranceCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("insurance_companies")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setInsuranceCompanies(data || []);
+    } catch (error) {
+      console.error("Error fetching insurance companies:", error);
+    }
+  };
+
+  const handleAssignToInsurance = async (applicationId: string) => {
+    if (!selectedInsuranceCompany) {
+      alert("Please select an insurance company first");
+      return;
+    }
+
+    setAssigningToInsurance(applicationId);
+    try {
+      // Create insurance application record
+      const { error } = await supabase
+        .from("insurance_applications")
+        .insert({
+          loan_application_id: applicationId,
+          insurance_company_id: selectedInsuranceCompany,
+          status: "Pending",
+        });
+
+      if (error) throw error;
+
+      // Update loan application status
+      const { error: updateError } = await supabase
+        .from("loan_applications")
+        .update({
+          status: "Insurance Assigned",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", applicationId);
+
+      if (updateError) throw updateError;
+
+      alert("Application assigned to insurance company successfully!");
+      await fetchApplications();
+      setSelectedInsuranceCompany("");
+    } catch (error: any) {
+      console.error("Error assigning to insurance:", error);
+      alert(`Error assigning to insurance: ${error.message}`);
+    } finally {
+      setAssigningToInsurance(null);
     }
   };
 
@@ -1974,6 +2036,45 @@ export default function AgentDashboard({
           </CardContent>
         </Card>
 
+        {/* Insurance Company Assignment Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-purple-600">
+              Assign Applications to Insurance Company
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="max-w-md">
+              <Label>Select Insurance Company</Label>
+              <Select
+                value={selectedInsuranceCompany}
+                onValueChange={setSelectedInsuranceCompany}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an insurance company" />
+                </SelectTrigger>
+                <SelectContent>
+                  {insuranceCompanies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedInsuranceCompany && (
+                <div className="mt-3 p-3 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-purple-700">
+                    Ready to assign applications to:{" "}
+                    <strong>
+                      {insuranceCompanies.find((c) => c.id === selectedInsuranceCompany)?.name}
+                    </strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>
@@ -2143,7 +2244,33 @@ export default function AgentDashboard({
                                 <Send className="h-4 w-4 mr-2" />
                                 {assigningApplication === application.id
                                   ? "Assigning..."
-                                  : "Assign"}
+                                  : "Assign to Bank"}
+                              </Button>
+
+                              <Button
+                                onClick={() =>
+                                  handleAssignToInsurance(application.id)
+                                }
+                                disabled={
+                                  assigningToInsurance === application.id ||
+                                  !selectedInsuranceCompany
+                                }
+                                size="sm"
+                                className={`${
+                                  !selectedInsuranceCompany
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-purple-600 hover:bg-purple-700"
+                                } text-white`}
+                                title={
+                                  !selectedInsuranceCompany
+                                    ? "Please select an insurance company first"
+                                    : "Assign application to selected insurance company"
+                                }
+                              >
+                                <Shield className="h-4 w-4 mr-2" />
+                                {assigningToInsurance === application.id
+                                  ? "Assigning..."
+                                  : "Assign to Insurance"}
                               </Button>
 
                               <Button
