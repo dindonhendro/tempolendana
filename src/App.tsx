@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useState, lazy } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
+import { useIdleTimeout } from "./hooks/useIdleTimeout";
 
 // Lazy load components for better performance
 const Home = lazy(() => import("./components/home"));
@@ -121,6 +122,17 @@ function App() {
     rejectedApplications: number;
     recentApplications: any[];
   } | null>(null);
+
+  // Idle timeout - auto logout after 10 minutes of inactivity
+  useIdleTimeout({
+    onIdle: () => {
+      if (user) {
+        console.log("User idle for 10 minutes - logging out...");
+        handleSignOut();
+      }
+    },
+    idleTime: 10 * 60 * 1000, // 10 minutes in milliseconds
+  });
 
   // ALWAYS call useRoutes - this must be called unconditionally
   const tempoRoutes = useRoutes(routes);
