@@ -412,9 +412,9 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#5680E9]">
               Produk Lendana
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -422,24 +422,15 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             </p>
           </motion.div>
 
-          {/* Pinjaman Pribadi Section */}
+          {/* All Products in One Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className="mb-16"
           >
-            <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-2 text-[#5680E9]">
-                Pinjaman Pribadi
-              </h3>
-              <p className="text-lg text-gray-600">
-                Solusi pembiayaan untuk kebutuhan pribadi PMI
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* KUR Penempatan PMI */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -450,19 +441,19 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
                   onClick={() => (window.location.href = "/auth")}
                 >
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <CardContent className="p-8 text-center">
+                    <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
                       ✈️
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
+                    <h3 className="text-2xl font-bold mb-4 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
                       KUR Penempatan PMI
                     </h3>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                    <p className="text-gray-700 text-base leading-relaxed mb-6">
                       Biaya penempatan, pelatihan, & dokumen hingga Rp100 juta
                     </p>
                     <Button
-                      size="sm"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
+                      size="lg"
+                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300 font-semibold py-3"
                       onClick={(e) => {
                         e.stopPropagation();
                         window.location.href = "/auth";
@@ -474,147 +465,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 </Card>
               </motion.div>
 
+              {/* Pengembangan Usaha P3MI */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                      🏠
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                      KUR Perumahan PMI
-                    </h3>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                      Kredit untuk pembelian atau renovasi rumah bagi PMI
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                      onClick={() => handleLoanApplication("KUR Perumahan PMI")}
-                    >
-                      Pelajari lebih lanjut
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                      🏘️
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                      Rumah Subsidi PMI
-                    </h3>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                      Program rumah bersubsidi khusus untuk PMI dengan bunga
-                      rendah
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                      onClick={() =>
-                        handleLoanApplication("KUR Rumah Subsidi PMI")
-                      }
-                    >
-                      Pelajari lebih lanjut
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                      💼
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                      KUR Wirausaha PMI
-                    </h3>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                      Modal usaha untuk PMI yang ingin memulai bisnis
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                      onClick={() => (window.location.href = "/auth/wirausaha")}
-                    >
-                      Daftar Sekarang
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                      🐄
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                      Peternak Sapi PMI
-                    </h3>
-                    <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                      Modal usaha untuk peternak sapi perah dengan dukungan
-                      koperasi
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300"
-                      onClick={() => handleLoanApplication("Peternak Sapi PMI")}
-                    >
-                      Pelajari lebih lanjut
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Pinjaman Perusahaan Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-          >
-            <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold mb-2 text-[#8860D0]">
-                Pinjaman Perusahaan
-              </h3>
-              <p className="text-lg text-gray-600">
-                Solusi pembiayaan untuk pengembangan usaha P3MI
-              </p>
-            </div>
-
-            <div className="flex justify-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                viewport={{ once: true }}
-                className="w-full max-w-md"
               >
                 <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
                   <CardContent className="p-8 text-center">
@@ -628,20 +484,6 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                       Pinjaman khusus untuk pengembangan usaha P3MI/Agent dengan
                       proses yang mudah dan bunga kompetitif
                     </p>
-                    <div className="space-y-3 mb-6 text-sm text-gray-600">
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="w-2 h-2 bg-[#8860D0] rounded-full"></span>
-                        <span>Proses cepat dan mudah</span>
-                      </div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="w-2 h-2 bg-[#8860D0] rounded-full"></span>
-                        <span>Khusus Business Loan</span>
-                      </div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="w-2 h-2 bg-[#8860D0] rounded-full"></span>
-                        <span>Dokumentasi lengkap</span>
-                      </div>
-                    </div>
                     <Button
                       size="lg"
                       className="w-full bg-[#8860D0] hover:bg-[#5680E9] text-white transition-colors duration-300 font-semibold py-3"

@@ -28,24 +28,18 @@ interface AuthFormProps {
   isWirausaha?: boolean;
 }
 
-export default function AuthForm({
-  onAuthSuccess,
-  isWirausaha = false,
-}: AuthFormProps = {}) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  // Sign In Form State
+export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFormProps) {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
-
-  // Sign Up Form State
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [agentCompanyId, setAgentCompanyId] = useState("");
   const [agentCompanies, setAgentCompanies] = useState<any[]>([]);
   const [bankId, setBankId] = useState("");
@@ -55,12 +49,24 @@ export default function AuthForm({
   const [insuranceCompanyId, setInsuranceCompanyId] = useState("");
   const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
   const [collectorCompanyId, setCollectorCompanyId] = useState("");
-  const [collectorCompanies, setCollectorCompanies] = useState<any[]>([]);
 
   // Consent checkboxes state
   const [consentDataProcessing, setConsentDataProcessing] = useState(false);
   const [consentTermsConditions, setConsentTermsConditions] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
+  
+  // Scroll tracking for privacy policy
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const privacyPolicyRef = React.useRef<HTMLDivElement>(null);
+
+  // Handle scroll event for privacy policy
+  const handlePrivacyPolicyScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isAtBottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 5;
+    if (isAtBottom && !hasScrolledToBottom) {
+      setHasScrolledToBottom(true);
+    }
+  };
 
   // Load agent companies and banks on component mount
   React.useEffect(() => {
@@ -180,15 +186,9 @@ export default function AuthForm({
       return;
     }
 
-    // Validate consent checkboxes
-    if (!consentDataProcessing) {
-      setError("Anda harus menyetujui pemrosesan data pribadi untuk melanjutkan");
-      setIsLoading(false);
-      return;
-    }
-
+    // Validate consent checkbox
     if (!consentTermsConditions) {
-      setError("Anda harus menyetujui syarat dan ketentuan untuk melanjutkan");
+      setError("Anda harus menyetujui syarat dan ketentuan serta kebijakan privasi untuk melanjutkan");
       setIsLoading(false);
       return;
     }
@@ -410,24 +410,9 @@ export default function AuthForm({
                       ) : (
                         <>
                           <SelectItem value="user">User (PMI)</SelectItem>
-                          <SelectItem value="agent">Agent (P3MI)</SelectItem>
-                          <SelectItem value="checker_agent">
-                            Checker Agent (P3MI Business Review)
-                          </SelectItem>
-                          <SelectItem value="validator">
-                            Validator (Lendana)
-                          </SelectItem>
-                          <SelectItem value="bank_staff">Bank Staff</SelectItem>
-                          <SelectItem value="insurance">
-                            Insurance Staff
-                          </SelectItem>
-                          <SelectItem value="collector">
-                            Collector Staff
-                          </SelectItem>
                           <SelectItem value="perusahaan">
                             Perusahaan (P3MI Business)
                           </SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
                         </>
                       )}
                     </SelectContent>
@@ -553,66 +538,120 @@ export default function AuthForm({
                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-medium text-gray-800">Persetujuan dan Consent</h4>
                   
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="consent-data-processing"
-                      checked={consentDataProcessing}
-                      onCheckedChange={(checked) => setConsentDataProcessing(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="consent-data-processing"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        Persetujuan Pemrosesan Data Pribadi *
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        Saya menyetujui PT. Lendana Digitalindo Nusantara untuk memproses data pribadi saya 
-                        sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi untuk 
-                        keperluan layanan KUR PMI.
-                      </p>
-                    </div>
+                  {/* Privacy Policy Text - Scrollable */}
+                  <div 
+                    ref={privacyPolicyRef}
+                    onScroll={handlePrivacyPolicyScroll}
+                    className="max-h-48 overflow-y-auto border rounded-lg p-4 bg-white text-xs text-gray-700 space-y-3"
+                  >
+                    <h5 className="font-semibold text-sm text-gray-900">Kebijakan Privasi PT. Lendana Digitalindo Nusantara</h5>
+                    
+                    <p>
+                      <strong>1. Pengumpulan Data Pribadi</strong><br/>
+                      PT. Lendana Digitalindo Nusantara ("Lendana") mengumpulkan data pribadi Anda termasuk namun tidak terbatas pada: 
+                      nama lengkap, alamat email, nomor telepon, alamat tempat tinggal, nomor identitas (KTP/Paspor), informasi pekerjaan, 
+                      data keuangan, dan dokumen pendukung lainnya yang diperlukan untuk proses pengajuan Kredit Usaha Rakyat (KUR) 
+                      untuk Pekerja Migran Indonesia (PMI).
+                    </p>
+
+                    <p>
+                      <strong>2. Tujuan Penggunaan Data</strong><br/>
+                      Data pribadi yang Anda berikan akan digunakan untuk:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Memproses aplikasi KUR PMI Anda</li>
+                      <li>Verifikasi identitas dan kelayakan kredit</li>
+                      <li>Komunikasi terkait status aplikasi dan layanan</li>
+                      <li>Penyaluran kredit melalui bank mitra</li>
+                      <li>Koordinasi dengan perusahaan penempatan (P3MI), asuransi, dan pihak terkait</li>
+                      <li>Pemenuhan kewajiban hukum dan regulasi</li>
+                      <li>Analisis dan peningkatan layanan</li>
+                    </ul>
+
+                    <p>
+                      <strong>3. Pembagian Data dengan Pihak Ketiga</strong><br/>
+                      Lendana dapat membagikan data pribadi Anda kepada:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Bank mitra (BNI, Mandiri, BRI, BTN, Bank Nano, BPR) untuk proses persetujuan kredit</li>
+                      <li>Perusahaan Penempatan Pekerja Migran Indonesia (P3MI) yang terdaftar</li>
+                      <li>Perusahaan asuransi untuk perlindungan kredit</li>
+                      <li>Otoritas Jasa Keuangan (OJK) dan regulator terkait</li>
+                      <li>Penyedia layanan teknologi dan infrastruktur yang mendukung platform</li>
+                    </ul>
+
+                    <p>
+                      <strong>4. Keamanan Data</strong><br/>
+                      Lendana menerapkan langkah-langkah keamanan teknis dan organisasi yang sesuai untuk melindungi data pribadi Anda 
+                      dari akses tidak sah, pengungkapan, perubahan, atau penghancuran. Data Anda disimpan dalam sistem yang aman 
+                      dengan enkripsi dan kontrol akses yang ketat.
+                    </p>
+
+                    <p>
+                      <strong>5. Penyimpanan Data</strong><br/>
+                      Data pribadi Anda akan disimpan selama diperlukan untuk tujuan yang telah disebutkan atau sesuai dengan 
+                      ketentuan peraturan perundang-undangan yang berlaku, termasuk namun tidak terbatas pada peraturan OJK 
+                      dan ketentuan perpajakan.
+                    </p>
+
+                    <p>
+                      <strong>6. Hak Anda</strong><br/>
+                      Sesuai dengan UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi, Anda memiliki hak untuk:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Mengakses dan memperoleh salinan data pribadi Anda</li>
+                      <li>Memperbarui atau memperbaiki data pribadi yang tidak akurat</li>
+                      <li>Menghapus data pribadi dalam kondisi tertentu</li>
+                      <li>Membatasi pemrosesan data pribadi</li>
+                      <li>Mengajukan keberatan atas pemrosesan data</li>
+                      <li>Meminta portabilitas data</li>
+                    </ul>
+
+                    <p>
+                      <strong>7. Perubahan Kebijakan Privasi</strong><br/>
+                      Lendana berhak untuk mengubah kebijakan privasi ini dari waktu ke waktu. Perubahan akan diinformasikan 
+                      melalui platform atau email yang terdaftar.
+                    </p>
+
+                    <p>
+                      <strong>8. Kontak</strong><br/>
+                      Untuk pertanyaan atau permintaan terkait data pribadi Anda, silakan hubungi kami di:<br/>
+                      Email: privacy@lendana.co.id<br/>
+                      Telepon: 1500-XXX<br/>
+                      Alamat: [Alamat Kantor Lendana]
+                    </p>
+
+                    <p className="text-gray-600 italic">
+                      Dengan mendaftar dan menggunakan layanan Lendana, Anda menyatakan telah membaca, memahami, 
+                      dan menyetujui kebijakan privasi ini.
+                    </p>
                   </div>
+
+                  {!hasScrolledToBottom && (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                      ⚠️ Silakan scroll ke bawah untuk membaca seluruh kebijakan privasi
+                    </div>
+                  )}
 
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="consent-terms"
                       checked={consentTermsConditions}
                       onCheckedChange={(checked) => setConsentTermsConditions(checked as boolean)}
+                      disabled={!hasScrolledToBottom}
                       className="mt-1"
                     />
                     <div className="grid gap-1.5 leading-none">
                       <label
                         htmlFor="consent-terms"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        className={`text-sm font-medium leading-none cursor-pointer ${
+                          !hasScrolledToBottom ? 'text-gray-400' : 'text-gray-900'
+                        }`}
                       >
                         Syarat dan Ketentuan *
                       </label>
-                      <p className="text-xs text-muted-foreground">
-                        Saya telah membaca dan menyetujui syarat dan ketentuan layanan Lendana Financial 
-                        Access Platform serta kebijakan privasi yang berlaku.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="consent-marketing"
-                      checked={consentMarketing}
-                      onCheckedChange={(checked) => setConsentMarketing(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="consent-marketing"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        Komunikasi Pemasaran (Opsional)
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        Saya bersedia menerima informasi produk dan layanan terbaru dari Lendana 
-                        melalui email, SMS, atau WhatsApp.
+                      <p className="text-xs text-gray-500">
+                        Saya telah membaca dan menyetujui kebijakan privasi di atas
                       </p>
                     </div>
                   </div>
@@ -625,7 +664,7 @@ export default function AuthForm({
                 <Button
                   type="submit"
                   className="w-full bg-[#5680E9] hover:bg-[#5680E9]/90"
-                  disabled={isLoading || !consentDataProcessing || !consentTermsConditions}
+                  disabled={isLoading || !consentTermsConditions}
                 >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
