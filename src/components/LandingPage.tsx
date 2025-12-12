@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,7 +24,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronRight,
+  Sparkles,
+  Shield,
+  Zap,
+  Building2,
+  Users,
+  ArrowRight,
+  Check,
+  Globe,
+  Briefcase,
+  TrendingUp,
+  Phone,
+  Mail,
+  MapPin,
+} from "lucide-react";
 
 interface LandingPageProps {
   onGetStarted?: () => void;
@@ -37,6 +52,7 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
   const [showAboutLendana, setShowAboutLendana] = useState(false);
   const [showBankList, setShowBankList] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [scrolled, setScrolled] = useState(false);
   const [loanFormData, setLoanFormData] = useState({
     name: "",
     phone: "",
@@ -44,15 +60,22 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     amount: "",
     bank: "",
     product: "",
-    // Dairy farmer specific fields
     cowCount: "",
     farmLocation: "",
     loanPurpose: "",
     dailyMilkYield: "",
     cooperative: "",
-    // KTP upload
     ktpFile: null as File | null,
   });
+
+  // Handle scroll for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const testimonials = [
     {
@@ -76,16 +99,6 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
       role: "PMI Hongkong",
     },
   ];
-
-  const nextTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
-
-  const prevTestimonial = () => {
-    setCurrentTestimonial(
-      (prev) => (prev - 1 + testimonials.length) % testimonials.length,
-    );
-  };
 
   const bumnBanks = [
     {
@@ -191,12 +204,6 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     ],
   };
 
-  const handleLoanApplication = (productType: string) => {
-    setSelectedProduct(productType);
-    setLoanFormData({ ...loanFormData, product: productType });
-    setShowLoanDialog(true);
-  };
-
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert(
@@ -266,244 +273,294 @@ Kebijakan ini dapat diperbarui sewaktu-waktu. Perubahan akan diberitahukan melal
 Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
   `;
 
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-white font-inter">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100"
+            : "bg-transparent"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex-shrink-0">
               <img
                 src="/images/logo lendana_trans1.png"
                 alt="Lendana"
-                className="h-8 w-auto"
+                className="h-10 w-auto"
               />
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-10">
               <a
                 href="#beranda"
-                className="text-gray-700 hover:text-[#5680E9] text-base font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors relative group"
               >
                 Beranda
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
               </a>
               <a
                 href="#produk"
-                className="text-gray-700 hover:text-[#5680E9] text-base font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors relative group"
               >
                 Produk
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
               </a>
               <a
                 href="#tentang"
-                className="text-gray-700 hover:text-[#5680E9] text-base font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors relative group"
               >
                 Tentang
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
               </a>
               <a
                 href="#kontak"
-                className="text-gray-700 hover:text-[#5680E9] text-base font-medium transition-colors"
+                className="text-slate-600 hover:text-blue-600 text-sm font-medium transition-colors relative group"
               >
                 Kontak
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
               </a>
             </nav>
 
-            {/* Login/Sign-up */}
+            {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
-                className="text-gray-700 hover:text-[#5680E9] font-medium"
+                className="text-slate-600 hover:text-blue-600 hover:bg-blue-50 font-medium"
                 onClick={() => (window.location.href = "/auth")}
               >
                 Masuk
               </Button>
               <Button
-                className="bg-[#5680E9] hover:bg-[#8860D0] text-white font-medium px-6"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-6 shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all duration-300"
                 onClick={() => (window.location.href = "/auth")}
               >
-                Daftar
+                Daftar Gratis
               </Button>
             </div>
           </div>
         </div>
       </header>
+
       {/* Hero Section */}
       <section
         id="beranda"
-        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
+        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#5680E9] via-[#84CEEB] to-[#8860D0] opacity-90"></div>
-        <div className="absolute inset-0 bg-black opacity-20"></div>
+        {/* Background */}
+        <div className="absolute inset-0 bg-hero-gradient" />
+        <div className="absolute inset-0 bg-mesh-blue opacity-60" />
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 text-center text-white">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Main Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-              Ingin Pembiayaan KUR PMI untuk Bekerja di Luar Negeri?
-            </h1>
-            
-            {/* Subtitle */}
-            <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-white/95">
-              Berangkat kerja dengan AMAN, Legal dengan Pembiayaan KUR-PMI
-            </h2>
-            
-            {/* Additional Text */}
-            <p className="text-lg md:text-xl mb-8 max-w-4xl mx-auto leading-relaxed text-white/90">
-              Tersedia fasilitas Pembiayaan bekerjasama dengan LENDANA yang telah Terdaftar di OJK
-            </p>
+        {/* Floating Decorative Elements */}
+        <div className="absolute top-32 left-10 w-72 h-72 bg-blue-200/30 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-300/20 rounded-full blur-2xl animate-float-slow" />
 
-            {/* Badge */}
-            <div className="flex justify-center mb-8">
-              <div className="bg-[#5680E9] border-4 border-white rounded-full px-8 py-4 shadow-2xl">
-                <span className="text-white font-bold text-xl md:text-2xl">
-                  Fasilitas KUR PMI 6% /tahun
+        {/* Geometric Shapes */}
+        <div className="absolute top-40 right-20 w-4 h-4 bg-blue-500 rounded-full opacity-60 animate-float" />
+        <div className="absolute top-60 right-40 w-3 h-3 bg-indigo-400 rounded-full opacity-40 animate-float-delayed" />
+        <div className="absolute bottom-40 left-20 w-5 h-5 bg-blue-400 rounded-full opacity-50 animate-float-slow" />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+              className="text-center lg:text-left"
+            >
+              {/* Badge */}
+              <motion.div variants={fadeInUp} className="mb-6">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-blue-100 text-blue-600 text-sm font-medium shadow-sm">
+                  <Sparkles className="w-4 h-4" />
+                  Terdaftar di OJK • S-27/3/MS.72/2019
                 </span>
+              </motion.div>
+
+              {/* Main Headline */}
+              <motion.h1
+                variants={fadeInUp}
+                className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight"
+              >
+                Pembiayaan <span className="text-gradient-blue">KUR PMI</span>
+                <br />
+                untuk Masa Depan Cerah
+              </motion.h1>
+
+              {/* Subtitle */}
+              <motion.p
+                variants={fadeInUp}
+                className="text-lg md:text-xl text-slate-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+              >
+                Berangkat kerja ke luar negeri dengan aman dan legal. Dapatkan
+                pembiayaan hingga{" "}
+                <span className="font-semibold text-slate-900">
+                  Rp 100 juta
+                </span>{" "}
+                dengan bunga hanya{" "}
+                <span className="font-semibold text-blue-600">
+                  6% per tahun
+                </span>
+                .
+              </motion.p>
+
+              {/* CTA Buttons */}
+              <motion.div
+                variants={fadeInUp}
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={onGetStarted}
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-lg px-10 py-7 h-auto rounded-xl shadow-xl shadow-blue-600/30 hover:shadow-blue-600/40 transition-all duration-300 group"
+                  >
+                    Daftar Sekarang
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={() => setShowAboutLendana(true)}
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-slate-300 bg-white/60 backdrop-blur-sm text-slate-700 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 font-semibold text-lg px-10 py-7 h-auto rounded-xl transition-all duration-300"
+                  >
+                    Tentang Lendana
+                  </Button>
+                </motion.div>
+              </motion.div>
+
+              {/* Trust Indicators */}
+              <motion.div
+                variants={fadeInUp}
+                className="mt-10 flex items-center gap-8 justify-center lg:justify-start"
+              >
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Shield className="w-5 h-5 text-green-500" />
+                  <span className="text-sm font-medium">Terdaftar OJK</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  <span className="text-sm font-medium">10K+ Pengguna</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium">4 Bank BUMN</span>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Right Content - Feature Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 50 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="hidden lg:block"
+            >
+              <div className="relative">
+                {/* Main Card */}
+                <div className="glass-card rounded-3xl p-8 shadow-2xl border border-white/40">
+                  <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/30">
+                      <span className="text-white text-3xl font-bold">L</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                      Fasilitas KUR PMI
+                    </h3>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full">
+                      <span className="text-blue-700 font-bold text-xl">
+                        6% /tahun
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Features List */}
+                  <div className="space-y-4">
+                    {[
+                      "Bunga rendah hanya 6% per tahun",
+                      "Proses cepat & mudah",
+                      "Tanpa agunan tambahan",
+                      "Dilindungi asuransi",
+                    ].map((feature, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 hover:bg-blue-50/80 transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-4 h-4 text-green-600" />
+                        </div>
+                        <span className="text-slate-700 font-medium">
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Floating Stats Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="absolute -bottom-6 -left-6 glass-card rounded-2xl p-4 shadow-xl border border-white/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">
+                        Rp 50M+
+                      </p>
+                      <p className="text-sm text-slate-500">Dana Tersalurkan</p>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                animate={{
-                  scale: [1, 1.02, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-              >
-                <Button
-                  onClick={onGetStarted}
-                  size="lg"
-                  className="bg-white text-[#5680E9] hover:bg-white/90 hover:text-[#5680E9]/90 font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
-                >
-                  Daftar Sekarang
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  onClick={() => setShowAboutLendana(true)}
-                  size="lg"
-                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#5680E9] font-bold text-xl px-12 py-6 h-auto rounded-full shadow-2xl transition-all duration-300"
-                >
-                  Tentang Lendana
-                </Button>
-              </motion.div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Products Section */}
-      <section id="produk" className="py-20 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#5680E9]">
-              Produk Lendana
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Pilih produk yang sesuai dengan kebutuhan Anda
-            </p>
-          </motion.div>
-
-          {/* All Products in One Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* KUR Penempatan PMI */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card
-                  className="h-full hover:shadow-xl transition-all duration-300 cursor-pointer group hover:scale-105"
-                  onClick={() => (window.location.href = "/auth")}
-                >
-                  <CardContent className="p-8 text-center">
-                    <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                      ✈️
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-[#5680E9] group-hover:text-[#8860D0] transition-colors duration-300">
-                      KUR Penempatan PMI
-                    </h3>
-                    <p className="text-gray-700 text-base leading-relaxed mb-6">
-                      Biaya penempatan, pelatihan, & dokumen hingga Rp100 juta
-                    </p>
-                    <Button
-                      size="lg"
-                      className="w-full bg-[#5680E9] hover:bg-[#8860D0] text-white transition-colors duration-300 font-semibold py-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.location.href = "/auth";
-                      }}
-                    >
-                      Daftar Sekarang
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Pengembangan Usaha P3MI */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 group hover:scale-105">
-                  <CardContent className="p-8 text-center">
-                    <div className="text-6xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                      🏢
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-[#8860D0] group-hover:text-[#5680E9] transition-colors duration-300">
-                      Pengembangan Usaha P3MI
-                    </h3>
-                    <p className="text-gray-700 text-base leading-relaxed mb-6">
-                      Pinjaman khusus untuk pengembangan usaha P3MI/Agent dengan
-                      proses yang mudah dan bunga kompetitif
-                    </p>
-                    <Button
-                      size="lg"
-                      className="w-full bg-[#8860D0] hover:bg-[#5680E9] text-white transition-colors duration-300 font-semibold py-3"
-                      onClick={() =>
-                        (window.location.href = "/auth/perusahaan")
-                      }
-                    >
-                      Ajukan Pinjaman Sekarang
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
+      <section
+        id="produk"
+        className="py-24 px-4 bg-white relative overflow-hidden"
+      >
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#2563eb_1px,transparent_1px)] [background-size:40px_40px] opacity-20" />
         </div>
-      </section>
 
-      {/* Value Proposition Section */}
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -511,35 +568,181 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
-              Keunggulan KUR-PMI
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
+              <Briefcase className="w-4 h-4" />
+              Produk Unggulan
+            </span>
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
+              Pilih Produk Sesuai{" "}
+              <span className="text-gradient-blue">Kebutuhan Anda</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Solusi pembiayaan terpercaya untuk mendukung perjalanan PMI
-              Indonesia
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Berbagai pilihan pembiayaan KUR yang telah disesuaikan untuk
+              kebutuhan Pekerja Migran Indonesia
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Product Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* KUR Penempatan PMI */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card
+                className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer group overflow-hidden bg-gradient-to-br from-blue-50 to-white hover:-translate-y-2"
+                onClick={() => (window.location.href = "/auth")}
+              >
+                <CardContent className="p-8">
+                  {/* Icon */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-600/30 group-hover:scale-110 transition-transform duration-500">
+                    <Globe className="w-8 h-8 text-white" />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
+                    KUR Penempatan PMI
+                  </h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                    Biaya penempatan, pelatihan, & dokumen hingga{" "}
+                    <span className="font-semibold text-slate-900">
+                      Rp 100 juta
+                    </span>
+                  </p>
+
+                  {/* Features */}
+                  <div className="space-y-3 mb-8">
+                    {["Bunga 6% per tahun", "Tanpa agunan", "Proses cepat"].map(
+                      (item, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                            <Check className="w-3 h-3 text-green-600" />
+                          </div>
+                          <span className="text-sm text-slate-600">{item}</span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+
+                  {/* CTA */}
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-6 rounded-xl shadow-lg shadow-blue-600/25 group-hover:shadow-blue-600/40 transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = "/auth";
+                    }}
+                  >
+                    Daftar Sekarang
+                    <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Pengembangan Usaha P3MI */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-500 group overflow-hidden bg-gradient-to-br from-indigo-50 to-white hover:-translate-y-2">
+                <CardContent className="p-8">
+                  {/* Icon */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-500">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors">
+                    Pengembangan Usaha P3MI
+                  </h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">
+                    Pinjaman khusus untuk pengembangan usaha P3MI/Agent dengan
+                    proses mudah
+                  </p>
+
+                  {/* Features */}
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "Bunga kompetitif",
+                      "Limit tinggi",
+                      "Pendampingan bisnis",
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-sm text-slate-600">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <Button
+                    className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-6 rounded-xl shadow-lg shadow-indigo-600/25 group-hover:shadow-indigo-600/40 transition-all"
+                    onClick={() => (window.location.href = "/auth/perusahaan")}
+                  >
+                    Ajukan Pinjaman
+                    <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 px-4 bg-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
+              Mengapa Memilih{" "}
+              <span className="text-gradient-blue">Lendana?</span>
+            </h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Solusi pembiayaan terpercaya untuk mendukung perjalanan PMI
+              Indonesia
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:-translate-y-1">
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">💰</div>
-                  <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/30">
+                    <Sparkles className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">
                     Bunga Ringan
                   </h3>
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    Suku bunga 6% efektif per tahun
+                  <p className="text-slate-600 leading-relaxed">
+                    Suku bunga hanya{" "}
+                    <span className="font-semibold text-green-600">
+                      6% efektif
+                    </span>{" "}
+                    per tahun, jauh lebih rendah dari pinjaman konvensional
                   </p>
                 </CardContent>
               </Card>
             </motion.div>
 
+            {/* Feature 2 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -547,38 +750,45 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               viewport={{ once: true }}
             >
               <Card
-                className="h-full hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-105"
+                className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:-translate-y-1 cursor-pointer"
                 onClick={() => setShowBankList(true)}
               >
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">🏦</div>
-                  <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-600/30">
+                    <Building2 className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">
                     Bank Terpercaya
                   </h3>
-                  <p className="text-gray-700 text-lg leading-relaxed mb-4">
-                    Disalurkan melalui bank-bank BUMN terpercaya
+                  <p className="text-slate-600 leading-relaxed mb-4">
+                    Disalurkan melalui bank-bank BUMN terpercaya di Indonesia
                   </p>
-                  <p className="text-sm text-[#5680E9] font-medium">
-                    Klik untuk melihat daftar bank →
-                  </p>
+                  <span className="inline-flex items-center text-sm text-blue-600 font-medium hover:text-blue-700">
+                    Lihat daftar bank
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </span>
                 </CardContent>
               </Card>
             </motion.div>
 
+            {/* Feature 3 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:-translate-y-1">
                 <CardContent className="p-8 text-center">
-                  <div className="text-6xl mb-6">⚡</div>
-                  <h3 className="text-2xl font-bold mb-4 text-[#5680E9]">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
+                    <Zap className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">
                     Proses Cepat
                   </h3>
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    Proses persetujuan yang cepat dan mudah
+                  <p className="text-slate-600 leading-relaxed">
+                    Proses persetujuan yang cepat dan mudah dengan pendampingan
+                    profesional
                   </p>
                 </CardContent>
               </Card>
@@ -588,7 +798,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
       </section>
 
       {/* Learn More Section */}
-      <section id="tentang" className="py-20 px-4 bg-gray-50">
+      <section id="tentang" className="py-24 px-4 bg-white">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -597,7 +807,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
               Pelajari Lebih Lanjut
             </h2>
           </motion.div>
@@ -608,23 +818,25 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <Card className="bg-[#C1C8E4] border-none">
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
               <CardContent className="p-0">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem
                     value="what-is-kur-pmi"
                     className="border-none"
                   >
-                    <AccordionTrigger className="px-8 py-6 text-left hover:no-underline">
-                      <div className="flex items-center text-xl font-semibold text-gray-900">
-                        <span className="mr-3">▶️</span>
+                    <AccordionTrigger className="px-8 py-6 text-left hover:no-underline hover:bg-blue-100/50 transition-colors">
+                      <div className="flex items-center text-xl font-semibold text-slate-900">
+                        <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
+                          <span className="text-white text-lg">?</span>
+                        </span>
                         Apa itu KUR-PMI?
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-8 pb-8">
-                      <div className="text-gray-800 space-y-4 text-lg leading-relaxed">
+                      <div className="text-slate-700 space-y-4 text-lg leading-relaxed pl-14">
                         <p>
-                          <strong>
+                          <strong className="text-blue-600">
                             KUR-PMI (Kredit Usaha Rakyat untuk Pekerja Migran
                             Indonesia)
                           </strong>{" "}
@@ -646,15 +858,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                           </li>
                         </ul>
                         <p>
-                          Dengan suku bunga hanya 6% efektif per tahun, KUR-PMI
-                          menjadi solusi pembiayaan yang sangat terjangkau
-                          dibandingkan dengan pinjaman konvensional lainnya.
-                        </p>
-                        <p>
-                          Program ini didukung oleh pemerintah dan disalurkan
-                          melalui bank-bank terpercaya seperti Bank Mandiri,
-                          BNI, dan BRI untuk memastikan keamanan dan
-                          kredibilitas.
+                          Dengan suku bunga hanya{" "}
+                          <span className="font-semibold text-blue-600">
+                            6% efektif per tahun
+                          </span>
+                          , KUR-PMI menjadi solusi pembiayaan yang sangat
+                          terjangkau.
                         </p>
                       </div>
                     </AccordionContent>
@@ -667,86 +876,125 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
       </section>
 
       {/* Footer */}
-      <footer
-        id="kontak"
-        className="bg-gradient-to-r from-[#8860D0] to-[#5680E9] text-white py-16 px-4"
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <footer id="kontak" className="bg-slate-900 text-white py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            {/* Brand */}
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">Lendana</h3>
-              <p className="text-lg opacity-90 leading-relaxed mb-4">
-                Lendana adalah Penyelenggara Agregasi Jasa Keuangan dan
-                terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK)
+              <img
+                src="/images/logo lendana_trans1.png"
+                alt="Lendana"
+                className="h-10 w-auto mb-6 brightness-0 invert"
+              />
+              <p className="text-slate-400 leading-relaxed mb-6 max-w-md">
+                Lendana adalah Penyelenggara Agregasi Jasa Keuangan yang
+                terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).
               </p>
-              <div>
-                <h4 className="text-xl font-semibold mb-4">
-                  Hubungi Kami DI :
-                </h4>
-                <div className="space-y-1 opacity-90">
-                  <p className="font-semibold">
-                    PT Lendana Digitalindo Nusantara
-                  </p>
-                  <p className="font-semibold">ALAMAT KANTOR</p>
-                  <p>Sovereign 78 E1</p>
-                  <p>Jalan Raya Kemang Raya 78</p>
-                  <p>Jakarta Selatan 12730</p>
-                  <p className="font-semibold mt-2">Call Center :</p>
-                  <p>Email : admin@lendana.id</p>
-                  <p>Phone : 0813.8111.1135</p>
+              <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg inline-flex">
+                <Shield className="w-5 h-5 text-green-400" />
+                <span className="text-sm text-slate-300">
+                  Terdaftar OJK: S-27/3/MS.72/2019
+                </span>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="text-lg font-semibold mb-6 text-blue-400">
+                Hubungi Kami
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-slate-400 text-sm">
+                    <p className="font-medium text-white">
+                      PT Lendana Digitalindo Nusantara
+                    </p>
+                    <p>Sovereign 78 E1</p>
+                    <p>Jalan Raya Kemang Raya 78</p>
+                    <p>Jakarta Selatan 12730</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-slate-500" />
+                  <a
+                    href="mailto:admin@lendana.id"
+                    className="text-slate-400 hover:text-blue-400 transition-colors text-sm"
+                  >
+                    admin@lendana.id
+                  </a>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-slate-500" />
+                  <a
+                    href="tel:081381111135"
+                    className="text-slate-400 hover:text-blue-400 transition-colors text-sm"
+                  >
+                    0813.8111.1135
+                  </a>
                 </div>
               </div>
             </div>
+
+            {/* Services */}
             <div>
-              <h4 className="text-xl font-semibold mb-4">Layanan</h4>
-              <ul className="space-y-2 opacity-90">
-                <li>KUR Penempatan PMI</li>
-                <li>KUR Perumahan PMI</li>
-                <li>KUR Rumah Subsidi PMI</li>
-                <li>KUR Wirausaha PMI</li>
-                <li>Peternak Sapi PMI</li>
-                <li>Konsultasi Gratis</li>
-                <li>Pendampingan Aplikasi</li>
+              <h4 className="text-lg font-semibold mb-6 text-blue-400">
+                Layanan
+              </h4>
+              <ul className="space-y-3 text-slate-400 text-sm">
+                <li className="hover:text-white transition-colors cursor-pointer">
+                  KUR Penempatan PMI
+                </li>
+                <li className="hover:text-white transition-colors cursor-pointer">
+                  KUR Perumahan PMI
+                </li>
+                <li className="hover:text-white transition-colors cursor-pointer">
+                  KUR Wirausaha PMI
+                </li>
+                <li className="hover:text-white transition-colors cursor-pointer">
+                  Konsultasi Gratis
+                </li>
+                <li className="hover:text-white transition-colors cursor-pointer">
+                  Pendampingan Aplikasi
+                </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-white/20 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <div className="flex flex-wrap justify-center md:justify-start space-x-6 text-sm">
+          {/* Bottom Bar */}
+          <div className="border-t border-slate-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-slate-500">
                 <Dialog
                   open={showPrivacyPolicy}
                   onOpenChange={setShowPrivacyPolicy}
                 >
                   <DialogTrigger asChild>
-                    <button className="hover:underline transition-all duration-200">
+                    <button className="hover:text-blue-400 transition-colors">
                       Kebijakan Privasi
                     </button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+                      <DialogTitle className="text-2xl font-bold text-blue-600">
                         Kebijakan Privasi
                       </DialogTitle>
                     </DialogHeader>
                     <div className="mt-4">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">
+                      <pre className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
                         {privacyPolicyText}
                       </pre>
                     </div>
                   </DialogContent>
                 </Dialog>
-                <button className="hover:underline transition-all duration-200">
+                <button className="hover:text-blue-400 transition-colors">
                   Syarat & Ketentuan
                 </button>
-                <button className="hover:underline transition-all duration-200">
+                <button className="hover:text-blue-400 transition-colors">
                   FAQ
                 </button>
-                <button className="hover:underline transition-all duration-200">
-                  Kontak
-                </button>
               </div>
-              <div className="text-sm opacity-75">
+              <div className="text-sm text-slate-500">
                 © {new Date().getFullYear()} Lendana. All rights reserved.
               </div>
             </div>
@@ -754,320 +1002,25 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
         </div>
       </footer>
 
-      {/* Loan Application Dialog */}
-      <Dialog open={showLoanDialog} onOpenChange={setShowLoanDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
-              Pengajuan {selectedProduct}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleFormSubmit} className="space-y-6 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama Lengkap *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  required
-                  value={loanFormData.name}
-                  onChange={(e) =>
-                    setLoanFormData({ ...loanFormData, name: e.target.value })
-                  }
-                  placeholder="Masukkan nama lengkap"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Nomor Telepon *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={loanFormData.phone}
-                  onChange={(e) =>
-                    setLoanFormData({ ...loanFormData, phone: e.target.value })
-                  }
-                  placeholder="08xxxxxxxxxx"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={loanFormData.email}
-                onChange={(e) =>
-                  setLoanFormData({ ...loanFormData, email: e.target.value })
-                }
-                placeholder="nama@email.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amount">Jumlah Pinjaman *</Label>
-              <Input
-                id="amount"
-                type="text"
-                required
-                value={loanFormData.amount}
-                onChange={(e) =>
-                  setLoanFormData({ ...loanFormData, amount: e.target.value })
-                }
-                placeholder="Rp 50.000.000"
-              />
-            </div>
-
-            {/* KTP Upload Field */}
-            <div className="space-y-2">
-              <Label htmlFor="ktp">Upload KTP *</Label>
-              <Input
-                id="ktp"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setLoanFormData({ ...loanFormData, ktpFile: file });
-                }}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#5680E9] file:text-white hover:file:bg-[#8860D0]"
-              />
-              <p className="text-xs text-gray-500">
-                Format yang diterima: JPG, PNG, PDF (Maksimal 5MB)
-              </p>
-            </div>
-
-            {/* Dairy Farmer Specific Fields */}
-            {selectedProduct === "Peternak Sapi PMI" && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cowCount">Jumlah Sapi *</Label>
-                    <Input
-                      id="cowCount"
-                      type="number"
-                      required
-                      value={loanFormData.cowCount}
-                      onChange={(e) =>
-                        setLoanFormData({
-                          ...loanFormData,
-                          cowCount: e.target.value,
-                        })
-                      }
-                      placeholder="10"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="farmLocation">Lokasi Peternakan *</Label>
-                    <Input
-                      id="farmLocation"
-                      type="text"
-                      required
-                      value={loanFormData.farmLocation}
-                      onChange={(e) =>
-                        setLoanFormData({
-                          ...loanFormData,
-                          farmLocation: e.target.value,
-                        })
-                      }
-                      placeholder="Kota/Kabupaten"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="loanPurpose">Tujuan Peminjaman *</Label>
-                  <Select
-                    value={loanFormData.loanPurpose}
-                    onValueChange={(value) =>
-                      setLoanFormData({ ...loanFormData, loanPurpose: value })
-                    }
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih tujuan peminjaman" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pembelian-sapi">
-                        Pembelian Sapi
-                      </SelectItem>
-                      <SelectItem value="perbaikan-kandang">
-                        Perbaikan Kandang
-                      </SelectItem>
-                      <SelectItem value="pembelian-pakan">
-                        Pembelian Pakan
-                      </SelectItem>
-                      <SelectItem value="peralatan-perah">
-                        Peralatan Perah
-                      </SelectItem>
-                      <SelectItem value="modal-kerja">Modal Kerja</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dailyMilkYield">
-                      Rata-rata Hasil Susu/Hari (Liter) *
-                    </Label>
-                    <Input
-                      id="dailyMilkYield"
-                      type="number"
-                      required
-                      value={loanFormData.dailyMilkYield}
-                      onChange={(e) =>
-                        setLoanFormData({
-                          ...loanFormData,
-                          dailyMilkYield: e.target.value,
-                        })
-                      }
-                      placeholder="50"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cooperative">
-                      Koperasi Pengelola Data *
-                    </Label>
-                    <Input
-                      id="cooperative"
-                      type="text"
-                      required
-                      value={loanFormData.cooperative}
-                      onChange={(e) =>
-                        setLoanFormData({
-                          ...loanFormData,
-                          cooperative: e.target.value,
-                        })
-                      }
-                      placeholder="Nama Koperasi"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div className="space-y-2">
-              <Label>Pilih Bank & Produk *</Label>
-              <Select
-                value={loanFormData.bank}
-                onValueChange={(value) =>
-                  setLoanFormData({ ...loanFormData, bank: value })
-                }
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih bank dan produk" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedProduct &&
-                    bankProducts[
-                      selectedProduct as keyof typeof bankProducts
-                    ]?.map((item, index) => (
-                      <SelectItem
-                        key={index}
-                        value={`${item.bank} - ${item.product}`}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">{item.bank}</span>
-                          <span className="text-sm text-gray-600">
-                            {item.product}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Maksimal: {item.maxAmount}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-[#5680E9] mb-2">
-                Informasi Produk {selectedProduct}
-              </h4>
-              <ul className="text-sm text-gray-700 space-y-1">
-                {selectedProduct === "KUR Perumahan PMI" && (
-                  <>
-                    <li>• Suku bunga: 6% efektif per tahun</li>
-                    <li>• Plafon: Hingga Rp 500 juta</li>
-                    <li>• Jangka waktu: Hingga 20 tahun</li>
-                    <li>• Untuk pembelian atau renovasi rumah</li>
-                  </>
-                )}
-                {selectedProduct === "KUR Rumah Subsidi PMI" && (
-                  <>
-                    <li>• Suku bunga: 5% efektif per tahun</li>
-                    <li>• Plafon: Hingga Rp 150 juta</li>
-                    <li>• Jangka waktu: Hingga 20 tahun</li>
-                    <li>• Program bersubsidi pemerintah</li>
-                  </>
-                )}
-                {selectedProduct === "KUR Wirausaha PMI" && (
-                  <>
-                    <li>• Suku bunga: 6% efektif per tahun</li>
-                    <li>• Plafon: Hingga Rp 50 juta</li>
-                    <li>• Jangka waktu: Hingga 5 tahun</li>
-                    <li>• Untuk modal usaha dan investasi</li>
-                  </>
-                )}
-                {selectedProduct === "Peternak Sapi PMI" && (
-                  <>
-                    <li>• Suku bunga: 6% efektif per tahun</li>
-                    <li>• Plafon: Hingga Rp 75 juta</li>
-                    <li>• Jangka waktu: Hingga 5 tahun</li>
-                    <li>• Untuk pengembangan usaha peternakan sapi perah</li>
-                    <li>• Didukung koperasi sebagai pusat pengelolaan data</li>
-                    <li>• Disalurkan melalui Bank BPR</li>
-                  </>
-                )}
-              </ul>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowLoanDialog(false)}
-                className="flex-1"
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 bg-[#5680E9] hover:bg-[#8860D0] text-white"
-              >
-                Ajukan Pinjaman
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* About Lendana Dialog */}
       <Dialog open={showAboutLendana} onOpenChange={setShowAboutLendana}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+            <DialogTitle className="text-2xl font-bold text-gradient-blue">
               Tentang Lendana
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4 space-y-6">
             <div>
-              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
-                Sebagai Platform Penyelenggara Agregasi Produk dan Layanan Jasa
-                Keuangan
+              <h3 className="text-xl font-semibold text-blue-600 mb-3">
+                Platform Penyelenggara Agregasi Produk dan Layanan Jasa Keuangan
               </h3>
-              <div className="space-y-4 text-gray-700 leading-relaxed">
+              <div className="space-y-4 text-slate-700 leading-relaxed">
                 <p>
                   PT. Lendana Digitalindo Nusantara, merupakan perusahaan
                   bergerak dibidang Financial Technology (Fintech) yang telah
                   tercatat di Otoritas Jasa Keuangan (OJK) nomor
-                  S-27/3/MS.72/2019. Melalui Peraturan Otoritas Jasa Keuangan
-                  (OJK) No. 03 Tahun 2024 tentang Penyelenggara Inovasi Keuangan
-                  Sektor Keuangan, Platform Lendana sebagai Penyelenggara
-                  Agregasi Produk dan Layanan Jasa Keuangan.
+                  S-27/3/MS.72/2019.
                 </p>
                 <p>
                   LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
@@ -1075,51 +1028,18 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                   Migran Indonesia, Petani dan Nelayan, UMKM secara digital
                   mudah, cepat dan terpercaya.
                 </p>
-                <p>
-                  Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
-                  Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
-                  yang mudah dan suku bunga rendah.
-                </p>
               </div>
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
-                Registrasi OJK
-              </h3>
-              <div className="space-y-4 text-gray-700 leading-relaxed">
-                <p>
-                  PT. Lendana Digitalindo Nusantara merupakan perusahaan
-                  bergerak dibidang Financial Technology (Fintech) yang telah
-                  tercatat di Otoritas Jasa Keuangan (OJK) nomor
-                  S-27/3/MS.72/2019.
-                </p>
-                <p>
-                  Melalui Peraturan Otoritas Jasa Keuangan (OJK) No. 03 Tahun
-                  2024 tentang Penyelenggara Inovasi Keuangan Sektor Keuangan,
-                  Platform Lendana sebagai Penyelenggara Agregasi Produk dan
-                  Layanan Jasa Keuangan.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold text-[#5680E9] mb-3">
+              <h3 className="text-xl font-semibold text-blue-600 mb-3">
                 Misi Kami
               </h3>
-              <div className="space-y-4 text-gray-700 leading-relaxed">
-                <p>
-                  LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
-                  pembiayaan ke sektor produktif diantaranya untuk calon Pekerja
-                  Migran Indonesia, Petani dan Nelayan, UMKM secara digital
-                  mudah, cepat dan terpercaya.
-                </p>
-                <p>
-                  Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
-                  Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
-                  yang mudah dan suku bunga rendah.
-                </p>
-              </div>
+              <p className="text-slate-700 leading-relaxed">
+                Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
+                Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
+                yang mudah dan suku bunga rendah.
+              </p>
             </div>
           </div>
         </DialogContent>
@@ -1129,12 +1049,12 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
       <Dialog open={showBankList} onOpenChange={setShowBankList}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#5680E9]">
+            <DialogTitle className="text-2xl font-bold text-gradient-blue">
               Bank BUMN Mitra Lendana
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <p className="text-gray-600 mb-6 text-center">
+            <p className="text-slate-600 mb-6 text-center">
               Lendana bekerja sama dengan bank-bank BUMN terpercaya untuk
               menyalurkan KUR kepada masyarakat Indonesia
             </p>
@@ -1142,7 +1062,7 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
               {bumnBanks.map((bank, index) => (
                 <Card
                   key={index}
-                  className="hover:shadow-lg transition-shadow duration-300"
+                  className="hover:shadow-lg transition-all duration-300 border-2 border-transparent hover:border-blue-200"
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
@@ -1154,13 +1074,13 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                         />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-[#5680E9] mb-1">
+                        <h3 className="text-xl font-bold text-blue-600 mb-1">
                           {bank.name}
                         </h3>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-slate-600 mb-2">
                           {bank.fullName}
                         </p>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-slate-700">
                           {bank.description}
                         </p>
                       </div>
@@ -1169,17 +1089,27 @@ Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
                 </Card>
               ))}
             </div>
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="font-semibold text-[#5680E9] mb-2">
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <h4 className="font-semibold text-blue-700 mb-2">
                 Mengapa Memilih Bank BUMN?
               </h4>
-              <ul className="text-sm text-gray-700 space-y-1">
-                <li>• Terjamin keamanan dan kredibilitasnya</li>
-                <li>
-                  • Memiliki jaringan cabang yang luas di seluruh Indonesia
+              <ul className="text-sm text-slate-700 space-y-1">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Terjamin keamanan dan kredibilitasnya
                 </li>
-                <li>• Berpengalaman dalam penyaluran KUR</li>
-                <li>• Didukung penuh oleh pemerintah Indonesia</li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Memiliki jaringan cabang yang luas di seluruh Indonesia
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Berpengalaman dalam penyaluran KUR
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Didukung penuh oleh pemerintah Indonesia
+                </li>
               </ul>
             </div>
           </div>
