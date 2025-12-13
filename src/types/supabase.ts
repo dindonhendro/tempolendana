@@ -366,6 +366,13 @@ export type Database = {
             referencedRelation: "loan_applications"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "branch_applications_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications_verified"
+            referencedColumns: ["id"]
+          },
         ]
       }
       collector_assignments: {
@@ -415,6 +422,13 @@ export type Database = {
             columns: ["loan_application_id"]
             isOneToOne: false
             referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collector_assignments_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications_verified"
             referencedColumns: ["id"]
           },
         ]
@@ -553,6 +567,13 @@ export type Database = {
             columns: ["loan_application_id"]
             isOneToOne: false
             referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_assignments_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications_verified"
             referencedColumns: ["id"]
           },
         ]
@@ -719,6 +740,13 @@ export type Database = {
             referencedRelation: "loan_applications"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "komponen_biaya_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications_verified"
+            referencedColumns: ["id"]
+          },
         ]
       }
       loan_applications: {
@@ -734,6 +762,7 @@ export type Database = {
           birth_place: string | null
           bunga_bank: number | null
           created_at: string
+          data_hash: string | null
           dokumen_kartu_keluarga_url: string | null
           dokumen_ktp_keluarga_penjamin_url: string | null
           dokumen_lain_1_url: string | null
@@ -751,7 +780,7 @@ export type Database = {
           id: string
           info_slik_bank_url: string | null
           institution: string | null
-          ip_address: unknown | null
+          ip_address: unknown
           ktp_pasangan: string | null
           ktp_photo_url: string | null
           last_education: string | null
@@ -797,6 +826,7 @@ export type Database = {
           birth_place?: string | null
           bunga_bank?: number | null
           created_at?: string
+          data_hash?: string | null
           dokumen_kartu_keluarga_url?: string | null
           dokumen_ktp_keluarga_penjamin_url?: string | null
           dokumen_lain_1_url?: string | null
@@ -814,7 +844,7 @@ export type Database = {
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
-          ip_address?: unknown | null
+          ip_address?: unknown
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
           last_education?: string | null
@@ -860,6 +890,7 @@ export type Database = {
           birth_place?: string | null
           bunga_bank?: number | null
           created_at?: string
+          data_hash?: string | null
           dokumen_kartu_keluarga_url?: string | null
           dokumen_ktp_keluarga_penjamin_url?: string | null
           dokumen_lain_1_url?: string | null
@@ -877,7 +908,7 @@ export type Database = {
           id?: string
           info_slik_bank_url?: string | null
           institution?: string | null
-          ip_address?: unknown | null
+          ip_address?: unknown
           ktp_pasangan?: string | null
           ktp_photo_url?: string | null
           last_education?: string | null
@@ -935,6 +966,63 @@ export type Database = {
           },
         ]
       }
+      loan_applications_audit: {
+        Row: {
+          action: string
+          audit_id: string
+          changed_at: string | null
+          changed_by: string | null
+          ip_address: unknown
+          loan_application_id: string
+          new_data: Json | null
+          new_hash: string | null
+          old_data: Json | null
+          old_hash: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          audit_id?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          ip_address?: unknown
+          loan_application_id: string
+          new_data?: Json | null
+          new_hash?: string | null
+          old_data?: Json | null
+          old_hash?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          audit_id?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          ip_address?: unknown
+          loan_application_id?: string
+          new_data?: Json | null
+          new_hash?: string | null
+          old_data?: Json | null
+          old_hash?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_applications_audit_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_applications_audit_loan_application_id_fkey"
+            columns: ["loan_application_id"]
+            isOneToOne: false
+            referencedRelation: "loan_applications_verified"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string
@@ -964,12 +1052,124 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      loan_applications_verified: {
+        Row: {
+          assigned_agent_id: string | null
+          bank_approved_at: string | null
+          created_at: string | null
+          data_hash: string | null
+          email: string | null
+          full_name: string | null
+          hash_verified: boolean | null
+          id: string | null
+          loan_amount: number | null
+          negara_penempatan: string | null
+          nik_ktp: string | null
+          phone_number: string | null
+          status: string | null
+          submission_type: string | null
+          tenor_months: number | null
+          transaction_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          validated_by_lendana: string | null
+          validated_by_lendana_at: string | null
+        }
+        Insert: {
+          assigned_agent_id?: string | null
+          bank_approved_at?: string | null
+          created_at?: string | null
+          data_hash?: string | null
+          email?: string | null
+          full_name?: string | null
+          hash_verified?: never
+          id?: string | null
+          loan_amount?: number | null
+          negara_penempatan?: string | null
+          nik_ktp?: string | null
+          phone_number?: string | null
+          status?: string | null
+          submission_type?: string | null
+          tenor_months?: number | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          validated_by_lendana?: string | null
+          validated_by_lendana_at?: string | null
+        }
+        Update: {
+          assigned_agent_id?: string | null
+          bank_approved_at?: string | null
+          created_at?: string | null
+          data_hash?: string | null
+          email?: string | null
+          full_name?: string | null
+          hash_verified?: never
+          id?: string | null
+          loan_amount?: number | null
+          negara_penempatan?: string | null
+          nik_ktp?: string | null
+          phone_number?: string | null
+          status?: string | null
+          submission_type?: string | null
+          tenor_months?: number | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          validated_by_lendana?: string | null
+          validated_by_lendana_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_applications_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_applications_validated_by_lendana_fkey"
+            columns: ["validated_by_lendana"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      generate_transaction_id: {
-        Args: Record<PropertyKey, never>
+      compute_hash_from_record: {
+        Args: {
+          p_record: Database["public"]["Tables"]["loan_applications"]["Row"]
+        }
         Returns: string
+      }
+      compute_loan_application_hash: {
+        Args: { p_loan_application_id: string }
+        Returns: string
+      }
+      generate_transaction_id: { Args: never; Returns: string }
+      update_loan_application_hash: {
+        Args: { p_loan_application_id: string }
+        Returns: undefined
+      }
+      verify_loan_application_hash: {
+        Args: { p_loan_application_id: string }
+        Returns: {
+          application_id: string
+          computed_hash: string
+          is_valid: boolean
+          status: string
+          stored_hash: string
+          transaction_id: string
+        }[]
       }
     }
     Enums: {
