@@ -226,52 +226,229 @@ const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
     });
   };
 
-  const privacyPolicyText = `
-KEBIJAKAN PRIVASI KUR-PMI
+  const privacyPolicyText = `KEBIJAKAN PRIVASI
+PT. LENDANA DIGITALINDO NUSANTARA
+I. KATA PENGANTAR
+Kebijakan Privasi ini (“Kebijakan Privasi”) menjelaskan bagaimana PT. Lendana Digitalindo
+Nusantara (selanjutnya disebut “Lendana” atau “Kami”) sebagai Penyelenggara Agregasi Jasa
+keuangan terdaftar di OJK sesuai dengan POJK 4/2025, yang akan memproses Data Pribadi
+Anda sehubungan dengan penggunaan transaksi dan layanan agregasi data di platform
+Lendana (“Pemrosesan Data Pribadi”).
+Kebijakan Privasi ini disediakan di platform atau website Lendana sehingga Anda dapat
+mengklik, membaca dan memahami secara lebih detil dan memberikan persetujuan apabila
+ingin melanjutkan pendaftaran dan transaksi di platform Lendana. Kebijakan privasi ini tunduk
+dan mengikuti POJK Nomor 22 Tahun 2023 tentang Pelindungan Konsumen dan Masyarakat
+di Sektor Jasa Keuangan, SEOJK 14/SEOJK.07/2014 tentang kewajiban PUJK merahasiakan data
+nasabah dan melarang pemberian ke pihak ketiga, serta mengharuskan persetujuan dari
+konsumen untuk pemrosesan data.
+II. PENGAKUAN DAN PERSETUJUAN
+Dengan mendaftar akun dan menggunakan Layanan Kami, berarti Anda mengakui bahwa Anda
+telah membaca dan memahami Kebijakan Privasi ini dan memberikan persetujuan atas
+Pemrosesan Data Pribadi Anda sesuai dengan Kebijakan Privasi ini. Secara khusus, Anda
+sepakat dan memberikan persetujuan kepada Kami untuk Memproses Data Pribadi Anda
+sesuai dengan Kebijakan Privasi ini.
+Anda dapat menarik persetujuan Anda untuk setiap atau seluruh pengumpulan, penggunaan,
+atau pengungkapan Data Pribadi Anda kapan saja dengan memberikan kepada Kami
+pemberitahuan secara tertulis melalui email ke privacy@lendana.id Setelah menerima
+pemberitahuan Anda untuk menarik persetujuan atas pengumpulan, penggunaan, atau
+pengungkapan Data Pribadi Anda, Kami akan memberi tahu Anda tentang konsekuensi yang
+mungkin terjadi dari penarikan tersebut sehingga Anda dapat memutuskan apakah Anda tetap
+ingin menarik persetujuan.
+III. DATA PRIBADI YANG DIKUMPULKAN
+“Data Pribadi” berarti data yang mengidentifikasi atau dapat digunakan untuk
+mengidentifikasi, menghubungi, atau menemukan orang atau perangkat yang terkait dengan
+data tersebut. Data Pribadi termasuk, namun tidak terbatas pada, nama, alamat, tanggal lahir,
+pekerjaan, nomor telepon, alamat email, rekening bank, jenis kelamin, identifikasi (termasuk
+paspor atau dokumen identitas nasional) atau tanda pengenal lainnya yang dikeluarkan
+pemerintah, Visa Kerja, foto, kewarganegaraan, nomor telepon Pengguna dan non-Pengguna
+di dalam daftar kontak telepon seluler Anda, data terkait keuangan, data biometrik (termasuk
+namun tidak terbatas pada pengenalan sidik jari dan pengenalan wajah), dan data lainnya yang
+termasuk sebagai Data Pribadi sesuai dengan hukum dan peraturan perundang-undangan
+yang berlaku
+Jenis Data Pribadi yang Kami kumpulkan bergantung pada keadaan pengumpulan dan sifat
+layanan yang diminta atau transaksi yang dilakukan. Mengingat Lendana sebaga
+Penyelenggara Agregasi Jasa Keuangan (PAJK) maka data/dokumen yang dikumpulkan
+termasuk diantaranya sesuai dengan kebutuhan LJK sebagai Mitra Lendana.
+Sepanjang diizinkan oleh Peraturan Perundang-undangan yang Berlaku, Kami dapat
+memproses, mengumpulkan, menggunakan, menyimpan dan mentransfer berbagai jenis Data
+Pribadi, yang terdiri dari Data Pribadi umum dan khusus/sensitif, tentang Anda yang telah Kami
+klasifikasikan sebagai berikut:
+1. Data Identitas termasuk nama, nama pengguna, kata sandi, kartu tanda penduduk, nomor
+pokok wajib pajak, Kartu keluarga, Paspor, Surat Nikah, identitas pengguna atau pengenal
+lainnya sesuai kebutuhan LJK, jabatan, tanggal kelahiran, jenis kelamin, tempat kelahiran,
+pekerjaan, kewarganegaraan, Visa Kerja, Nomor regristasi PMI, foto dan/atau data
+biometric.
+2. Data Kontak termasuk alamat di Indonesia atau di Luar Negeri apabila menjadi PMI
+sebagai informasi alamat penagihan, alamat email, nomor telepon.
+3. Data Kelayakan termasuk, dalam kaitannya dengan kontrak kerja dari pemberi kerja di Luar
+Negeri, Sertifikat Kompetensi, Nama Perusahaan Pemberi kerja beserta alamatnya, Bukti
+mendaftar di SISKO Kementerian P2MI dan Siap Kerja di Kemenaker, polis asuransi dan
+dokumen tambahan. Untuk pengguna korporasi seperti NIB, NPWP, Informasi keuangan
+dan data lainnya sesuai kebutuhan LJK.
+4. Data Transaksi termasuk data pengajuan pinjaman, minat, preferensi, masukan, dan
+tanggapan survei Anda, sehubungan dengan Pengguna, jenis layanan yang dicari dan jenis
+layanan yang dilakukan pada saat itu.
+5. Data Catatan (log) termasuk catatan pada server yang menerima data seperti alamat IP
+perangkat, tanggal dan waktu akses, fitur aplikasi atau laman yang dilihat, proses kerja
+aplikasi dan aktivitas sistem lainnya, jenis peramban (browser), dan/atau situs atau layanan
+pihak ketiga yang Pengguna gunakan sebelum berinteraksi dengan Layanan.
+6. Data Lokasi termasuk data lokasi geografis waktu-nyata (real-time) Anda, titik koordinat
+lokasi bujur lintang (longitude latitude), dan lokasi Wi-Fi.
+Kami dapat membuat, menggunakan, mengungkapkan Data Gabungan seperti data statistik
+atau demografis untuk tujuan apa pun. Data Gabungan dapat berasal dari Data Pribadi Anda
+tetapi tidak akan dianggap sebagai Data Pribadi karena data ini tidak akan secara langsung
+atau tidak langsung mengungkapkan identitas Anda karena Kami akan memastikan: (i) bahwa
+semua pengenal telah dihapus sehingga data tersebut, sendiri atau bersama-sama dengan
+data lain yang tersedia, tidak dapat dikaitkan atau dihubungkan dengan atau tidak dapat
+mengidentifikasi siapa pun, dan (ii) data tersebut kemudian digabungkan dengan data serupa
+sehingga data asli membentuk bagian dari kumpulan data yang lebih besar.
+Cara Kami Mengumpulkan Data Pribadi Anda
+Data Pribadi yang Kami kumpulkan dapat diberikan oleh Anda secara langsung atau oleh pihak
+ketiga (misalnya: Mitra P3MI, Mitra LPK/SO, BNSP sebagai Lembaga Sertifikasi, Imigrasi untuk
+Paspor dan Visa, Poliklinik untuk data medical checkup ketika Anda mendaftar secara kolektif
+melalui Mitra Penempatan atau menggunakan Layanan, ketika Anda menghubungi layanan
+pelanggan Kami, atau ketika Anda menyediakan Data Pribadi kepada Kami). Kami dapat
+mengumpulkan data dalam berbagai macam bentuk dan tujuan (termasuk tujuan yang
+diizinkan berdasarkan Peraturan Perundang-undangan yang Berlaku).
+1. Informasi yang Kami kumpulkan dari Anda atau dari perangkat seluler Anda secara
+langsung
+Anda dapat memberikan kepada Kami Data Identitas, Kontak, Kelayakan, Data transaksi
+dan lain-lain termasuk dalam keadaan di mana hal tersebut diminta oleh Kami atau Mitra
+LJK kami. Adapun dalam keadaan diharuskan oleh Peraturan Perundang-undangan yang
+Berlaku, saat berinteraksi dengan Kami secara langsung atau dengan berkorespondensi
+dengan Kami melalui surat, email atau lainnya. Hal ini termasuk Data Pribadi yang Anda
+sediakan ketika Anda:
+• mendaftar dan membuat sebuah akun menggunakan Layanan;
+• menggunakan Layanan yang tersedia di platform Lendana.
+• menggunakan fitur obrolan (chat
+• memberikan masukan kepada Kami atau menghubungi Kami.
+2. Informasi yang dikumpulkan setiap kali Anda menggunakan Layanan
+Anda dapat memberikan Data Teknis dan Lokasi kepada Kami setiap kali Anda
+menggunakan dan/atau mengunjungi Layanan. Setiap kali Anda mengakses Layanan
+melalui Perangkat Seluler Anda, Kami akan melacak dan mengumpulkan data lokasi
+geografis Anda secara waktu-nyata (real-time). Dalam beberapa situasi, Anda akan diminta
+untuk mengaktifkan Global Positioning System (GPS) pada perangkat seluler Anda untuk
+memungkinkan Kami memberikan pengalaman yang lebih baik kepada Anda dalam
+menggunakan Layanan (misalnya, untuk memberikan informasi kepada Anda tentang
+seberapa dekat kurir dengan Anda). Anda selalu dapat memilih untuk menonaktifkan data
+pelacakan lokasi geografis pada Perangkat Seluler Anda untuk sementara waktu. Namun,
+hal itu dapat mempengaruhi fungsi yang tersedia pada Layanan.
+3. Data yang dikumpulkan dari pihak ketiga
+Kami juga dapat mengumpulkan Data Pribadi Anda dari pihak ketiga (termasuk Mitra P3MI,
+Mitra LPK, Mitra Sending Organization dan atau pihak lainnya yang bekerjasama dengan
+kami. Dalam kondisi tersebut, Kami hanya akan mengumpulkan Data Pribadi Anda untuk
+atau sehubungan dengan tujuan yang melibatkan pihak ketiga tersebut atau tujuan kerja
+sama Kami dengan pihak ketiga tersebut (tergantung pada kondisinya).
+4. Informasi tentang pihak ketiga yang Anda berikan kepada Kami
+Anda dapat memberikan kepada Kami Data Pribadi yang berkaitan dengan individu pihak
+ketiga lainnya (termasuk Data Pribadi yang berkaitan dengan pasangan Anda, anggota
+keluarga, teman, atau individu lainnya). Dalam hal tersebut, Anda tentu saja akan
+memerlukan persetujuan dari individu pihak ketiga lainnya tersebut — lihat “Pengakuan
+dan Persetujuan”, di atas, untuk informasi lebih lanjut.
+IV. PENGGUNAAN DATA PRIBADI
 
-1. PENGUMPULAN INFORMASI
-Kami mengumpulkan informasi pribadi yang Anda berikan secara langsung kepada kami, termasuk namun tidak terbatas pada:
-- Nama lengkap dan informasi identitas
-- Informasi kontak (alamat, nomor telepon, email)
-- Informasi keuangan dan pekerjaan
-- Dokumen pendukung aplikasi pinjaman
+Kami dapat menggunakan Data Pribadi yang dikumpulkan untuk salah satu dari tujuan berikut
+ini serta untuk tujuan lain yang diizinkan oleh Peraturan Perundang-undangan yang Berlaku
+("Tujuan"):
+1. untuk mengidentifikasi dan mendaftarkan Anda sebagai Pengguna dan untuk
+membuat, memverifikasi, menonaktifkan, atau mengelola akun Anda pada Layanan
+Kami;
+2. untuk memfasilitasi atau memungkinkan verifikasi apa pun yang menurut
+pertimbangan Kami diperlukan sebelum menggunakan produk dan layanan kami atau
+sebelum Kami mendaftarkan Anda sebagai Pengguna, termasuk melakukan proses KYC
+(Know Your Customer) dan/atau penilaian kredit (credit scoring) (jika dibutuhkan);
+3. untuk memungkinkan Lendana menyediakan layanan, baik layanan yang telah tersedia
+seperti pengajuan pinjaman ke Lembaga Jasa Keuangan yang telah bekerjasama
+dengan kami, layanan yang Anda minta sebagai kelengkapan produk dan layanan,
+maupun layanan yang akan kami sediakan mendatang sesuai pertimbangan kami;
+4. untuk memberitahu Anda atas transaksi atau aktivitas yang terjadi dalam platform atau
+sistem lain yang terhubung dengan Layanan Kami;
+5. untuk memfasilitasi penautan akun VA melalui mitra Payment Gateway sesuai dengan
+layanan yang anda aktifkan sesuai kebutuhan layanan.
+6. untuk berkomunikasi dengan Anda dan mengirimkan Anda data sehubungan dengan
+penggunaan Layanan;
+7. untuk memberitahu Anda mengenai segala pembaruan pada platform atau perubahan
+pada Layanan yang tersedia;
+8. untuk memproses, menyelesaikan dan menanggapi keluhan, permasalahan,
+pertanyaan dan saran yang diterima dari Anda;
+9. untuk melakukan pemeliharaan, mengembangkan, menguji, meningkatkan, dan
+mempersonalisasikan Layanan untuk memenuhi kebutuhan dan preferensi Anda
+sebagai Pengguna
+10. untuk memantau dan menganalisis aktivitas, perilaku, dan data demografis pengguna
+termasuk tren dan penggunaan berbagai layanan yang tersedia pada Layanan Kami,
+termasuk mengevaluasi kelayakan kredit dan penilaian kredit (credit scoring)
+berdasarkan penggunaan Layanan oleh Anda secara keseluruhan;
+11. untuk memproses dan mengelola reward points Anda apabila terdapat program
+promosi dari kami;
+V. MELINDUNGI DATA PRIBADI ANDA
 
-2. PENGGUNAAN INFORMASI
-Informasi yang kami kumpulkan digunakan untuk:
-- Memproses aplikasi pinjaman KUR-PMI
-- Melakukan verifikasi dan penilaian kredit
-- Berkomunikasi mengenai status aplikasi
-- Mematuhi persyaratan hukum dan regulasi
+1. Keamanan Data
+Kerahasiaan Data Pribadi Anda adalah hal yang terpenting bagi Lendana. Kami akan
+melakukan segala upaya yang wajar untuk melindungi dan mengamankan Data Pribadi
+Anda dari akses, pengumpulan, penggunaan atau pengungkapan oleh orang-orang
+yang tidak berwenang dan dari pemrosesan yang melanggar hukum. Namun,
+pengiriman data melalui internet tidak sepenuhnya aman. Meskipun Kami selalu
+melakukan yang terbaik untuk melindungi Data Pribadi Anda, Anda mengakui bahwa
+Kami tidak dapat menjamin integritas dan keakuratan Data Pribadi apa pun yang Anda
+kirimkan melalui Internet, atau menjamin bahwa Data Pribadi tersebut tidak akan
+dicegat, diakses, diungkapkan, diubah atau dimusnahkan oleh pihak ketiga yang tidak
+berwenang, karena faktor-faktor di luar kendali Kami. Anda bertanggung jawab untuk
+menjaga kerahasiaan rincian akun Anda dan Anda wajib untuk tidak membagikan
+rincian akun Anda, termasuk kata sandi Anda dan One Time Password (OTP) Anda,
+kepada siapa pun dan Anda juga harus selalu menjaga dan bertanggung jawab atas
+keamanan perangkat yang Anda gunakan.
+2. Penyimpanan Data
+Data Pribadi Anda hanya akan disimpan selama diperlukan untuk memenuhi tujuan
+dari pengumpulannya. Untuk keperluan pengajuan pinjaman hanya disimpan sesuai
+tenor pinjaman anda plus 6 (enam) bulan tambahan apabila anda ingin mengajukan
+pinjaman baru, yang mana selama masa retensi atau selama penyimpanan tersebut
+diwajibkan atau diizinkan oleh Peraturan Perundang-undangan yang Berlaku. Kami
+akan berhenti menyimpan Data Pribadi, atau menghapus maksud dari dikaitkannya
+Data Pribadi tersebut dengan Anda sebagai individu, segera setelah dianggap bahwa
+tujuan pengumpulan Data Pribadi tersebut tidak lagi dibutuhkan dengan menyimpan
+Data Pribadi, terdapat permintaan dari Anda untuk melakukan penghapusan akun
+Anda, dan penyimpanan tidak lagi diperlukan untuk tujuan bisnis atau secara hukum.
+Lendana akan menghapus dan/atau menganonimkan Data Pribadi Pengguna yang ada
+di bawah kendali Lendana apabila (i) Data Pribadi Pengguna tidak lagi diperlukan untuk
+memenuhi tujuan dari pengumpulannya; (ii) berakhirnya masa retensi dan (iii)
+penyimpanan tidak lagi diperlukan untuk tujuan kepatuhan menurut ketentuan
+Peraturan Perundang-undangan yang Berlaku.
+Mohon diperhatikan bahwa masih ada kemungkinan bahwa beberapa Data Pribadi
+Anda disimpan oleh pihak lain, termasuk institusi pemerintah dengan cara tertentu.
+Dalam hal Kami membagikan Data Pribadi Anda kepada institusi pemerintah yang
+berwenang dan/atau institusi lainnya yang dapat ditunjuk oleh otoritas pemerintah
+yang berwenang atau memiliki kerja sama dengan Kami, Anda menyetujui dan
+mengakui bahwa penyimpanan Data Pribadi Anda oleh institusi terkait akan mengikuti
+kebijakan penyimpanan data masing-masing institusi tersebut.
+Sepanjang diizinkan oleh Peraturan Perundang-undangan yang Berlaku, Anda setuju
+untuk membebaskan Kami dari dan terhadap setiap dan semua klaim, kerugian,
+kewajiban, pengeluaran, kerusakan, dan biaya (termasuk namun tidak terbatas pada
+biaya dan pengeluaran hukum atas dasar ganti rugi penuh) yang diakibatkan secara
+langsung atau tidak langsung dari setiap penyimpanan Data Pribadi Anda yang tidak
+sah.
+VI. HAK PENGGUNA
 
-3. PERLINDUNGAN DATA
-Kami berkomitmen melindungi informasi pribadi Anda dengan:
-- Enkripsi data yang kuat
-- Akses terbatas hanya untuk personel yang berwenang
-- Sistem keamanan berlapis
-- Audit keamanan berkala
+Anda sebagai pengguna dari platform kami memiliki hak tertentu berdasarkan Peraturan
+Perundang-undangan yang Berlaku untuk meminta kepada Kami terhadap akses berupa
+koreksi dari dan/atau penghapusan terhadap Data Pribadi Anda yang berada dalam
+penguasaan dan kendali Kami. Anda dapat menghapus akun anda melalui platform kami atau
+menghubungi kami melalui emai di privacy@lendana.id
+Kami berhak untuk menolak permintaan Anda terhadap akses pada, koreksi dari dan/atau
+penghapusan terhadap, sebagian atau semua Data Pribadi Anda yang Kami kuasai atau
+kendalikan jika diperbolehkan atau diperlukan berdasarkan Peraturan Perundang-undangan
+yang Berlaku. Hal ini termasuk dalam keadaan di mana Data Pribadi tersebut dapat berisi
+referensi kepada orang lain atau di mana permintaan untuk akses atau permintaan untuk
+memperbaiki atau menghapus adalah untuk alasan yang Kami anggap tidak relevan,
+sembrono, atau sulit.
+Sesuai Peraturan Perundang-undangan yang Berlaku, Kami berhak untuk membebankan biaya
+administrasi untuk setiap permintaan akses dan/atau koreksi.
 
-4. PEMBAGIAN INFORMASI
-Informasi Anda dapat dibagikan kepada:
-- Bank penyalur KUR yang bekerja sama
-- Lembaga pemerintah terkait (sesuai regulasi)
-- Pihak ketiga yang mendukung layanan (dengan perjanjian kerahasiaan)
+VII. HUBUNGI KAMI
 
-5. HAK ANDA
-Anda memiliki hak untuk:
-- Mengakses informasi pribadi yang kami miliki
-- Meminta koreksi data yang tidak akurat
-- Meminta penghapusan data (sesuai ketentuan hukum)
-- Menarik persetujuan penggunaan data
-
-6. KONTAK
-Untuk pertanyaan mengenai kebijakan privasi ini, hubungi:
-Email: privacy@kur-pmi.id
-Telepon: 0813.8111.1135
-
-Kebijakan ini dapat diperbarui sewaktu-waktu. Perubahan akan diberitahukan melalui website resmi kami.
-
-Terakhir diperbarui: ${new Date().toLocaleDateString("id-ID")}
-  `;
+Apabila Anda memiliki pertanyaan atau keluhan terkait Kebijakan Privasi ini atau apabila
+Anda ingin mengakses, mengoreksi dan/atau hak-hak lainnya atas Data Pribadi Anda, silakan
+hubungi kami melalui layanan pelanggan di privacy@lendana.id
+Dikeluarkan per 17 Desember 2025 `;
 
   // Animation variants
   const fadeInUp = {
