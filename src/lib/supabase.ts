@@ -20,6 +20,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Import registration logger
+import { logUserRegistration } from './registrationLogger';
+
 // Authentication functions
 export const signUp = async (
   email: string,
@@ -30,83 +33,119 @@ export const signUp = async (
   bankId?: string,
   branchId?: string,
 ) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        role,
-        full_name: fullName,
-      },
-    },
-  });
-
-  if (error) throw error;
-
-  // Create user profile in public.users table
-  if (data.user) {
-    const { error: profileError } = await supabase.from("users").insert({
-      id: data.user.id,
+  try {
+    const { data, error } = await supabase.auth.signUp({
       email,
-      full_name: fullName,
-      role,
+      password,
+      options: {
+        data: {
+          role,
+          full_name: fullName,
+        },
+      },
     });
 
-    if (profileError) throw profileError;
+    if (error) {
+      // Log failed registration
+      await logUserRegistration({
+        email,
+        fullName,
+        role,
+        registrationStatus: 'failed',
+        errorMessage: error.message
+      });
+      throw error;
+    }
 
-    // If user is an agent or checker_agent, create agent_staff record
-    if ((role === "agent" || role === "checker_agent") && agentCompanyId) {
-      const { error: agentError } = await supabase.from("agent_staff").insert({
-        user_id: data.user.id,
-        agent_company_id: agentCompanyId,
-        position: role === "checker_agent" ? "Checker Agent" : "Agent",
+    // Create user profile in public.users table
+    if (data.user) {
+      const { error: profileError } = await supabase.from("users").insert({
+        id: data.user.id,
+        email,
+        full_name: fullName,
+        role,
       });
 
-      if (agentError) throw agentError;
-    }
+      if (profileError) {
+        // Log failed registration
+        await logUserRegistration({
+          userId: data.user.id,
+          email,
+          fullName,
+          role,
+          registrationStatus: 'failed',
+          errorMessage: profileError.message
+        });
+        throw profileError;
+      }
 
-    // If user is bank_staff, create bank_staff record
-    if (role === "bank_staff" && bankId && branchId) {
-      const { error: bankStaffError } = await supabase
-        .from("bank_staff")
-        .insert({
+      // If user is an agent or checker_agent, create agent_staff record
+      if ((role === "agent" || role === "checker_agent") && agentCompanyId) {
+        const { error: agentError } = await supabase.from("agent_staff").insert({
           user_id: data.user.id,
-          bank_id: bankId,
-          branch_id: branchId,
-          position: "Staff",
+          agent_company_id: agentCompanyId,
+          position: role === "checker_agent" ? "Checker Agent" : "Agent",
         });
 
-      if (bankStaffError) throw bankStaffError;
+        if (agentError) throw agentError;
+      }
+
+      // If user is bank_staff, create bank_staff record
+      if (role === "bank_staff" && bankId && branchId) {
+        const { error: bankStaffError } = await supabase
+          .from("bank_staff")
+          .insert({
+            user_id: data.user.id,
+            bank_id: bankId,
+            branch_id: branchId,
+            position: "Staff",
+          });
+
+        if (bankStaffError) throw bankStaffError;
+      }
+
+      // If user is insurance, create insurance_staff record
+      if (role === "insurance" && agentCompanyId) {
+        const { error: insuranceStaffError } = await supabase
+          .from("insurance_staff")
+          .insert({
+            user_id: data.user.id,
+            insurance_company_id: agentCompanyId, // reusing agentCompanyId param for insurance company
+            position: "Staff",
+          });
+
+        if (insuranceStaffError) throw insuranceStaffError;
+      }
+
+      // If user is collector, create collector_staff record
+      if (role === "collector" && agentCompanyId) {
+        const { error: collectorStaffError } = await supabase
+          .from("collector_staff")
+          .insert({
+            user_id: data.user.id,
+            collector_company_id: agentCompanyId, // reusing agentCompanyId param for collector company
+            position: "Staff",
+          });
+
+        if (collectorStaffError) throw collectorStaffError;
+      }
+
+      // Log successful registration (for OJK compliance)
+      await logUserRegistration({
+        userId: data.user.id,
+        email,
+        fullName,
+        role,
+        registrationStatus: 'success'
+      });
     }
 
-    // If user is insurance, create insurance_staff record
-    if (role === "insurance" && agentCompanyId) {
-      const { error: insuranceStaffError } = await supabase
-        .from("insurance_staff")
-        .insert({
-          user_id: data.user.id,
-          insurance_company_id: agentCompanyId, // reusing agentCompanyId param for insurance company
-          position: "Staff",
-        });
-
-      if (insuranceStaffError) throw insuranceStaffError;
-    }
-
-    // If user is collector, create collector_staff record
-    if (role === "collector" && agentCompanyId) {
-      const { error: collectorStaffError } = await supabase
-        .from("collector_staff")
-        .insert({
-          user_id: data.user.id,
-          collector_company_id: agentCompanyId, // reusing agentCompanyId param for collector company
-          position: "Staff",
-        });
-
-      if (collectorStaffError) throw collectorStaffError;
-    }
+    return data;
+  } catch (error: any) {
+    // Ensure error is logged before re-throwing
+    console.error('Registration error:', error);
+    throw error;
   }
-
-  return data;
 };
 
 export const signIn = async (email: string, password: string) => {

@@ -1023,6 +1023,60 @@ export type Database = {
           },
         ]
       }
+      user_registration_logs: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          email: string
+          error_message: string | null
+          full_name: string | null
+          id: string
+          ip_address: unknown
+          operating_system: string | null
+          registration_status: string | null
+          role: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          email: string
+          error_message?: string | null
+          full_name?: string | null
+          id?: string
+          ip_address?: unknown
+          operating_system?: string | null
+          registration_status?: string | null
+          role: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          email?: string
+          error_message?: string | null
+          full_name?: string | null
+          id?: string
+          ip_address?: unknown
+          operating_system?: string | null
+          registration_status?: string | null
+          role?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -1142,6 +1196,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_registration_logs_summary: {
+        Row: {
+          registration_date: string | null
+          registration_status: string | null
+          role: string | null
+          total_registrations: number | null
+          unique_emails: number | null
+          unique_ips: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
