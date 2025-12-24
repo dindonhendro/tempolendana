@@ -1023,6 +1023,45 @@ export type Database = {
           },
         ]
       }
+      user_consent_logs: {
+        Row: {
+          consent_at: string
+          consent_given: boolean
+          created_at: string
+          document_type: string
+          document_version: string | null
+          id: string
+          ip_address: unknown
+          source: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_at?: string
+          consent_given?: boolean
+          created_at?: string
+          document_type: string
+          document_version?: string | null
+          id?: string
+          ip_address?: unknown
+          source?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_at?: string
+          consent_given?: boolean
+          created_at?: string
+          document_type?: string
+          document_version?: string | null
+          id?: string
+          ip_address?: unknown
+          source?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_registration_logs: {
         Row: {
           browser: string | null
@@ -1196,6 +1235,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_consent_logs_summary: {
+        Row: {
+          consent_date: string | null
+          consents_denied: number | null
+          consents_given: number | null
+          document_type: string | null
+          total_consents: number | null
+          unique_users: number | null
+        }
+        Relationships: []
       }
       v_registration_logs_summary: {
         Row: {

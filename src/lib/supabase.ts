@@ -22,6 +22,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 // Import registration logger
 import { logUserRegistration } from './registrationLogger';
+import { logUserConsent } from './consentLogger';
 
 // Authentication functions
 export const signUp = async (
@@ -32,7 +33,9 @@ export const signUp = async (
   agentCompanyId?: string,
   bankId?: string,
   branchId?: string,
+  consentPrivacyPolicy: boolean = false,
 ) => {
+  console.log('signUp called with params:', { email, role, fullName, agentCompanyId, bankId, branchId, consentPrivacyPolicy });
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -138,6 +141,21 @@ export const signUp = async (
         role,
         registrationStatus: 'success'
       });
+
+      // Log privacy policy consent (for OJK compliance)
+      if (consentPrivacyPolicy) {
+        console.log('Logging consent for user:', data.user.id, 'consent:', consentPrivacyPolicy);
+        const consentResult = await logUserConsent({
+          userId: data.user.id,
+          documentType: 'privacy_policy',
+          documentVersion: '1.0',
+          consentGiven: true,
+          source: 'web'
+        });
+        console.log('Consent log result:', consentResult);
+      } else {
+        console.log('consentPrivacyPolicy is false or undefined:', consentPrivacyPolicy);
+      }
     }
 
     return data;

@@ -818,8 +818,8 @@ Dikeluarkan per 17 Desember 2025 `;
               </Card>
             </motion.div>
 
-            {/* Pengembangan Usaha P3MI */}
-            <motion.div
+            {/* Pengembangan Usaha P3MI - Hidden temporarily */}
+            {/* <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -827,12 +827,9 @@ Dikeluarkan per 17 Desember 2025 `;
             >
               <Card className="h-full border-0 shadow-xl hover:shadow-2xl transition-all duration-500 group overflow-hidden bg-gradient-to-br from-indigo-50 to-white hover:-translate-y-2">
                 <CardContent className="p-8">
-                  {/* Icon */}
                   <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-500">
                     <Building2 className="w-8 h-8 text-white" />
                   </div>
-
-                  {/* Content */}
                   <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-indigo-600 transition-colors">
                     Pengembangan Usaha P3MI
                   </h3>
@@ -840,8 +837,6 @@ Dikeluarkan per 17 Desember 2025 `;
                     Pinjaman khusus untuk pengembangan usaha P3MI/Agent dengan
                     proses mudah
                   </p>
-
-                  {/* Features */}
                   <div className="space-y-3 mb-8">
                     {[
                       "Bunga kompetitif",
@@ -856,8 +851,6 @@ Dikeluarkan per 17 Desember 2025 `;
                       </div>
                     ))}
                   </div>
-
-                  {/* CTA */}
                   <Button
                     className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-6 rounded-xl shadow-lg shadow-indigo-600/25 group-hover:shadow-indigo-600/40 transition-all"
                     onClick={() => (window.location.href = "/auth/perusahaan")}
@@ -867,7 +860,7 @@ Dikeluarkan per 17 Desember 2025 `;
                   </Button>
                 </CardContent>
               </Card>
-            </motion.div>
+            </motion.div> */}
           </div>
         </div>
       </section>

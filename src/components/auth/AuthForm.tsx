@@ -186,6 +186,13 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
       return;
     }
 
+    // Validate scroll requirement for privacy policy
+    if (!hasScrolledToBottom) {
+      setError("Silakan scroll dan baca seluruh kebijakan privasi terlebih dahulu");
+      setIsLoading(false);
+      return;
+    }
+
     // Validate consent checkbox
     if (!consentTermsConditions) {
       setError("Anda harus menyetujui syarat dan ketentuan serta kebijakan privasi untuk melanjutkan");
@@ -230,6 +237,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
             : agentCompanyId,
         bankId,
         branchId,
+        consentTermsConditions, // Pass privacy policy consent for OJK logging
       );
       setSuccess(
         "Account created successfully! Please check your email to verify your account.",
@@ -410,8 +418,8 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                       ) : (
                         <>
                           <SelectItem value="user">User (PMI)</SelectItem>
-                          <SelectItem value="perusahaan">
-                            Perusahaan (P3MI Business)
+                          <SelectItem value="perusahaan" disabled>
+                            Perusahaan (P3MI Business) - Coming Soon
                           </SelectItem>
                         </>
                       )}
