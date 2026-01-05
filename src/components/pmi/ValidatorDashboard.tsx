@@ -33,6 +33,7 @@ import {
   getCollectorCompanies,
 } from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
+import ImmutabilityConfirmationDialog from "@/components/pmi/ImmutabilityConfirmationDialog";
 
 interface ValidatorDashboardProps {
   validatorId?: string;
@@ -65,6 +66,17 @@ export default function ValidatorDashboard({
   const [selectedApplicationForCollector, setSelectedApplicationForCollector] =
     useState<LoanApplication | null>(null);
   const [selectedCollectorCompany, setSelectedCollectorCompany] = useState("");
+  
+  // Immutability dialog state
+  const [showImmutabilityDialog, setShowImmutabilityDialog] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    transactionId: string;
+    applicationId: string;
+    dataHash?: string;
+    submittedAt: string;
+    applicantName: string;
+    submissionType: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -162,11 +174,41 @@ export default function ValidatorDashboard({
         console.error("Error updating application:", error);
         alert("Error updating application. Please try again.");
       } else {
-        // If there are comments, we could store them in a separate comments table
-        // For now, we'll just show success message
-        alert(
-          `Application ${action === "validate" ? "validated" : "rejected"} successfully!`,
-        );
+        // If validated, compute hash and show immutability dialog
+        if (action === "validate") {
+          // Compute hash via RPC
+          const { data: hashData, error: hashError } = await supabase.rpc(
+            'compute_loan_application_hash',
+            { p_loan_application_id: applicationId }
+          );
+          
+          if (hashError) {
+            console.error("Error computing hash:", hashError);
+          } else {
+            // Update with hash
+            await supabase
+              .from('loan_applications')
+              .update({ data_hash: hashData })
+              .eq('id', applicationId);
+          }
+          
+          // Get application details for dialog
+          const application = applications.find(app => app.id === applicationId);
+          if (application) {
+            setValidationResult({
+              transactionId: application.transaction_id || "N/A",
+              applicationId: applicationId,
+              dataHash: hashData || undefined,
+              submittedAt: new Date().toISOString(),
+              applicantName: application.full_name || "",
+              submissionType: application.submission_type || "",
+            });
+            setShowImmutabilityDialog(true);
+          }
+        } else {
+          alert(`Application rejected successfully!`);
+        }
+        
         fetchApplications();
         setSelectedApplication(null);
         setComments("");
@@ -801,6 +843,20 @@ export default function ValidatorDashboard({
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Immutability Confirmation Dialog */}
+      {validationResult && (
+        <ImmutabilityConfirmationDialog
+          open={showImmutabilityDialog}
+          onClose={() => setShowImmutabilityDialog(false)}
+          transactionId={validationResult.transactionId}
+          applicationId={validationResult.applicationId}
+          dataHash={validationResult.dataHash}
+          submittedAt={validationResult.submittedAt}
+          applicantName={validationResult.applicantName}
+          submissionType={validationResult.submissionType}
+        />
+      )}
     </div>
   );
 }

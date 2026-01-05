@@ -24,6 +24,7 @@ import { Upload, CheckCircle, Printer, Download } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database, Tables } from "@/types/supabase";
 import { Checkbox } from "@/components/ui/checkbox";
+import ImmutabilityConfirmationDialog from "@/components/pmi/ImmutabilityConfirmationDialog";
 
 type LoanApplicationInsert =
   Database["public"]["Tables"]["loan_applications"]["Insert"];
@@ -47,6 +48,15 @@ export default function LoanApplicationForm({
   const [currentTab, setCurrentTab] = useState("personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agentCompanies, setAgentCompanies] = useState<any[]>([]);
+  
+  // Immutability dialog state
+  const [showImmutabilityDialog, setShowImmutabilityDialog] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<{
+    transactionId: string;
+    applicationId: string;
+    dataHash?: string;
+    submittedAt: string;
+  } | null>(null);
   const [banks, setBanks] = useState<Tables<"banks">[]>([]);
   const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>(
     [],
@@ -828,9 +838,11 @@ export default function LoanApplicationForm({
           }
         }
 
-        // Show success message with transaction ID
+        // Note: Hash is NOT generated on submit (status='Submitted')
+        // Data only becomes immutable when status changes to 'Validated'
+        // Show success message
         alert(
-          `${formData.submission_type} application submitted successfully!\n\nTransaction ID: ${transactionId}\nApplication ID: ${insertResult[0]?.id?.substring(0, 8)}...\n\nPlease save your Transaction ID for tracking purposes.`,
+          `${formData.submission_type} application submitted successfully!\n\nTransaction ID: ${transactionId}\nApplication ID: ${insertResult[0]?.id?.substring(0, 8)}...\n\nStatus: Submitted - Data can still be edited until validated.\n\nPlease save your Transaction ID for tracking purposes.`,
         );
       }
 
@@ -2760,6 +2772,20 @@ export default function LoanApplicationForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Immutability Confirmation Dialog */}
+      {submissionResult && (
+        <ImmutabilityConfirmationDialog
+          open={showImmutabilityDialog}
+          onClose={() => setShowImmutabilityDialog(false)}
+          transactionId={submissionResult.transactionId}
+          applicationId={submissionResult.applicationId}
+          dataHash={submissionResult.dataHash}
+          submittedAt={submissionResult.submittedAt}
+          applicantName={formData.full_name || ""}
+          submissionType={formData.submission_type || ""}
+        />
+      )}
     </div>
   );
 }

@@ -96,8 +96,9 @@ DECLARE
     col_name TEXT;
     old_val TEXT;
     new_val TEXT;
-    excluded_columns TEXT[] := ARRAY['updated_at', 'data_hash'];
+    excluded_columns TEXT[] := ARRAY['updated_at', 'data_hash', 'status'];
 BEGIN
+    -- Only prevent changes when status is 'Validated' (immutable state)
     IF OLD.status = 'Validated' AND OLD.data_hash IS NOT NULL THEN
         FOR col_name IN
             SELECT column_name
@@ -111,7 +112,7 @@ BEGIN
             USING OLD, NEW;
 
             IF old_val IS DISTINCT FROM new_val THEN
-                RAISE EXCEPTION 'Immutable record—submitted applications cannot be modified. Column "%" change attempted.', col_name;
+                RAISE EXCEPTION 'Immutable record—validated applications cannot be modified. Column "%" change attempted.', col_name;
             END IF;
         END LOOP;
     END IF;
@@ -120,7 +121,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION prevent_immutable_loan_update() IS 'Prevents modification of loan applications that have been submitted (status = Submitted with data_hash set)';
+COMMENT ON FUNCTION prevent_immutable_loan_update() IS 'Prevents modification of loan applications that have been validated (status = Validated with data_hash set). Applications with status Submitted or Checked can still be edited.';
 
 -- ============================================================================
 -- SECTION 6: TRIGGER FUNCTION TO GENERATE HASH ON SUBMIT
