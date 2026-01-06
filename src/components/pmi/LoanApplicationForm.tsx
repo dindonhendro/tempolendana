@@ -1815,15 +1815,13 @@ export default function LoanApplicationForm({
                   </div>
 
                   <div>
-                    <h4 className="font-medium mb-2">Family Information</h4>
+                    <h4 className="font-medium mb-2">Agent/P3MI Information</h4>
                     <div className="space-y-1 text-sm">
                       <p>
-                        <span className="font-medium">Mother's Name:</span>{" "}
-                        {formData.nama_ibu_kandung}
-                      </p>
-                      <p>
-                        <span className="font-medium">Spouse:</span>{" "}
-                        {formData.nama_pasangan || "Not specified"}
+                        <span className="font-medium">Agent Company:</span>{" "}
+                        {formData.agent_company_id 
+                          ? agentCompanies.find(a => a.id === formData.agent_company_id)?.company_name || "N/A"
+                          : "Belum ada agent"}
                       </p>
                     </div>
                   </div>
