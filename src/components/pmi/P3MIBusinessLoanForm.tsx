@@ -371,7 +371,12 @@ export default function P3MIBusinessLoanForm({
 
         if (error) {
           console.error("Database update error:", error);
-          alert(`Failed to update application: ${error.message}`);
+          // Check if it's an immutability error
+          if (error.message.includes('Immutable record') || error.message.includes('validated applications cannot be modified')) {
+            alert(`Gagal memperbarui permohonan: Data aplikasi yang sudah divalidasi tidak dapat diubah lagi (OJK Compliance - Data Immutability).`);
+          } else {
+            alert(`Gagal memperbarui permohonan: ${error.message}`);
+          }
           return;
         }
 
@@ -379,7 +384,7 @@ export default function P3MIBusinessLoanForm({
           "P3MI Business Loan application updated successfully:",
           updateResult,
         );
-        alert("P3MI Business Loan application updated successfully!");
+        alert("Permohonan Pinjaman Usaha P3MI berhasil diperbarui!");
       } else {
         // Insert new application
         const { data: insertResult, error } = await supabase

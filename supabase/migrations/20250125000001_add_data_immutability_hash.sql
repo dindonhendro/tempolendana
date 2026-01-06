@@ -112,7 +112,7 @@ BEGIN
             USING OLD, NEW;
 
             IF old_val IS DISTINCT FROM new_val THEN
-                RAISE EXCEPTION 'Immutable record—validated applications cannot be modified. Column "%" change attempted.', col_name;
+                RAISE EXCEPTION 'Data aplikasi yang sudah divalidasi tidak dapat diubah lagi (OJK Compliance). Kolom "%" tidak dapat diubah.', col_name;
             END IF;
         END LOOP;
     END IF;
