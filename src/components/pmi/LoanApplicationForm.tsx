@@ -48,7 +48,7 @@ export default function LoanApplicationForm({
   const [currentTab, setCurrentTab] = useState("personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agentCompanies, setAgentCompanies] = useState<any[]>([]);
-  
+
   // Immutability dialog state
   const [showImmutabilityDialog, setShowImmutabilityDialog] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{
@@ -65,7 +65,8 @@ export default function LoanApplicationForm({
   const [selectedBankProductId, setSelectedBankProductId] =
     useState<string>("");
   const [selectedProductType, setSelectedProductType] = useState<string>("");
-  const [selectedProductDescription, setSelectedProductDescription] = useState<string>("");
+  const [selectedProductDescription, setSelectedProductDescription] =
+    useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
@@ -218,7 +219,7 @@ export default function LoanApplicationForm({
 
   // Calculate total costs
   const calculateTotalCosts = () => {
-    const biayaPersiapan = 
+    const biayaPersiapan =
       costData.biaya_pelatihan +
       costData.biaya_sertifikasi +
       costData.biaya_jasa_perusahaan +
@@ -228,14 +229,13 @@ export default function LoanApplicationForm({
       costData.biaya_tiket_pulang +
       costData.biaya_akomodasi;
 
-    const biayaPenempatan = 
+    const biayaPenempatan =
       costData.biaya_pemeriksaan_kesehatan +
       costData.biaya_jaminan_sosial +
       costData.biaya_apostille;
 
-    const biayaLainLain = 
-      costData.biaya_lain_lain_1 +
-      costData.biaya_lain_lain_2;
+    const biayaLainLain =
+      costData.biaya_lain_lain_1 + costData.biaya_lain_lain_2;
 
     const totalKeseluruhan = biayaPersiapan + biayaPenempatan + biayaLainLain;
 
@@ -296,17 +296,22 @@ export default function LoanApplicationForm({
 
   // Prevent session timeout by keeping auth alive
   useEffect(() => {
-    const keepAlive = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          // Refresh the session to prevent timeout
-          await supabase.auth.refreshSession();
+    const keepAlive = setInterval(
+      async () => {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session) {
+            // Refresh the session to prevent timeout
+            await supabase.auth.refreshSession();
+          }
+        } catch (error) {
+          console.error("Session refresh error:", error);
         }
-      } catch (error) {
-        console.error("Session refresh error:", error);
-      }
-    }, 5 * 60 * 1000); // Refresh every 5 minutes
+      },
+      5 * 60 * 1000,
+    ); // Refresh every 5 minutes
 
     return () => clearInterval(keepAlive);
   }, []);
@@ -314,7 +319,7 @@ export default function LoanApplicationForm({
   useEffect(() => {
     loadAgentCompanies();
     loadBanks();
-    
+
     // Load cost component data if editing
     if (editData?.id) {
       loadCostComponentData(editData.id);
@@ -324,8 +329,13 @@ export default function LoanApplicationForm({
   // Add useEffect to load bank products when bank or submission type changes
   useEffect(() => {
     if (selectedBankId && (formData.submission_type || isKurWirausaha)) {
-      const submissionType = isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : formData.submission_type;
-      console.log("Loading bank products for:", { selectedBankId, submissionType });
+      const submissionType = isKurWirausaha
+        ? "KUR_WIRAUSAHA_PMI"
+        : formData.submission_type;
+      console.log("Loading bank products for:", {
+        selectedBankId,
+        submissionType,
+      });
       loadBankProducts(selectedBankId, submissionType);
     } else {
       setBankProducts([]);
@@ -335,7 +345,10 @@ export default function LoanApplicationForm({
   // Add function to load cost component data
   const loadCostComponentData = async (loanApplicationId: string) => {
     try {
-      console.log("Loading cost component data for application:", loanApplicationId);
+      console.log(
+        "Loading cost component data for application:",
+        loanApplicationId,
+      );
       const { data, error } = await supabase
         .from("komponen_biaya")
         .select("*")
@@ -343,7 +356,7 @@ export default function LoanApplicationForm({
         .single();
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           // No cost component data found - this is normal for older applications
           console.log("No cost component data found for this application");
           return;
@@ -435,17 +448,24 @@ export default function LoanApplicationForm({
   };
 
   // Fix the input change handler to work with both direct calls and event objects
-  const handleInputChangeEvent = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChangeEvent = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value, type } = e.target;
     let processedValue = value;
-    
+
     // Handle different input types
-    if (type === 'number') {
-      processedValue = value === '' ? null : (type === 'number' ? parseFloat(value) : parseInt(value));
-    } else if (type === 'date') {
+    if (type === "number") {
+      processedValue =
+        value === ""
+          ? null
+          : type === "number"
+            ? parseFloat(value)
+            : parseInt(value);
+    } else if (type === "date") {
       processedValue = value || null;
     }
-    
+
     setFormData((prev) => ({ ...prev, [name]: processedValue }));
   };
 
@@ -508,17 +528,23 @@ export default function LoanApplicationForm({
 
       // Validate consent checkboxes
       if (!consentLoanApplication) {
-        alert("Anda harus menyetujui persetujuan pengajuan pinjaman untuk melanjutkan");
+        alert(
+          "Anda harus menyetujui persetujuan pengajuan pinjaman untuk melanjutkan",
+        );
         return;
       }
 
       if (!consentDataSharing) {
-        alert("Anda harus menyetujui pembagian data dengan bank mitra untuk melanjutkan");
+        alert(
+          "Anda harus menyetujui pembagian data dengan bank mitra untuk melanjutkan",
+        );
         return;
       }
 
       if (!consentCreditCheck) {
-        alert("Anda harus menyetujui pemeriksaan riwayat kredit untuk melanjutkan");
+        alert(
+          "Anda harus menyetujui pemeriksaan riwayat kredit untuk melanjutkan",
+        );
         return;
       }
 
@@ -542,30 +568,33 @@ export default function LoanApplicationForm({
       let userIpAddress = null;
       try {
         console.log("Attempting to capture user IP address...");
-        
+
         // Try multiple IP services for better reliability
         const ipServices = [
-          'https://api.ipify.org?format=json',
-          'https://ipapi.co/json/',
-          'https://api.ip.sb/jsonip'
+          "https://api.ipify.org?format=json",
+          "https://ipapi.co/json/",
+          "https://api.ip.sb/jsonip",
         ];
-        
+
         for (const service of ipServices) {
           try {
             const ipResponse = await fetch(service, {
-              method: 'GET',
+              method: "GET",
               headers: {
-                'Accept': 'application/json',
+                Accept: "application/json",
               },
-              timeout: 5000 // 5 second timeout
+              timeout: 5000, // 5 second timeout
             });
-            
+
             if (ipResponse.ok) {
               const ipData = await ipResponse.json();
               userIpAddress = ipData.ip || ipData.query || ipData.ip_addr;
-              
+
               if (userIpAddress) {
-                console.log("User IP address captured successfully:", userIpAddress);
+                console.log(
+                  "User IP address captured successfully:",
+                  userIpAddress,
+                );
                 break; // Exit loop if we got an IP
               }
             }
@@ -574,12 +603,14 @@ export default function LoanApplicationForm({
             continue; // Try next service
           }
         }
-        
+
         // Fallback: try to get IP from browser if available
         if (!userIpAddress) {
           try {
             // This is a fallback that might work in some environments
-            const rtcResponse = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
+            const rtcResponse = await fetch(
+              "https://www.cloudflare.com/cdn-cgi/trace",
+            );
             const rtcText = await rtcResponse.text();
             const ipMatch = rtcText.match(/ip=([^\n]+)/);
             if (ipMatch) {
@@ -590,13 +621,12 @@ export default function LoanApplicationForm({
             console.warn("Cloudflare trace IP capture failed:", rtcError);
           }
         }
-        
+
         // Final fallback - use a placeholder IP if all methods fail
         if (!userIpAddress) {
           userIpAddress = "0.0.0.0"; // Placeholder IP
           console.warn("Could not capture real IP address, using placeholder");
         }
-        
       } catch (ipError) {
         console.warn("All IP capture methods failed:", ipError);
         userIpAddress = "0.0.0.0"; // Fallback IP
@@ -756,8 +786,13 @@ export default function LoanApplicationForm({
         if (error) {
           console.error("Database update error:", error);
           // Check if it's an immutability error
-          if (error.message.includes('Immutable record') || error.message.includes('validated applications cannot be modified')) {
-            alert(`Gagal memperbarui permohonan: Data aplikasi yang sudah divalidasi tidak dapat diubah lagi (OJK Compliance - Data Immutability).`);
+          if (
+            error.message.includes("Immutable record") ||
+            error.message.includes("validated applications cannot be modified")
+          ) {
+            alert(
+              `Gagal memperbaruhi data. Data aplikasi anda saat ini sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.`,
+            );
           } else {
             alert(`Gagal memperbarui permohonan: ${error.message}`);
           }
@@ -784,7 +819,9 @@ export default function LoanApplicationForm({
         }
 
         console.log("Application updated successfully:", updateResult);
-        alert(`Application updated successfully! Transaction ID: ${updateResult[0]?.transaction_id || 'N/A'}`);
+        alert(
+          `Application updated successfully! Transaction ID: ${updateResult[0]?.transaction_id || "N/A"}`,
+        );
       } else {
         console.log("Inserting new application...");
         // Insert new application
@@ -826,18 +863,22 @@ export default function LoanApplicationForm({
           console.log("Inserting cost components...");
           const { error: costError } = await supabase
             .from("komponen_biaya")
-            .insert([{
-              loan_application_id: newApplicationId,
-              user_id: user.id,
-              ...costData,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            }]);
+            .insert([
+              {
+                loan_application_id: newApplicationId,
+                user_id: user.id,
+                ...costData,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+            ]);
 
           if (costError) {
             console.error("Error inserting cost components:", costError);
             // Don't fail the whole submission for cost component errors
-            alert(`Application submitted successfully with Transaction ID: ${transactionId}, but there was an issue saving cost components: ${costError.message}`);
+            alert(
+              `Application submitted successfully with Transaction ID: ${transactionId}, but there was an issue saving cost components: ${costError.message}`,
+            );
           } else {
             console.log("Cost components inserted successfully");
           }
@@ -1112,7 +1153,7 @@ export default function LoanApplicationForm({
     ? ["personal", "documents", "loan"] // Simplified 3-step flow for KUR Wirausaha
     : [
         "personal",
-        "documents", 
+        "documents",
         "agent",
         "komponen-biaya", // Moved before loan
         "loan",
@@ -1224,15 +1265,15 @@ export default function LoanApplicationForm({
                       index + 1 === currentIndex + 1
                         ? "bg-blue-600 text-white"
                         : index + 1 < currentIndex + 1
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-300 text-gray-600"
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-300 text-gray-600"
                     }`}
                     onClick={() => setCurrentTab(tabs[index])}
                     title={`Go to step ${index + 1}: ${step}`}
                   >
                     {index + 1}
                   </div>
-                  <div 
+                  <div
                     className="ml-2 text-xs sm:text-sm font-medium text-gray-700 max-w-[100px] sm:max-w-none cursor-pointer hover:text-blue-600"
                     onClick={() => setCurrentTab(tabs[index])}
                     title={`Go to step ${index + 1}: ${step}`}
@@ -1819,8 +1860,10 @@ export default function LoanApplicationForm({
                     <div className="space-y-1 text-sm">
                       <p>
                         <span className="font-medium">Agent Company:</span>{" "}
-                        {formData.agent_company_id 
-                          ? agentCompanies.find(a => a.id === formData.agent_company_id)?.company_name || "N/A"
+                        {formData.agent_company_id
+                          ? agentCompanies.find(
+                              (a) => a.id === formData.agent_company_id,
+                            )?.company_name || "N/A"
                           : "Belum ada agent"}
                       </p>
                     </div>
@@ -1845,12 +1888,14 @@ export default function LoanApplicationForm({
                 <h3 className="text-lg font-semibold text-blue-800 mb-4">
                   Persetujuan dan Consent Pengajuan Pinjaman
                 </h3>
-                
+
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="consent-loan-application"
                     checked={consentLoanApplication}
-                    onCheckedChange={(checked) => setConsentLoanApplication(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setConsentLoanApplication(checked as boolean)
+                    }
                     className="mt-1"
                   />
                   <div className="grid gap-1.5 leading-none">
@@ -1861,9 +1906,10 @@ export default function LoanApplicationForm({
                       Persetujuan Pengajuan Pinjaman KUR PMI *
                     </label>
                     <p className="text-xs text-blue-700">
-                      Saya dengan ini mengajukan pinjaman KUR PMI dan menyatakan bahwa semua informasi 
-                      yang saya berikan adalah benar dan akurat. Saya memahami bahwa informasi palsu 
-                      dapat mengakibatkan penolakan aplikasi atau tindakan hukum.
+                      Saya dengan ini mengajukan pinjaman KUR PMI dan menyatakan
+                      bahwa semua informasi yang saya berikan adalah benar dan
+                      akurat. Saya memahami bahwa informasi palsu dapat
+                      mengakibatkan penolakan aplikasi atau tindakan hukum.
                     </p>
                   </div>
                 </div>
@@ -1872,7 +1918,9 @@ export default function LoanApplicationForm({
                   <Checkbox
                     id="consent-data-sharing"
                     checked={consentDataSharing}
-                    onCheckedChange={(checked) => setConsentDataSharing(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setConsentDataSharing(checked as boolean)
+                    }
                     className="mt-1"
                   />
                   <div className="grid gap-1.5 leading-none">
@@ -1883,9 +1931,10 @@ export default function LoanApplicationForm({
                       Persetujuan Pembagian Data dengan Bank Mitra *
                     </label>
                     <p className="text-xs text-blue-700">
-                      Saya menyetujui PT. Lendana Digitalindo Nusantara untuk membagikan data aplikasi 
-                      pinjaman saya kepada bank mitra (BNI, Mandiri, BRI, BTN, Bank Nano, BPR) untuk 
-                      keperluan evaluasi dan persetujuan pinjaman.
+                      Saya menyetujui PT. Lendana Digitalindo Nusantara untuk
+                      membagikan data aplikasi pinjaman saya kepada bank mitra
+                      (BNI, Mandiri, BRI, BTN, Bank Nano, BPR) untuk keperluan
+                      evaluasi dan persetujuan pinjaman.
                     </p>
                   </div>
                 </div>
@@ -1894,7 +1943,9 @@ export default function LoanApplicationForm({
                   <Checkbox
                     id="consent-credit-check"
                     checked={consentCreditCheck}
-                    onCheckedChange={(checked) => setConsentCreditCheck(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setConsentCreditCheck(checked as boolean)
+                    }
                     className="mt-1"
                   />
                   <div className="grid gap-1.5 leading-none">
@@ -1902,11 +1953,13 @@ export default function LoanApplicationForm({
                       htmlFor="consent-credit-check"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      Persetujuan Pemeriksaan Riwayat Kredit (SLIK/BI Checking) *
+                      Persetujuan Pemeriksaan Riwayat Kredit (SLIK/BI Checking)
+                      *
                     </label>
                     <p className="text-xs text-blue-700">
-                      Saya memberikan izin kepada bank mitra untuk melakukan pemeriksaan riwayat kredit 
-                      saya melalui Sistem Layanan Informasi Keuangan (SLIK) Bank Indonesia atau sistem 
+                      Saya memberikan izin kepada bank mitra untuk melakukan
+                      pemeriksaan riwayat kredit saya melalui Sistem Layanan
+                      Informasi Keuangan (SLIK) Bank Indonesia atau sistem
                       serupa untuk keperluan evaluasi kelayakan kredit.
                     </p>
                   </div>
@@ -1915,10 +1968,22 @@ export default function LoanApplicationForm({
                 <div className="text-xs text-blue-600 mt-4 p-3 bg-white rounded border">
                   <p className="font-medium mb-2">Informasi Penting:</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Semua persetujuan di atas wajib disetujui untuk melanjutkan pengajuan pinjaman</li>
-                    <li>Data Anda akan diproses sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi</li>
-                    <li>Lendana terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK) sebagai Platform Agregator Teknologi Finansial</li>
-                    <li>Anda dapat mencabut persetujuan ini kapan saja dengan menghubungi customer service kami</li>
+                    <li>
+                      Semua persetujuan di atas wajib disetujui untuk
+                      melanjutkan pengajuan pinjaman
+                    </li>
+                    <li>
+                      Data Anda akan diproses sesuai dengan Undang-Undang No. 27
+                      Tahun 2022 tentang Pelindungan Data Pribadi
+                    </li>
+                    <li>
+                      Lendana terdaftar dan diawasi oleh Otoritas Jasa Keuangan
+                      (OJK) sebagai Platform Agregator Teknologi Finansial
+                    </li>
+                    <li>
+                      Anda dapat mencabut persetujuan ini kapan saja dengan
+                      menghubungi customer service kami
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -2207,33 +2272,51 @@ export default function LoanApplicationForm({
               )}
 
               {/* Show total cost from komponen biaya if available */}
-              {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                    Estimasi Biaya dari Komponen Biaya
-                  </h3>
-                  <p className="text-blue-700 mb-2">
-                    Total estimasi biaya PMI: <strong>Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}</strong>
-                  </p>
-                  <p className="text-sm text-blue-600">
-                    Jumlah pinjaman telah diisi otomatis berdasarkan total estimasi biaya. Anda dapat menyesuaikan jika diperlukan.
-                  </p>
-                </div>
-              )}
+              {!isKurWirausaha &&
+                calculateTotalCosts().totalKeseluruhan > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                      Estimasi Biaya dari Komponen Biaya
+                    </h3>
+                    <p className="text-blue-700 mb-2">
+                      Total estimasi biaya PMI:{" "}
+                      <strong>
+                        Rp{" "}
+                        {calculateTotalCosts().totalKeseluruhan.toLocaleString(
+                          "id-ID",
+                        )}
+                      </strong>
+                    </p>
+                    <p className="text-sm text-blue-600">
+                      Jumlah pinjaman telah diisi otomatis berdasarkan total
+                      estimasi biaya. Anda dapat menyesuaikan jika diperlukan.
+                    </p>
+                  </div>
+                )}
 
               {/* Add button to auto-fill loan amount from cost calculation */}
-              {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => updateFormData("loan_amount", calculateTotalCosts().totalKeseluruhan)}
-                    className="text-sm"
-                  >
-                    Gunakan Total Estimasi Biaya (Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")})
-                  </Button>
-                </div>
-              )}
+              {!isKurWirausaha &&
+                calculateTotalCosts().totalKeseluruhan > 0 && (
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        updateFormData(
+                          "loan_amount",
+                          calculateTotalCosts().totalKeseluruhan,
+                        )
+                      }
+                      className="text-sm"
+                    >
+                      Gunakan Total Estimasi Biaya (Rp{" "}
+                      {calculateTotalCosts().totalKeseluruhan.toLocaleString(
+                        "id-ID",
+                      )}
+                      )
+                    </Button>
+                  </div>
+                )}
 
               <div>
                 <Label htmlFor="submission_type">Jenis Aplikasi KUR *</Label>
@@ -2308,11 +2391,15 @@ export default function LoanApplicationForm({
                     placeholder="Enter loan amount"
                     required
                   />
-                  {!isKurWirausaha && calculateTotalCosts().totalKeseluruhan > 0 && (
-                    <p className="text-xs text-green-600 mt-1">
-                      Otomatis diisi dari total estimasi biaya: Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}
-                    </p>
-                  )}
+                  {!isKurWirausaha &&
+                    calculateTotalCosts().totalKeseluruhan > 0 && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Otomatis diisi dari total estimasi biaya: Rp{" "}
+                        {calculateTotalCosts().totalKeseluruhan.toLocaleString(
+                          "id-ID",
+                        )}
+                      </p>
+                    )}
                 </div>
                 <div>
                   <Label htmlFor="tenor_months">Tenor (Months) *</Label>
@@ -2417,8 +2504,12 @@ export default function LoanApplicationForm({
                       onValueChange={(value) => {
                         setSelectedBankProductId(value);
                         // Find and set the product description
-                        const selectedProduct = bankProducts.find(p => p.id === value);
-                        setSelectedProductDescription(selectedProduct?.product_description || "");
+                        const selectedProduct = bankProducts.find(
+                          (p) => p.id === value,
+                        );
+                        setSelectedProductDescription(
+                          selectedProduct?.product_description || "",
+                        );
                       }}
                     >
                       <SelectTrigger>
@@ -2444,11 +2535,13 @@ export default function LoanApplicationForm({
                         yang tersedia untuk bank ini.
                       </p>
                     )}
-                    
+
                     {/* Product Description Display */}
                     {selectedProductDescription && (
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h4 className="font-semibold text-blue-800 mb-2">Deskripsi Produk</h4>
+                        <h4 className="font-semibold text-blue-800 mb-2">
+                          Deskripsi Produk
+                        </h4>
                         <p className="text-sm text-blue-700 whitespace-pre-wrap">
                           {selectedProductDescription}
                         </p>
@@ -2464,8 +2557,9 @@ export default function LoanApplicationForm({
                   Komponen Biaya PMI
                 </h3>
                 <p className="text-blue-700">
-                  Silakan isi estimasi biaya-biaya yang diperlukan untuk penempatan PMI. 
-                  Informasi ini akan membantu dalam perhitungan kebutuhan pinjaman.
+                  Silakan isi estimasi biaya-biaya yang diperlukan untuk
+                  penempatan PMI. Informasi ini akan membantu dalam perhitungan
+                  kebutuhan pinjaman.
                 </p>
               </div>
 
@@ -2482,43 +2576,70 @@ export default function LoanApplicationForm({
                       name="biaya_pelatihan"
                       type="number"
                       value={costData.biaya_pelatihan || ""}
-                      onChange={(e) => updateCostData("biaya_pelatihan", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_pelatihan",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya pelatihan"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="biaya_sertifikasi">b. Sertifikasi Kompetensi</Label>
+                    <Label htmlFor="biaya_sertifikasi">
+                      b. Sertifikasi Kompetensi
+                    </Label>
                     <Input
                       id="biaya_sertifikasi"
                       name="biaya_sertifikasi"
                       type="number"
                       value={costData.biaya_sertifikasi || ""}
-                      onChange={(e) => updateCostData("biaya_sertifikasi", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_sertifikasi",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya sertifikasi"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="biaya_jasa_perusahaan">c. Jasa Perusahaan</Label>
+                    <Label htmlFor="biaya_jasa_perusahaan">
+                      c. Jasa Perusahaan
+                    </Label>
                     <Input
                       id="biaya_jasa_perusahaan"
                       name="biaya_jasa_perusahaan"
                       type="number"
                       value={costData.biaya_jasa_perusahaan || ""}
-                      onChange={(e) => updateCostData("biaya_jasa_perusahaan", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_jasa_perusahaan",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya jasa perusahaan"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="biaya_transportasi_lokal">d. Transportasi Lokal dari Daerah Asal ke Tempat Keberangkatan di Indonesia</Label>
+                    <Label htmlFor="biaya_transportasi_lokal">
+                      d. Transportasi Lokal dari Daerah Asal ke Tempat
+                      Keberangkatan di Indonesia
+                    </Label>
                     <Input
                       id="biaya_transportasi_lokal"
                       name="biaya_transportasi_lokal"
                       type="number"
                       value={costData.biaya_transportasi_lokal || ""}
-                      onChange={(e) => updateCostData("biaya_transportasi_lokal", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_transportasi_lokal",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Dari daerah asal ke tempat keberangkatan"
                       className="mt-1"
                     />
@@ -2530,19 +2651,31 @@ export default function LoanApplicationForm({
                       name="biaya_visa_kerja"
                       type="number"
                       value={costData.biaya_visa_kerja || ""}
-                      onChange={(e) => updateCostData("biaya_visa_kerja", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_visa_kerja",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya visa kerja"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="biaya_tiket_keberangkatan">f. Tiket Keberangkatan</Label>
+                    <Label htmlFor="biaya_tiket_keberangkatan">
+                      f. Tiket Keberangkatan
+                    </Label>
                     <Input
                       id="biaya_tiket_keberangkatan"
                       name="biaya_tiket_keberangkatan"
                       type="number"
                       value={costData.biaya_tiket_keberangkatan || ""}
-                      onChange={(e) => updateCostData("biaya_tiket_keberangkatan", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_tiket_keberangkatan",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya tiket keberangkatan"
                       className="mt-1"
                     />
@@ -2554,7 +2687,12 @@ export default function LoanApplicationForm({
                       name="biaya_tiket_pulang"
                       type="number"
                       value={costData.biaya_tiket_pulang || ""}
-                      onChange={(e) => updateCostData("biaya_tiket_pulang", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_tiket_pulang",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya tiket pulang"
                       className="mt-1"
                     />
@@ -2566,7 +2704,12 @@ export default function LoanApplicationForm({
                       name="biaya_akomodasi"
                       type="number"
                       value={costData.biaya_akomodasi || ""}
-                      onChange={(e) => updateCostData("biaya_akomodasi", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_akomodasi",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya akomodasi"
                       className="mt-1"
                     />
@@ -2581,25 +2724,39 @@ export default function LoanApplicationForm({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="biaya_pemeriksaan_kesehatan">a. Pemeriksaan Kesehatan dan Psikologi</Label>
+                    <Label htmlFor="biaya_pemeriksaan_kesehatan">
+                      a. Pemeriksaan Kesehatan dan Psikologi
+                    </Label>
                     <Input
                       id="biaya_pemeriksaan_kesehatan"
                       name="biaya_pemeriksaan_kesehatan"
                       type="number"
                       value={costData.biaya_pemeriksaan_kesehatan || ""}
-                      onChange={(e) => updateCostData("biaya_pemeriksaan_kesehatan", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_pemeriksaan_kesehatan",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya pemeriksaan kesehatan"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="biaya_jaminan_sosial">b. Jaminan Sosial Pekerja Migran Indonesia</Label>
+                    <Label htmlFor="biaya_jaminan_sosial">
+                      b. Jaminan Sosial Pekerja Migran Indonesia
+                    </Label>
                     <Input
                       id="biaya_jaminan_sosial"
                       name="biaya_jaminan_sosial"
                       type="number"
                       value={costData.biaya_jaminan_sosial || ""}
-                      onChange={(e) => updateCostData("biaya_jaminan_sosial", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_jaminan_sosial",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya jaminan sosial"
                       className="mt-1"
                     />
@@ -2611,7 +2768,12 @@ export default function LoanApplicationForm({
                       name="biaya_apostille"
                       type="number"
                       value={costData.biaya_apostille || ""}
-                      onChange={(e) => updateCostData("biaya_apostille", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_apostille",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya apostille"
                       className="mt-1"
                     />
@@ -2632,7 +2794,12 @@ export default function LoanApplicationForm({
                       name="biaya_lain_lain_1"
                       type="number"
                       value={costData.biaya_lain_lain_1 || ""}
-                      onChange={(e) => updateCostData("biaya_lain_lain_1", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_lain_lain_1",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya lain-lain"
                       className="mt-1"
                     />
@@ -2644,18 +2811,27 @@ export default function LoanApplicationForm({
                       name="biaya_lain_lain_2"
                       type="number"
                       value={costData.biaya_lain_lain_2 || ""}
-                      onChange={(e) => updateCostData("biaya_lain_lain_2", parseInt(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateCostData(
+                          "biaya_lain_lain_2",
+                          parseInt(e.target.value) || 0,
+                        )
+                      }
                       placeholder="Masukkan biaya lain-lain"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="keterangan_biaya_lain">Keterangan Biaya Lain-lain</Label>
+                    <Label htmlFor="keterangan_biaya_lain">
+                      Keterangan Biaya Lain-lain
+                    </Label>
                     <Textarea
                       id="keterangan_biaya_lain"
                       name="keterangan_biaya_lain"
                       value={costData.keterangan_biaya_lain}
-                      onChange={(e) => updateCostData("keterangan_biaya_lain", e.target.value)}
+                      onChange={(e) =>
+                        updateCostData("keterangan_biaya_lain", e.target.value)
+                      }
                       placeholder="Jelaskan detail biaya lain-lain jika ada"
                       className="mt-1"
                       rows={3}
@@ -2671,39 +2847,63 @@ export default function LoanApplicationForm({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <p className="text-sm text-green-600 mb-1">Biaya Persiapan Penempatan</p>
+                    <p className="text-sm text-green-600 mb-1">
+                      Biaya Persiapan Penempatan
+                    </p>
                     <p className="text-xl font-bold text-green-800">
-                      Rp {calculateTotalCosts().biayaPersiapan.toLocaleString("id-ID")}
+                      Rp{" "}
+                      {calculateTotalCosts().biayaPersiapan.toLocaleString(
+                        "id-ID",
+                      )}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-green-600 mb-1">Biaya Penempatan</p>
+                    <p className="text-sm text-green-600 mb-1">
+                      Biaya Penempatan
+                    </p>
                     <p className="text-xl font-bold text-green-800">
-                      Rp {calculateTotalCosts().biayaPenempatan.toLocaleString("id-ID")}
+                      Rp{" "}
+                      {calculateTotalCosts().biayaPenempatan.toLocaleString(
+                        "id-ID",
+                      )}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-green-600 mb-1">Biaya Lain-lain</p>
+                    <p className="text-sm text-green-600 mb-1">
+                      Biaya Lain-lain
+                    </p>
                     <p className="text-xl font-bold text-green-800">
-                      Rp {calculateTotalCosts().biayaLainLain.toLocaleString("id-ID")}
+                      Rp{" "}
+                      {calculateTotalCosts().biayaLainLain.toLocaleString(
+                        "id-ID",
+                      )}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-green-600 mb-1">Total Keseluruhan</p>
+                    <p className="text-sm text-green-600 mb-1">
+                      Total Keseluruhan
+                    </p>
                     <p className="text-2xl font-bold text-green-800">
-                      Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")}
+                      Rp{" "}
+                      {calculateTotalCosts().totalKeseluruhan.toLocaleString(
+                        "id-ID",
+                      )}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4 p-4 bg-white rounded border">
                   <p className="text-sm text-gray-600">
-                    <strong>Catatan:</strong> Total estimasi biaya ini akan membantu dalam menentukan 
-                    jumlah pinjaman yang dibutuhkan. Pastikan semua komponen biaya telah diisi dengan akurat.
+                    <strong>Catatan:</strong> Total estimasi biaya ini akan
+                    membantu dalam menentukan jumlah pinjaman yang dibutuhkan.
+                    Pastikan semua komponen biaya telah diisi dengan akurat.
                   </p>
                   {calculateTotalCosts().totalKeseluruhan > 0 && (
                     <p className="text-sm text-blue-600 mt-2">
-                      <strong>Saran:</strong> Pertimbangkan untuk mengajukan pinjaman sebesar 
-                      Rp {calculateTotalCosts().totalKeseluruhan.toLocaleString("id-ID")} 
+                      <strong>Saran:</strong> Pertimbangkan untuk mengajukan
+                      pinjaman sebesar Rp{" "}
+                      {calculateTotalCosts().totalKeseluruhan.toLocaleString(
+                        "id-ID",
+                      )}
                       atau lebih untuk menutupi seluruh biaya penempatan PMI.
                     </p>
                   )}
@@ -2731,8 +2931,10 @@ export default function LoanApplicationForm({
                   !formData.email ||
                   (currentTab === "loan" &&
                     (!formData.loan_amount || !formData.tenor_months)) ||
-                  (currentTab === "summary" && 
-                    (!consentLoanApplication || !consentDataSharing || !consentCreditCheck))
+                  (currentTab === "summary" &&
+                    (!consentLoanApplication ||
+                      !consentDataSharing ||
+                      !consentCreditCheck))
                 }
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >

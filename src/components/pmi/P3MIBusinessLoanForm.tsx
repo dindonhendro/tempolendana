@@ -372,8 +372,13 @@ export default function P3MIBusinessLoanForm({
         if (error) {
           console.error("Database update error:", error);
           // Check if it's an immutability error
-          if (error.message.includes('Immutable record') || error.message.includes('validated applications cannot be modified')) {
-            alert(`Gagal memperbarui permohonan: Data aplikasi yang sudah divalidasi tidak dapat diubah lagi (OJK Compliance - Data Immutability).`);
+          if (
+            error.message.includes("Immutable record") ||
+            error.message.includes("validated applications cannot be modified")
+          ) {
+            alert(
+              `Gagal memperbaruhi data. Data aplikasi anda saat ini sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.`,
+            );
           } else {
             alert(`Gagal memperbarui permohonan: ${error.message}`);
           }
