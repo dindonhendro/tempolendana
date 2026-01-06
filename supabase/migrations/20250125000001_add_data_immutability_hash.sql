@@ -112,7 +112,7 @@ BEGIN
             USING OLD, NEW;
 
             IF old_val IS DISTINCT FROM new_val THEN
-                RAISE EXCEPTION 'Data aplikasi yang sudah divalidasi tidak dapat diubah lagi (OJK Compliance). Kolom "%" tidak dapat diubah.', col_name;
+                RAISE EXCEPTION 'Data aplikasi anda saat ini sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi. Kolom "%" tidak dapat diubah.', col_name;
             END IF;
         END LOOP;
     END IF;

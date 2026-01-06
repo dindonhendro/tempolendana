@@ -794,7 +794,7 @@ export default function LoanApplicationForm({
               `Gagal memperbaruhi data. Data aplikasi anda saat ini sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.`,
             );
           } else {
-            alert(`Gagal memperbarui permohonan: ${error.message}`);
+            alert(`Gagal memperbarui data: ${error.message}`);
           }
           return;
         }
