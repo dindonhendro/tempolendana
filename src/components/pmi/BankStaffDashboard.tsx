@@ -18,7 +18,7 @@ interface BankStaffDashboardProps {
 
 interface ApplicationWithBranch extends LoanApplication {
   branch_applications: (BranchApplication & {
-    bank_products: BankProduct;
+    bank_products: BankProduct | null;
   })[];
 }
 
@@ -449,8 +449,8 @@ export default function BankStaffDashboard({
                     <p className="font-medium">
                       {selectedApplication.tanggal_keberangkatan
                         ? new Date(
-                            selectedApplication.tanggal_keberangkatan,
-                          ).toLocaleDateString()
+                          selectedApplication.tanggal_keberangkatan,
+                        ).toLocaleDateString()
                         : "N/A"}
                     </p>
                   </div>
@@ -634,8 +634,8 @@ export default function BankStaffDashboard({
                               Validated:{" "}
                               {application.validated_by_lendana_at
                                 ? new Date(
-                                    application.validated_by_lendana_at,
-                                  ).toLocaleDateString()
+                                  application.validated_by_lendana_at,
+                                ).toLocaleDateString()
                                 : "N/A"}
                             </div>
                           </div>

@@ -1,0 +1,80 @@
+src/App.tsx(55,10): error TS2305: Module '"./types/supabase"' has no exported member 'User'.
+src/App.tsx(56,20): error TS2307: Cannot find module 'tempo-routes' or its corresponding type declarations.
+src/App.tsx(3160,56): error TS2322: Type '{ onAuthSuccess: () => Promise<void>; isPerusahaan: boolean; }' is not assignable to type 'IntrinsicAttributes & AuthFormProps'.
+  Property 'isPerusahaan' does not exist on type 'IntrinsicAttributes & AuthFormProps'.
+src/components/auth/AuthForm.tsx(88,11): error TS2552: Cannot find name 'setCollectorCompanies'. Did you mean 'setCollectorCompanyId'?
+src/components/auth/AuthForm.tsx(96,11): error TS2552: Cannot find name 'setCollectorCompanies'. Did you mean 'setCollectorCompanyId'?
+src/components/auth/AuthForm.tsx(108,9): error TS2552: Cannot find name 'setCollectorCompanies'. Did you mean 'setCollectorCompanyId'?
+src/components/auth/AuthForm.tsx(535,26): error TS2552: Cannot find name 'collectorCompanies'. Did you mean 'collectorCompanyId'?
+src/components/pmi/AgentDashboard.tsx(47,10): error TS2305: Module '"@/types/supabase"' has no exported member 'LoanApplication'.
+src/components/pmi/AgentDashboard.tsx(308,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: "agent_companies" | "users" | "banks" | "branch_applications" | "bank_staff" | "bank_branches" | "bank_products" | "loan_applications" | "collector_companies" | "insurance_companies" | ... 9 more ... | "user_registration_logs"): PostgrestQueryBuilder<...>', gave the following error.
+    Argument of type '"insurance_applications"' is not assignable to parameter of type '"agent_companies" | "users" | "banks" | "branch_applications" | "bank_staff" | "bank_branches" | "bank_products" | "loan_applications" | "collector_companies" | "insurance_companies" | ... 9 more ... | "user_registration_logs"'.
+  Overload 2 of 2, '(relation: "loan_applications_verified" | "v_consent_logs_summary" | "v_registration_logs_summary"): PostgrestQueryBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { ...; }; ... 18 more ...; users: { ...; }; }; Views: { ...; }; Functions: { ...; }; Enums: {}; CompositeTypes: {}; }, { ...; } | ... 1 more ... | { ...; }, "loan_applications_verified" | ... 1 more ... | "v_registration_logs_summary", [] | [...]>', gave the following error.
+    Argument of type '"insurance_applications"' is not assignable to parameter of type '"loan_applications_verified" | "v_consent_logs_summary" | "v_registration_logs_summary"'.
+src/components/pmi/BankStaffDashboard.tsx(10,3): error TS2305: Module '"@/types/supabase"' has no exported member 'LoanApplication'.
+src/components/pmi/BankStaffDashboard.tsx(11,3): error TS2305: Module '"@/types/supabase"' has no exported member 'BranchApplication'.
+src/components/pmi/BankStaffDashboard.tsx(12,3): error TS2305: Module '"@/types/supabase"' has no exported member 'BankProduct'.
+src/components/pmi/BankStaffDashboard.tsx(204,15): error TS2339: Property 'full_name' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(205,15): error TS2339: Property 'email' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(206,15): error TS2339: Property 'phone_number' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(207,15): error TS2339: Property 'work_location' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(305,52): error TS2339: Property 'full_name' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(322,44): error TS2339: Property 'full_name' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(328,47): error TS2339: Property 'loan_amount' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(334,44): error TS2339: Property 'tenor_months' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(340,44): error TS2339: Property 'work_location' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(367,44): error TS2339: Property 'full_name' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(372,69): error TS2339: Property 'gender' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(376,69): error TS2339: Property 'age' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(380,69): error TS2339: Property 'email' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(385,44): error TS2339: Property 'phone_number' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(390,69): error TS2339: Property 'nik_ktp' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(395,44): error TS2339: Property 'last_education' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(401,44): error TS2339: Property 'nomor_sisko' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(416,44): error TS2339: Property 'institution' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(421,69): error TS2339: Property 'major' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(426,44): error TS2339: Property 'work_experience' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(432,44): error TS2339: Property 'work_location' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(438,44): error TS2339: Property 'nama_pemberi_kerja' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(444,44): error TS2339: Property 'telp_pemberi_kerja' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(450,44): error TS2339: Property 'tanggal_keberangkatan' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(452,49): error TS2339: Property 'tanggal_keberangkatan' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(461,42): error TS2339: Property 'alamat_pemberi_kerja' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(490,43): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(495,64): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(499,55): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(506,43): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(512,56): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(517,55): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(597,40): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(605,46): error TS2339: Property 'full_name' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(608,46): error TS2339: Property 'status' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(614,46): error TS2339: Property 'email' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(620,46): error TS2339: Property 'work_location' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(630,49): error TS2339: Property 'loan_amount' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(635,44): error TS2339: Property 'validated_by_lendana_at' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(637,49): error TS2339: Property 'validated_by_lendana_at' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(658,47): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(663,68): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/BankStaffDashboard.tsx(674,68): error TS2339: Property 'id' does not exist on type 'ApplicationWithBranch'.
+src/components/pmi/LoanApplicationForm.tsx(459,7): error TS2322: Type 'number' is not assignable to type 'string'.
+src/components/pmi/LoanApplicationForm.tsx(586,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(input: string | URL | Request, init?: RequestInit): Promise<Response>', gave the following error.
+    Object literal may only specify known properties, and 'timeout' does not exist in type 'RequestInit'.
+  Overload 2 of 2, '(input: URL | RequestInfo, init?: RequestInit): Promise<Response>', gave the following error.
+    Object literal may only specify known properties, and 'timeout' does not exist in type 'RequestInit'.
+src/components/pmi/LoanApplicationForm.tsx(1863,35): error TS2339: Property 'agent_company_id' does not exist on type '{ address_domicile?: string; address_ktp?: string; age?: number; alamat_pasangan?: string; alamat_pemberi_kerja?: string; assigned_agent_id: string; bank_approved_at?: string; birth_date?: string; ... 53 more ...; work_location?: string; }'.
+src/components/pmi/LoanApplicationForm.tsx(1865,56): error TS2339: Property 'agent_company_id' does not exist on type '{ address_domicile?: string; address_ktp?: string; age?: number; alamat_pasangan?: string; alamat_pemberi_kerja?: string; assigned_agent_id: string; bank_approved_at?: string; birth_date?: string; ... 53 more ...; work_location?: string; }'.
+src/components/pmi/LoanApplicationTimeline.tsx(4,10): error TS2305: Module '"@/types/supabase"' has no exported member 'LoanApplication'.
+src/components/pmi/P3MIBusinessLoanForm.tsx(46,5): error TS2345: Argument of type '{ full_name: string; email: string; phone_number: string; nik_ktp: string; address_ktp: string; address_domicile: string; institution: string; major: string; work_experience: string; work_location: string; ... 5 more ...; submission_type: string; }' is not assignable to parameter of type '{ address_domicile?: string; address_ktp?: string; age?: number; alamat_pasangan?: string; alamat_pemberi_kerja?: string; assigned_agent_id: string; bank_approved_at?: string; birth_date?: string; ... 53 more ...; work_location?: string; } | (() => { ...; })'.
+  Property 'assigned_agent_id' is missing in type '{ full_name: string; email: string; phone_number: string; nik_ktp: string; address_ktp: string; address_domicile: string; institution: string; major: string; work_experience: string; work_location: string; ... 5 more ...; submission_type: string; }' but required in type '{ address_domicile?: string; address_ktp?: string; age?: number; alamat_pasangan?: string; alamat_pemberi_kerja?: string; assigned_agent_id: string; bank_approved_at?: string; birth_date?: string; ... 53 more ...; work_location?: string; }'.
+src/components/pmi/ValidatorDashboard.tsx(35,10): error TS2305: Module '"@/types/supabase"' has no exported member 'LoanApplication'.
+src/components/UserProfile.tsx(32,10): error TS2305: Module '"@/types/supabase"' has no exported member 'User'.
+src/lib/supabase.ts(2,20): error TS2305: Module '"@/types/supabase"' has no exported member 'User'.
+src/lib/supabase.ts(804,9): error TS2345: Argument of type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is not assignable to parameter of type 'readonly string[]'.
+  Type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is missing the following properties from type 'readonly string[]': length, concat, join, slice, and 19 more.
+src/lib/supabase.ts(809,13): error TS2345: Argument of type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is not assignable to parameter of type 'readonly string[]'.
+  Type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is missing the following properties from type 'readonly string[]': length, concat, join, slice, and 19 more.
+src/lib/supabase.ts(826,9): error TS2345: Argument of type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is not assignable to parameter of type 'readonly string[]'.
+  Type 'PostgrestFilterBuilder<{ PostgrestVersion: "12.2.3 (519615d)"; }, { Tables: { agent_companies: { Row: { address: string; code: string; created_at: string; email: string; id: string; license_number: string; name: string; phone: string; updated_at: string; }; Insert: { ...; }; Update: { ...; }; Relationships: []; }; ....' is missing the following properties from type 'readonly string[]': length, concat, join, slice, and 19 more.

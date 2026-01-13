@@ -169,24 +169,24 @@ export const signUp = async (
 export const signIn = async (email: string, password: string) => {
   try {
     console.log("Starting sign in process...");
-    
+
     // Use a timeout to prevent hanging
     const signInPromise = supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
+
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("Sign in timeout")), 10000) // 10 second timeout
     );
-    
+
     const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
-    
+
     if (error) {
       console.error("Sign in error:", error);
       throw error;
     }
-    
+
     console.log("Sign in successful");
     return data;
   } catch (error: any) {
@@ -212,13 +212,13 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
     if (authError) {
       // Silently handle auth session missing errors
-      if (authError.message?.includes('Auth session missing') || 
-          authError.message?.includes('session_missing') ||
-          authError.name === 'AuthSessionMissingError') {
+      if (authError.message?.includes('Auth session missing') ||
+        authError.message?.includes('session_missing') ||
+        authError.name === 'AuthSessionMissingError') {
         console.log("No active session found");
         return null;
       }
-      
+
       console.warn("Auth error (non-critical):", authError.message);
       // If it's a network error, return null instead of throwing
       if (authError.message?.includes('Failed to fetch') || authError.message?.includes('timeout')) {
@@ -273,9 +273,9 @@ export const getCurrentUser = async (): Promise<User | null> => {
     }
   } catch (error: any) {
     // Silently handle session missing errors
-    if (error?.message?.includes('Auth session missing') || 
-        error?.message?.includes('session_missing') ||
-        error?.name === 'AuthSessionMissingError') {
+    if (error?.message?.includes('Auth session missing') ||
+      error?.message?.includes('session_missing') ||
+      error?.name === 'AuthSessionMissingError') {
       console.log("No active session (caught in outer try-catch)");
       return null;
     }
@@ -796,48 +796,53 @@ export const deleteUserAccount = async (userId: string) => {
     console.log("Starting to delete user account:", userId);
 
     // Delete user's loan applications and related data first
-    const { error: branchReviewsError } = await supabase
-      .from("bank_reviews")
-      .delete()
-      .in(
-        "branch_application_id",
-        supabase
-          .from("branch_applications")
-          .select("id")
-          .in(
-            "loan_application_id",
-            supabase
-              .from("loan_applications")
-              .select("id")
-              .eq("user_id", userId),
-          ),
-      );
-
-    if (branchReviewsError) {
-      console.error("Error deleting bank reviews:", branchReviewsError);
-    }
-
-    // Delete branch applications
-    const { error: branchAppsError } = await supabase
-      .from("branch_applications")
-      .delete()
-      .in(
-        "loan_application_id",
-        supabase.from("loan_applications").select("id").eq("user_id", userId),
-      );
-
-    if (branchAppsError) {
-      console.error("Error deleting branch applications:", branchAppsError);
-    }
-
-    // Delete loan applications
-    const { error: loansError } = await supabase
+    const { data: userLoans } = await supabase
       .from("loan_applications")
-      .delete()
+      .select("id")
       .eq("user_id", userId);
 
-    if (loansError) {
-      console.error("Error deleting loan applications:", loansError);
+    const loanIds = (userLoans || []).map((l) => l.id);
+
+    if (loanIds.length > 0) {
+      // Get branch application IDs
+      const { data: branches } = await supabase
+        .from("branch_applications")
+        .select("id")
+        .in("loan_application_id", loanIds);
+
+      const branchIds = (branches || []).map((b) => b.id);
+
+      if (branchIds.length > 0) {
+        // Delete bank reviews
+        const { error: branchReviewsError } = await supabase
+          .from("bank_reviews")
+          .delete()
+          .in("branch_application_id", branchIds);
+
+        if (branchReviewsError) {
+          console.error("Error deleting bank reviews:", branchReviewsError);
+        }
+      }
+
+      // Delete branch applications
+      const { error: branchAppsError } = await supabase
+        .from("branch_applications")
+        .delete()
+        .in("loan_application_id", loanIds);
+
+      if (branchAppsError) {
+        console.error("Error deleting branch applications:", branchAppsError);
+      }
+
+      // Delete loan applications
+      const { error: loansError } = await supabase
+        .from("loan_applications")
+        .delete()
+        .in("id", loanIds);
+
+      if (loansError) {
+        console.error("Error deleting loan applications:", loansError);
+      }
     }
 
     // Delete agent staff record if exists

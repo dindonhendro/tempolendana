@@ -45,41 +45,43 @@ export default function P3MIBusinessLoanForm({
   const [formData, setFormData] = useState<LoanApplicationInsert>(
     editData
       ? {
-          full_name: editData.full_name || "",
-          email: editData.email || "",
-          phone_number: editData.phone_number || "",
-          nik_ktp: editData.nik_ktp || "",
-          address_ktp: editData.address_ktp || "",
-          address_domicile: editData.address_domicile || "",
-          institution: editData.institution || "", // Company name
-          major: editData.major || "", // Business type
-          work_experience: editData.work_experience || "", // Years in business
-          work_location: editData.work_location || "", // Business location
-          loan_amount: editData.loan_amount || null,
-          tenor_months: editData.tenor_months || null,
-          bunga_bank: editData.bunga_bank || 6,
-          grace_period: editData.grace_period || null,
-          status: editData.status || "Submitted",
-          submission_type: editData.submission_type || "P3MI_BUSINESS_LOAN",
-        }
+        full_name: editData.full_name || "",
+        email: editData.email || "",
+        phone_number: editData.phone_number || "",
+        nik_ktp: editData.nik_ktp || "",
+        address_ktp: editData.address_ktp || "",
+        address_domicile: editData.address_domicile || "",
+        institution: editData.institution || "", // Company name
+        major: editData.major || "", // Business type
+        work_experience: editData.work_experience || "", // Years in business
+        work_location: editData.work_location || "", // Business location
+        loan_amount: editData.loan_amount || null,
+        tenor_months: editData.tenor_months || null,
+        bunga_bank: editData.bunga_bank || 6,
+        grace_period: editData.grace_period || null,
+        status: editData.status || "Submitted",
+        submission_type: editData.submission_type || "P3MI_BUSINESS_LOAN",
+        assigned_agent_id: editData.assigned_agent_id || "e558e9a3-0438-4e8c-b09f-bad255f5d715",
+      }
       : {
-          full_name: "",
-          email: "",
-          phone_number: "",
-          nik_ktp: "",
-          address_ktp: "",
-          address_domicile: "",
-          institution: "", // Company name
-          major: "", // Business type
-          work_experience: "", // Years in business
-          work_location: "", // Business location
-          loan_amount: null,
-          tenor_months: null,
-          bunga_bank: 6,
-          grace_period: null,
-          status: "Submitted",
-          submission_type: "P3MI_BUSINESS_LOAN",
-        },
+        full_name: "",
+        email: "",
+        phone_number: "",
+        nik_ktp: "",
+        address_ktp: "",
+        address_domicile: "",
+        institution: "", // Company name
+        major: "", // Business type
+        work_experience: "", // Years in business
+        work_location: "", // Business location
+        loan_amount: null,
+        tenor_months: null,
+        bunga_bank: 6,
+        grace_period: null,
+        status: "Submitted",
+        submission_type: "P3MI_BUSINESS_LOAN",
+        assigned_agent_id: "e558e9a3-0438-4e8c-b09f-bad255f5d715",
+      },
   );
 
   const [files, setFiles] = useState<{
@@ -698,7 +700,7 @@ export default function P3MIBusinessLoanForm({
                           <p className="mb-2 text-sm text-gray-500">
                             <span className="font-semibold">
                               {files[doc.key] ||
-                              (editData && (editData as any)[`${doc.key}_url`])
+                                (editData && (editData as any)[`${doc.key}_url`])
                                 ? "Click to replace"
                                 : "Click to upload"}
                             </span>{" "}

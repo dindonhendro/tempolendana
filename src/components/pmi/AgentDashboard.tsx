@@ -44,7 +44,7 @@ import {
   processBulkApplications,
   parseCSVContent,
 } from "@/lib/supabase";
-import { LoanApplication, Tables } from "@/types/supabase";
+import { LoanApplication, BranchApplication, Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
 import P3MIBusinessLoanForm from "./P3MIBusinessLoanForm";
 
@@ -53,20 +53,26 @@ interface AgentDashboardProps {
   isCheckerAgent?: boolean;
 }
 
+interface AgentLoanApplication extends LoanApplication {
+  branch_applications?: (BranchApplication & {
+    bank_reviews?: any[];
+  })[];
+}
+
 export default function AgentDashboard({
   agentId,
   isCheckerAgent = false,
 }: AgentDashboardProps = {}) {
-  const [applications, setApplications] = useState<LoanApplication[]>([]);
+  const [applications, setApplications] = useState<AgentLoanApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<
-    LoanApplication[]
+    AgentLoanApplication[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApplication, setSelectedApplication] =
-    useState<LoanApplication | null>(null);
+    useState<AgentLoanApplication | null>(null);
   const [editingApplication, setEditingApplication] =
-    useState<LoanApplication | null>(null);
+    useState<AgentLoanApplication | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [showNewApplicationForm, setShowNewApplicationForm] = useState(false);
   const [currentAgentCompanyId, setCurrentAgentCompanyId] = useState<
@@ -170,7 +176,7 @@ export default function AgentDashboard({
             "P3MI Business Loan applications found:",
             data?.length || 0,
           );
-          setApplications(data || []);
+          setApplications((data as AgentLoanApplication[]) || []);
         }
 
         setLoading(false);
@@ -227,7 +233,7 @@ export default function AgentDashboard({
         setApplications([]);
       } else {
         console.log("Filtered applications for agent:", data?.length || 0);
-        setApplications(data || []);
+        setApplications((data as AgentLoanApplication[]) || []);
       }
 
       // Also try fetching without status filter to see if there are other statuses
@@ -305,7 +311,7 @@ export default function AgentDashboard({
     try {
       // Create insurance application record
       const { error } = await supabase
-        .from("insurance_applications")
+        .from("insurance_assignments")
         .insert({
           loan_application_id: applicationId,
           insurance_company_id: selectedInsuranceCompany,
@@ -1689,38 +1695,38 @@ export default function AgentDashboard({
               {/* Rejection Comments Section */}
               {(selectedApplication.status === "Rejected" ||
                 selectedApplication.status === "Bank Rejected") && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 text-red-600">
-                    Rejection Comments
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-red-600">
+                      Rejection Comments
+                    </h3>
 
-                  {/* Lendana Validator Comments */}
-                  {selectedApplication.status === "Rejected" && (
-                    <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                      <h4 className="font-semibold text-red-800 mb-2">
-                        Rejected by Lendana Validator
-                      </h4>
-                      <p className="text-red-700 text-sm">
-                        This application was rejected during the validation
-                        process by Lendana. For specific rejection reasons,
-                        please contact the validation team.
-                      </p>
-                      <p className="text-red-600 text-xs mt-2">
-                        Status: {selectedApplication.status}
-                      </p>
-                    </div>
-                  )}
+                    {/* Lendana Validator Comments */}
+                    {selectedApplication.status === "Rejected" && (
+                      <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                        <h4 className="font-semibold text-red-800 mb-2">
+                          Rejected by Lendana Validator
+                        </h4>
+                        <p className="text-red-700 text-sm">
+                          This application was rejected during the validation
+                          process by Lendana. For specific rejection reasons,
+                          please contact the validation team.
+                        </p>
+                        <p className="text-red-600 text-xs mt-2">
+                          Status: {selectedApplication.status}
+                        </p>
+                      </div>
+                    )}
 
-                  {/* Bank Staff Comments */}
-                  {selectedApplication.status === "Bank Rejected" &&
-                    selectedApplication.branch_applications &&
-                    selectedApplication.branch_applications.length > 0 && (
-                      <div className="space-y-3">
-                        {selectedApplication.branch_applications.map(
-                          (branchApp: any) =>
-                            branchApp.bank_reviews &&
-                            branchApp.bank_reviews.length > 0
-                              ? branchApp.bank_reviews.map(
+                    {/* Bank Staff Comments */}
+                    {selectedApplication.status === "Bank Rejected" &&
+                      selectedApplication.branch_applications &&
+                      selectedApplication.branch_applications.length > 0 && (
+                        <div className="space-y-3">
+                          {selectedApplication.branch_applications?.map(
+                            (branchApp: any) =>
+                              branchApp.bank_reviews &&
+                                branchApp.bank_reviews.length > 0
+                                ? branchApp.bank_reviews.map(
                                   (review: any, index: number) => (
                                     <div
                                       key={review.id || index}
@@ -1763,18 +1769,18 @@ export default function AgentDashboard({
                                     </div>
                                   ),
                                 )
-                              : null,
-                        )}
-                      </div>
-                    )}
-                </div>
-              )}
+                                : null,
+                          )}
+                        </div>
+                      )}
+                  </div>
+                )}
 
               {/* Action Buttons */}
               {/* Uploaded Files Section for P3MI Business Loan */}
               {isCheckerAgent &&
                 selectedApplication.submission_type ===
-                  "P3MI_BUSINESS_LOAN" && (
+                "P3MI_BUSINESS_LOAN" && (
                   <div>
                     <h3 className="text-lg font-semibold mb-4 text-[#5680E9]">
                       Uploaded Documents Review
@@ -1797,19 +1803,19 @@ export default function AgentDashboard({
                 </Button>
                 {(selectedApplication.status === "Submitted" ||
                   selectedApplication.status === "Checked") && (
-                  <Button
-                    onClick={() =>
-                      handleApplicationAction(selectedApplication.id, "reject")
-                    }
-                    disabled={processing === selectedApplication.id}
-                    variant="destructive"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    {processing === selectedApplication.id
-                      ? "Processing..."
-                      : "Reject Application"}
-                  </Button>
-                )}
+                    <Button
+                      onClick={() =>
+                        handleApplicationAction(selectedApplication.id, "reject")
+                      }
+                      disabled={processing === selectedApplication.id}
+                      variant="destructive"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      {processing === selectedApplication.id
+                        ? "Processing..."
+                        : "Reject Application"}
+                    </Button>
+                  )}
               </div>
             </CardContent>
           </Card>
@@ -2101,12 +2107,11 @@ export default function AgentDashboard({
                 {filteredApplications.map((application) => (
                   <Card
                     key={application.id}
-                    className={`border-l-4 ${
-                      application.status === "Rejected" ||
+                    className={`border-l-4 ${application.status === "Rejected" ||
                       application.status === "Bank Rejected"
-                        ? "border-l-red-500"
-                        : "border-l-blue-500"
-                    }`}
+                      ? "border-l-red-500"
+                      : "border-l-blue-500"
+                      }`}
                   >
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
@@ -2116,12 +2121,11 @@ export default function AgentDashboard({
                               {application.full_name}
                             </h3>
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                application.status === "Rejected" ||
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${application.status === "Rejected" ||
                                 application.status === "Bank Rejected"
-                                  ? "bg-red-100 text-red-600"
-                                  : "bg-blue-100 text-blue-600"
-                              }`}
+                                ? "bg-red-100 text-red-600"
+                                : "bg-blue-100 text-blue-600"
+                                }`}
                             >
                               {application.status}
                             </span>
@@ -2187,7 +2191,7 @@ export default function AgentDashboard({
                           {/* Files Review Button for P3MI Business Loan */}
                           {isCheckerAgent &&
                             application.submission_type ===
-                              "P3MI_BUSINESS_LOAN" && (
+                            "P3MI_BUSINESS_LOAN" && (
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button
@@ -2214,88 +2218,86 @@ export default function AgentDashboard({
 
                           {(application.status === "Submitted" ||
                             application.status === "Checked") && (
-                            <>
-                              <Button
-                                onClick={() =>
-                                  handleAssignApplication(application.id)
-                                }
-                                disabled={
-                                  assigningApplication === application.id ||
-                                  !selectedBank ||
-                                  !selectedProduct ||
-                                  !selectedBranch
-                                }
-                                size="sm"
-                                className={`${
-                                  !selectedBank ||
-                                  !selectedProduct ||
-                                  !selectedBranch
+                              <>
+                                <Button
+                                  onClick={() =>
+                                    handleAssignApplication(application.id)
+                                  }
+                                  disabled={
+                                    assigningApplication === application.id ||
+                                    !selectedBank ||
+                                    !selectedProduct ||
+                                    !selectedBranch
+                                  }
+                                  size="sm"
+                                  className={`${!selectedBank ||
+                                    !selectedProduct ||
+                                    !selectedBranch
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-[#5680E9] hover:bg-[#4a6bc7]"
-                                } text-white`}
-                                title={
-                                  !selectedBank ||
-                                  !selectedProduct ||
-                                  !selectedBranch
-                                    ? "Please select bank, product, and branch first"
-                                    : "Assign application to selected bank"
-                                }
-                              >
-                                <Send className="h-4 w-4 mr-2" />
-                                {assigningApplication === application.id
-                                  ? "Assigning..."
-                                  : "Assign to Bank"}
-                              </Button>
+                                    } text-white`}
+                                  title={
+                                    !selectedBank ||
+                                      !selectedProduct ||
+                                      !selectedBranch
+                                      ? "Please select bank, product, and branch first"
+                                      : "Assign application to selected bank"
+                                  }
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  {assigningApplication === application.id
+                                    ? "Assigning..."
+                                    : "Assign to Bank"}
+                                </Button>
 
-                              <Button
-                                onClick={() =>
-                                  handleAssignToInsurance(application.id)
-                                }
-                                disabled={
-                                  assigningToInsurance === application.id ||
-                                  !selectedInsuranceCompany
-                                }
-                                size="sm"
-                                className={`${
-                                  !selectedInsuranceCompany
+                                <Button
+                                  onClick={() =>
+                                    handleAssignToInsurance(application.id)
+                                  }
+                                  disabled={
+                                    assigningToInsurance === application.id ||
+                                    !selectedInsuranceCompany
+                                  }
+                                  size="sm"
+                                  className={`${!selectedInsuranceCompany
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-purple-600 hover:bg-purple-700"
-                                } text-white`}
-                                title={
-                                  !selectedInsuranceCompany
-                                    ? "Please select an insurance company first"
-                                    : "Assign application to selected insurance company"
-                                }
-                              >
-                                <Shield className="h-4 w-4 mr-2" />
-                                {assigningToInsurance === application.id
-                                  ? "Assigning..."
-                                  : "Assign to Insurance"}
-                              </Button>
+                                    } text-white`}
+                                  title={
+                                    !selectedInsuranceCompany
+                                      ? "Please select an insurance company first"
+                                      : "Assign application to selected insurance company"
+                                  }
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  {assigningToInsurance === application.id
+                                    ? "Assigning..."
+                                    : "Assign to Insurance"}
+                                </Button>
 
-                              <Button
-                                onClick={() =>
-                                  handleApplicationAction(
-                                    application.id,
-                                    "reject",
-                                  )
-                                }
-                                disabled={processing === application.id}
-                                size="sm"
-                                variant="destructive"
-                              >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
+                                <Button
+                                  onClick={() =>
+                                    handleApplicationAction(
+                                      application.id,
+                                      "reject",
+                                    )
+                                  }
+                                  disabled={processing === application.id}
+                                  size="sm"
+                                  variant="destructive"
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
 
                           {(application.status === "Rejected" ||
                             application.status === "Bank Rejected") && (
-                            <span className="text-sm text-red-600 font-medium px-2 py-1 bg-red-50 rounded">
-                              Application Rejected - View details for comments
-                            </span>
-                          )}
+                              <span className="text-sm text-red-600 font-medium px-2 py-1 bg-red-50 rounded">
+                                Application Rejected - View details for comments
+                              </span>
+                            )}
                         </div>
                       </div>
                     </CardContent>

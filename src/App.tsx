@@ -53,7 +53,6 @@ import {
 } from "./components/ui/select";
 import { supabase, getCurrentUser, signOut } from "./lib/supabase";
 import { User, Tables } from "./types/supabase";
-import routes from "tempo-routes";
 import {
   LogOut,
   Building2,
@@ -135,7 +134,6 @@ function App() {
   });
 
   // ALWAYS call useRoutes - this must be called unconditionally
-  const tempoRoutes = useRoutes(routes);
 
   // Auth initialization effect - MUST be first useEffect
   useEffect(() => {
@@ -159,7 +157,7 @@ function App() {
 
         try {
           const currentUser = await getCurrentUser();
-          
+
           if (isMounted) {
             clearTimeout(timeoutId);
             setUser(currentUser);
@@ -226,7 +224,7 @@ function App() {
               created_at: session.user.created_at || new Date().toISOString(),
               updated_at: session.user.updated_at || new Date().toISOString(),
             } as User;
-            
+
             setUser(quickUser);
             setAuthError(null);
             setLoading(false);
@@ -2521,21 +2519,20 @@ function App() {
                                 </TableCell>
                                 <TableCell>
                                   <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      application.status === "Bank Approved"
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${application.status === "Bank Approved"
                                         ? "bg-green-100 text-green-800"
                                         : application.status ===
-                                              "Bank Rejected" ||
-                                            application.status === "Rejected"
+                                          "Bank Rejected" ||
+                                          application.status === "Rejected"
                                           ? "bg-red-100 text-red-800"
                                           : application.status ===
-                                                "Submitted" ||
-                                              application.status ===
-                                                "Checked" ||
-                                              application.status === "Validated"
+                                            "Submitted" ||
+                                            application.status ===
+                                            "Checked" ||
+                                            application.status === "Validated"
                                             ? "bg-blue-100 text-blue-800"
                                             : "bg-gray-100 text-gray-800"
-                                    }`}
+                                      }`}
                                   >
                                     {application.status}
                                   </span>
@@ -2891,15 +2888,14 @@ function App() {
                                 </TableCell>
                                 <TableCell>
                                   <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      app.status === "Approved"
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${app.status === "Approved"
                                         ? "bg-green-100 text-green-800"
                                         : app.status === "Rejected"
                                           ? "bg-red-100 text-red-800"
                                           : app.status === "Pending"
                                             ? "bg-yellow-100 text-yellow-800"
                                             : "bg-gray-100 text-gray-800"
-                                    }`}
+                                      }`}
                                   >
                                     {app.status}
                                   </span>
@@ -2947,11 +2943,10 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "banks"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "banks"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <Building2 className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -2971,11 +2966,10 @@ function App() {
                 </div>
 
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "agents"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "agents"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <Users className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -2995,11 +2989,10 @@ function App() {
                 </div>
 
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "insurance"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "insurance"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <Building2 className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -3019,11 +3012,10 @@ function App() {
                 </div>
 
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "applications"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "applications"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <FileText className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -3043,11 +3035,10 @@ function App() {
                 </div>
 
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "collector"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "collector"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <Building2 className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -3067,11 +3058,10 @@ function App() {
                 </div>
 
                 <div
-                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                    activeAdminSection === "reports"
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "reports"
                       ? "border-[#5680E9] bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center mb-3">
                     <BarChart3 className="h-6 w-6 text-[#5680E9] mr-2" />
@@ -3220,7 +3210,6 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         {/* Always render tempo routes when in tempo environment */}
-        {import.meta.env.VITE_TEMPO === "true" && tempoRoutes}
       </>
     </Suspense>
   );

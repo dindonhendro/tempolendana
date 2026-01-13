@@ -71,10 +71,10 @@ export default function LoanApplicationForm({
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
     dokumen_persetujuan_data_privacy:
-      | "idle"
-      | "uploading"
-      | "success"
-      | "error";
+    | "idle"
+    | "uploading"
+    | "success"
+    | "error";
     surat_permohonan_kredit: "idle" | "uploading" | "success" | "error";
     dokumen_kartu_keluarga: "idle" | "uploading" | "success" | "error";
     dokumen_paspor: "idle" | "uploading" | "success" | "error";
@@ -84,10 +84,10 @@ export default function LoanApplicationForm({
     surat_pernyataan_ortu_wali: "idle" | "uploading" | "success" | "error";
     surat_izin_ortu_wali: "idle" | "uploading" | "success" | "error";
     dokumen_perjanjian_penempatan_pmi:
-      | "idle"
-      | "uploading"
-      | "success"
-      | "error";
+    | "idle"
+    | "uploading"
+    | "success"
+    | "error";
     dokumen_perjanjian_kerja: "idle" | "uploading" | "success" | "error";
     surat_keterangan_p3mi: "idle" | "uploading" | "success" | "error";
     info_slik_bank: "idle" | "uploading" | "success" | "error";
@@ -121,75 +121,75 @@ export default function LoanApplicationForm({
   const [formData, setFormData] = useState<LoanApplicationInsert>(
     editData
       ? {
-          full_name: editData.full_name || "",
-          gender: editData.gender || "",
-          age: editData.age || null,
-          birth_place: editData.birth_place || "",
-          birth_date: editData.birth_date || "",
-          phone_number: editData.phone_number || "",
-          email: editData.email || "",
-          nik_ktp: editData.nik_ktp || "",
-          last_education: editData.last_education || "",
-          nomor_sisko: editData.nomor_sisko || "",
-          address_ktp: editData.address_ktp || "",
-          address_domicile: editData.address_domicile || "",
-          nama_ibu_kandung: editData.nama_ibu_kandung || "",
-          nama_pasangan: editData.nama_pasangan || "",
-          ktp_pasangan: editData.ktp_pasangan || "",
-          telp_pasangan: editData.telp_pasangan || "",
-          alamat_pasangan: editData.alamat_pasangan || "",
-          institution: editData.institution || "",
-          major: editData.major || "",
-          work_experience: editData.work_experience || "",
-          work_location: editData.work_location || "",
-          nama_pemberi_kerja: editData.nama_pemberi_kerja || "",
-          telp_pemberi_kerja: editData.telp_pemberi_kerja || "",
-          tanggal_keberangkatan: editData.tanggal_keberangkatan || "",
-          alamat_pemberi_kerja: editData.alamat_pemberi_kerja || "",
-          loan_amount: editData.loan_amount || null,
-          tenor_months: editData.tenor_months || null,
-          bunga_bank: editData.bunga_bank || 6,
-          grace_period: editData.grace_period || null,
-          negara_penempatan: editData.negara_penempatan || "",
-          assigned_agent_id: isKurWirausaha
-            ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
-            : editData.assigned_agent_id || preSelectedAgentId || "",
-          status: editData.status || "Submitted",
-          submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
-        }
+        full_name: editData.full_name || "",
+        gender: editData.gender || "",
+        age: editData.age || null,
+        birth_place: editData.birth_place || "",
+        birth_date: editData.birth_date || "",
+        phone_number: editData.phone_number || "",
+        email: editData.email || "",
+        nik_ktp: editData.nik_ktp || "",
+        last_education: editData.last_education || "",
+        nomor_sisko: editData.nomor_sisko || "",
+        address_ktp: editData.address_ktp || "",
+        address_domicile: editData.address_domicile || "",
+        nama_ibu_kandung: editData.nama_ibu_kandung || "",
+        nama_pasangan: editData.nama_pasangan || "",
+        ktp_pasangan: editData.ktp_pasangan || "",
+        telp_pasangan: editData.telp_pasangan || "",
+        alamat_pasangan: editData.alamat_pasangan || "",
+        institution: editData.institution || "",
+        major: editData.major || "",
+        work_experience: editData.work_experience || "",
+        work_location: editData.work_location || "",
+        nama_pemberi_kerja: editData.nama_pemberi_kerja || "",
+        telp_pemberi_kerja: editData.telp_pemberi_kerja || "",
+        tanggal_keberangkatan: editData.tanggal_keberangkatan || "",
+        alamat_pemberi_kerja: editData.alamat_pemberi_kerja || "",
+        loan_amount: editData.loan_amount || null,
+        tenor_months: editData.tenor_months || null,
+        bunga_bank: editData.bunga_bank || 6,
+        grace_period: editData.grace_period || null,
+        negara_penempatan: editData.negara_penempatan || "",
+        assigned_agent_id: isKurWirausaha
+          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+          : editData.assigned_agent_id || preSelectedAgentId || "",
+        status: editData.status || "Submitted",
+        submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
+      }
       : {
-          full_name: "",
-          gender: "",
-          age: null,
-          birth_place: "",
-          birth_date: "",
-          phone_number: "",
-          email: "",
-          nik_ktp: "",
-          last_education: "",
-          nomor_sisko: "",
-          address_ktp: "",
-          address_domicile: "",
-          nama_ibu_kandung: "",
-          institution: "",
-          major: "",
-          work_experience: "",
-          work_location: "",
-          nama_pemberi_kerja: "",
-          telp_pemberi_kerja: "",
-          tanggal_keberangkatan: "",
-          alamat_pemberi_kerja: "",
-          loan_amount: null,
-          tenor_months: null,
-          bunga_bank: 6,
-          grace_period: null,
-          negara_penempatan: "",
-          assigned_agent_id: isKurWirausaha
-            ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
-            : preSelectedAgentId || "",
-          status: "Submitted",
-          submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
-        },
+        full_name: "",
+        gender: "",
+        age: null,
+        birth_place: "",
+        birth_date: "",
+        phone_number: "",
+        email: "",
+        nik_ktp: "",
+        last_education: "",
+        nomor_sisko: "",
+        address_ktp: "",
+        address_domicile: "",
+        nama_ibu_kandung: "",
+        institution: "",
+        major: "",
+        work_experience: "",
+        work_location: "",
+        nama_pemberi_kerja: "",
+        telp_pemberi_kerja: "",
+        tanggal_keberangkatan: "",
+        alamat_pemberi_kerja: "",
+        loan_amount: null,
+        tenor_months: null,
+        bunga_bank: 6,
+        grace_period: null,
+        negara_penempatan: "",
+        assigned_agent_id: isKurWirausaha
+          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+          : preSelectedAgentId || "",
+        status: "Submitted",
+        submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
+      },
   );
 
   // Cost component state
@@ -452,7 +452,7 @@ export default function LoanApplicationForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value, type } = e.target;
-    let processedValue = value;
+    let processedValue: any = value;
 
     // Handle different input types
     if (type === "number") {
@@ -583,7 +583,6 @@ export default function LoanApplicationForm({
               headers: {
                 Accept: "application/json",
               },
-              timeout: 5000, // 5 second timeout
             });
 
             if (ipResponse.ok) {
@@ -939,7 +938,7 @@ export default function LoanApplicationForm({
     const monthlyPayment =
       monthlyRate > 0
         ? (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, tenorMonths)) /
-          (Math.pow(1 + monthlyRate, tenorMonths) - 1)
+        (Math.pow(1 + monthlyRate, tenorMonths) - 1)
         : loanAmount / tenorMonths;
 
     const installments = [];
@@ -1042,8 +1041,8 @@ export default function LoanApplicationForm({
           </thead>
           <tbody>
             ${installments
-              .map(
-                (inst) => `
+        .map(
+          (inst) => `
               <tr>
                 <td>${inst.month}</td>
                 <td>${inst.date}</td>
@@ -1054,8 +1053,8 @@ export default function LoanApplicationForm({
                 <td>Rp ${inst.remainingBalance.toLocaleString("id-ID")}</td>
               </tr>
             `,
-              )
-              .join("")}
+        )
+        .join("")}
           </tbody>
         </table>
 
@@ -1152,16 +1151,16 @@ export default function LoanApplicationForm({
   const tabs = isKurWirausaha
     ? ["personal", "documents", "loan"] // Simplified 3-step flow for KUR Wirausaha
     : [
-        "personal",
-        "documents",
-        "agent",
-        "komponen-biaya", // Moved before loan
-        "loan",
-        "document-other",
-        "work", // Removed "family" step
-        "installment",
-        "summary",
-      ];
+      "personal",
+      "documents",
+      "agent",
+      "komponen-biaya", // Moved before loan
+      "loan",
+      "document-other",
+      "work", // Removed "family" step
+      "installment",
+      "summary",
+    ];
   const currentIndex = tabs.indexOf(currentTab);
 
   const validateCurrentTab = () => {
@@ -1261,13 +1260,12 @@ export default function LoanApplicationForm({
               {tabs.map((step, index) => (
                 <div key={index} className="flex items-center">
                   <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium cursor-pointer transition-colors hover:bg-blue-500 hover:text-white ${
-                      index + 1 === currentIndex + 1
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium cursor-pointer transition-colors hover:bg-blue-500 hover:text-white ${index + 1 === currentIndex + 1
                         ? "bg-blue-600 text-white"
                         : index + 1 < currentIndex + 1
                           ? "bg-green-600 text-white"
                           : "bg-gray-300 text-gray-600"
-                    }`}
+                      }`}
                     onClick={() => setCurrentTab(tabs[index])}
                     title={`Go to step ${index + 1}: ${step}`}
                   >
@@ -1655,7 +1653,7 @@ export default function LoanApplicationForm({
                       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           {uploadStatus.tabel_angsuran_signed ===
-                          "uploading" ? (
+                            "uploading" ? (
                             <div className="text-blue-500">Uploading...</div>
                           ) : uploadStatus.tabel_angsuran_signed ===
                             "success" ? (
@@ -1720,7 +1718,7 @@ export default function LoanApplicationForm({
               )}
               {!isKurWirausaha &&
                 formData.assigned_agent_id ===
-                  "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
+                "e558e9a3-0438-4e8c-b09f-bad255f5d715" && (
                   <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mb-6">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
@@ -1860,10 +1858,10 @@ export default function LoanApplicationForm({
                     <div className="space-y-1 text-sm">
                       <p>
                         <span className="font-medium">Agent Company:</span>{" "}
-                        {formData.agent_company_id
+                        {formData.assigned_agent_id
                           ? agentCompanies.find(
-                              (a) => a.id === formData.agent_company_id,
-                            )?.company_name || "N/A"
+                            (a) => a.id === formData.assigned_agent_id,
+                          )?.name || "N/A"
                           : "Belum ada agent"}
                       </p>
                     </div>
@@ -2115,8 +2113,8 @@ export default function LoanApplicationForm({
                           ] === "uploading" ? (
                             <div className="text-blue-500">Uploading...</div>
                           ) : uploadStatus[
-                              doc.key as keyof typeof uploadStatus
-                            ] === "success" ? (
+                            doc.key as keyof typeof uploadStatus
+                          ] === "success" ? (
                             <CheckCircle className="w-8 h-8 text-green-500" />
                           ) : (
                             <Upload className="w-8 h-8 mb-4 text-gray-500" />

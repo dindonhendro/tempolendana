@@ -24,11 +24,16 @@ import { Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface AuthFormProps {
-  onAuthSuccess?: () => void;
+  onAuthSuccess?: () => void | Promise<void>;
   isWirausaha?: boolean;
+  isPerusahaan?: boolean;
 }
 
-export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFormProps) {
+export default function AuthForm({
+  onAuthSuccess,
+  isWirausaha = false,
+  isPerusahaan = false,
+}: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -49,12 +54,13 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
   const [insuranceCompanyId, setInsuranceCompanyId] = useState("");
   const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
   const [collectorCompanyId, setCollectorCompanyId] = useState("");
+  const [collectorCompanies, setCollectorCompanies] = useState<any[]>([]);
 
   // Consent checkboxes state
   const [consentDataProcessing, setConsentDataProcessing] = useState(false);
   const [consentTermsConditions, setConsentTermsConditions] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
-  
+
   // Scroll tracking for privacy policy
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const privacyPolicyRef = React.useRef<HTMLDivElement>(null);
@@ -153,7 +159,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
     try {
       console.log("Attempting sign in...");
       await signIn(signInEmail, signInPassword);
-      
+
       clearTimeout(signInTimeout);
       setSuccess("Sign in successful! Redirecting...");
 
@@ -272,7 +278,11 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-[#5680E9]">
-            {isWirausaha ? "KUR Wirausaha PMI" : "KUR Penempatan PMI"}
+            {isPerusahaan
+              ? "P3MI Business Loan"
+              : isWirausaha
+                ? "KUR Wirausaha PMI"
+                : "KUR Penempatan PMI"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -415,6 +425,10 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                         <SelectItem value="wirausaha">
                           User Wirausaha PMI
                         </SelectItem>
+                      ) : isPerusahaan ? (
+                        <SelectItem value="perusahaan">
+                          Perusahaan (P3MI Business)
+                        </SelectItem>
                       ) : (
                         <>
                           <SelectItem value="user">User (PMI)</SelectItem>
@@ -545,18 +559,18 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                 {/* Consent Checkboxes */}
                 <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="font-medium text-gray-800">Persetujuan dan Consent</h4>
-                  
+
                   {/* Privacy Policy Text - Scrollable */}
-                  <div 
+                  <div
                     ref={privacyPolicyRef}
                     onScroll={handlePrivacyPolicyScroll}
                     className="max-h-48 overflow-y-auto border rounded-lg p-4 bg-white text-xs text-gray-700 space-y-3"
                   >
                     <h5 className="font-semibold text-sm text-gray-900 text-center">KEBIJAKAN PRIVASI</h5>
                     <h6 className="font-semibold text-sm text-gray-900 text-center">PT. LENDANA DIGITALINDO NUSANTARA</h6>
-                    
+
                     <p>
-                      <strong>I. KATA PENGANTAR</strong><br/>
+                      <strong>I. KATA PENGANTAR</strong><br />
                       Kebijakan Privasi ini ("Kebijakan Privasi") menjelaskan bagaimana PT. Lendana Digitalindo Nusantara (selanjutnya disebut "Lendana" atau "Kami") sebagai Penyelenggara Agregasi Jasa keuangan terdaftar di OJK sesuai dengan POJK 4/2025, yang akan memproses Data Pribadi Anda sehubungan dengan penggunaan transaksi dan layanan agregasi data di platform Lendana ("Pemrosesan Data Pribadi").
                     </p>
                     <p>
@@ -564,7 +578,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </p>
 
                     <p>
-                      <strong>II. PENGAKUAN DAN PERSETUJUAN</strong><br/>
+                      <strong>II. PENGAKUAN DAN PERSETUJUAN</strong><br />
                       Dengan mendaftar akun dan menggunakan Layanan Kami, berarti Anda mengakui bahwa Anda telah membaca dan memahami Kebijakan Privasi ini dan memberikan persetujuan atas Pemrosesan Data Pribadi Anda sesuai dengan Kebijakan Privasi ini. Secara khusus, Anda sepakat dan memberikan persetujuan kepada Kami untuk Memproses Data Pribadi Anda sesuai dengan Kebijakan Privasi ini.
                     </p>
                     <p>
@@ -572,7 +586,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </p>
 
                     <p>
-                      <strong>III. DATA PRIBADI YANG DIKUMPULKAN</strong><br/>
+                      <strong>III. DATA PRIBADI YANG DIKUMPULKAN</strong><br />
                       "Data Pribadi" berarti data yang mengidentifikasi atau dapat digunakan untuk mengidentifikasi, menghubungi, atau menemukan orang atau perangkat yang terkait dengan data tersebut. Data Pribadi termasuk, namun tidak terbatas pada, nama, alamat, tanggal lahir, pekerjaan, nomor telepon, alamat email, rekening bank, jenis kelamin, identifikasi (termasuk paspor atau dokumen identitas nasional) atau tanda pengenal lainnya yang dikeluarkan pemerintah, Visa Kerja, foto, kewarganegaraan, nomor telepon Pengguna dan non-Pengguna di dalam daftar kontak telepon seluler Anda, data terkait keuangan, data biometrik (termasuk namun tidak terbatas pada pengenalan sidik jari dan pengenalan wajah), dan data lainnya yang termasuk sebagai Data Pribadi sesuai dengan hukum dan peraturan perundang-undangan yang berlaku.
                     </p>
                     <p>
@@ -594,7 +608,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </p>
 
                     <p>
-                      <strong>Cara Kami Mengumpulkan Data Pribadi Anda</strong><br/>
+                      <strong>Cara Kami Mengumpulkan Data Pribadi Anda</strong><br />
                       Data Pribadi yang Kami kumpulkan dapat diberikan oleh Anda secara langsung atau oleh pihak ketiga (misalnya: Mitra P3MI, Mitra LPK/SO, BNSP sebagai Lembaga Sertifikasi, Imigrasi untuk Paspor dan Visa, Poliklinik untuk data medical checkup ketika Anda mendaftar secara kolektif melalui Mitra Penempatan atau menggunakan Layanan, ketika Anda menghubungi layanan pelanggan Kami, atau ketika Anda menyediakan Data Pribadi kepada Kami). Kami dapat mengumpulkan data dalam berbagai macam bentuk dan tujuan (termasuk tujuan yang diizinkan berdasarkan Peraturan Perundang-undangan yang Berlaku).
                     </p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -605,7 +619,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </ul>
 
                     <p>
-                      <strong>IV. PENGGUNAAN DATA PRIBADI</strong><br/>
+                      <strong>IV. PENGGUNAAN DATA PRIBADI</strong><br />
                       Kami dapat menggunakan Data Pribadi yang dikumpulkan untuk salah satu dari tujuan berikut ini serta untuk tujuan lain yang diizinkan oleh Peraturan Perundang-undangan yang Berlaku ("Tujuan"):
                     </p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -626,11 +640,11 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                       <strong>V. MELINDUNGI DATA PRIBADI ANDA</strong>
                     </p>
                     <p>
-                      <strong>1. Keamanan Data</strong><br/>
+                      <strong>1. Keamanan Data</strong><br />
                       Kerahasiaan Data Pribadi Anda adalah hal yang terpenting bagi Lendana. Kami akan melakukan segala upaya yang wajar untuk melindungi dan mengamankan Data Pribadi Anda dari akses, pengumpulan, penggunaan atau pengungkapan oleh orang-orang yang tidak berwenang dan dari pemrosesan yang melanggar hukum. Namun, pengiriman data melalui internet tidak sepenuhnya aman. Meskipun Kami selalu melakukan yang terbaik untuk melindungi Data Pribadi Anda, Anda mengakui bahwa Kami tidak dapat menjamin integritas dan keakuratan Data Pribadi apa pun yang Anda kirimkan melalui Internet, atau menjamin bahwa Data Pribadi tersebut tidak akan dicegat, diakses, diungkapkan, diubah atau dimusnahkan oleh pihak ketiga yang tidak berwenang, karena faktor-faktor di luar kendali Kami. Anda bertanggung jawab untuk menjaga kerahasiaan rincian akun Anda dan Anda wajib untuk tidak membagikan rincian akun Anda, termasuk kata sandi Anda dan One Time Password (OTP) Anda, kepada siapa pun dan Anda juga harus selalu menjaga dan bertanggung jawab atas keamanan perangkat yang Anda gunakan.
                     </p>
                     <p>
-                      <strong>2. Penyimpanan Data</strong><br/>
+                      <strong>2. Penyimpanan Data</strong><br />
                       Data Pribadi Anda hanya akan disimpan selama diperlukan untuk memenuhi tujuan dari pengumpulannya. Untuk keperluan pengajuan pinjaman hanya disimpan sesuai tenor pinjaman anda plus 6 (enam) bulan tambahan apabila anda ingin mengajukan pinjaman baru, yang mana selama masa retensi atau selama penyimpanan tersebut diwajibkan atau diizinkan oleh Peraturan Perundang-undangan yang Berlaku. Kami akan berhenti menyimpan Data Pribadi, atau menghapus maksud dari dikaitkannya Data Pribadi tersebut dengan Anda sebagai individu, segera setelah dianggap bahwa tujuan pengumpulan Data Pribadi tersebut tidak lagi dibutuhkan dengan menyimpan Data Pribadi, terdapat permintaan dari Anda untuk melakukan penghapusan akun Anda, dan penyimpanan tidak lagi diperlukan untuk tujuan bisnis atau secara hukum.
                     </p>
                     <p>
@@ -644,7 +658,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </p>
 
                     <p>
-                      <strong>VI. HAK PENGGUNA</strong><br/>
+                      <strong>VI. HAK PENGGUNA</strong><br />
                       Anda sebagai pengguna dari platform kami memiliki hak tertentu berdasarkan Peraturan Perundang-undangan yang Berlaku untuk meminta kepada Kami terhadap akses berupa koreksi dari dan/atau penghapusan terhadap Data Pribadi Anda yang berada dalam penguasaan dan kendali Kami. Anda dapat menghapus akun anda melalui platform kami atau menghubungi kami melalui email di privacy@lendana.id
                     </p>
                     <p>
@@ -655,7 +669,7 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     </p>
 
                     <p>
-                      <strong>VII. HUBUNGI KAMI</strong><br/>
+                      <strong>VII. HUBUNGI KAMI</strong><br />
                       Apabila Anda memiliki pertanyaan atau keluhan terkait Kebijakan Privasi ini atau apabila Anda ingin mengakses, mengoreksi dan/atau hak-hak lainnya atas Data Pribadi Anda, silakan hubungi kami melalui layanan pelanggan di privacy@lendana.id
                     </p>
 
@@ -681,9 +695,8 @@ export default function AuthForm({ onAuthSuccess, isWirausaha = false }: AuthFor
                     <div className="grid gap-1.5 leading-none">
                       <label
                         htmlFor="consent-terms"
-                        className={`text-sm font-medium leading-none cursor-pointer ${
-                          !hasScrolledToBottom ? 'text-gray-400' : 'text-gray-900'
-                        }`}
+                        className={`text-sm font-medium leading-none cursor-pointer ${!hasScrolledToBottom ? 'text-gray-400' : 'text-gray-900'
+                          }`}
                       >
                         Syarat dan Ketentuan *
                       </label>
