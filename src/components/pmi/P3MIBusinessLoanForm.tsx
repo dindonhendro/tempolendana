@@ -249,6 +249,14 @@ export default function P3MIBusinessLoanForm({
   };
 
   const handleSubmit = async () => {
+    // Prevent modification if already validated
+    if (editData && editData.status === "Validated") {
+      alert(
+        "Gagal memperbaruhi data. Data aplikasi anda saat ini sudah divalidasi dan sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -445,11 +453,17 @@ export default function P3MIBusinessLoanForm({
     const missingFields: string[] = [];
 
     if (currentTab === "company") {
-      if (!formData.full_name) missingFields.push("Company Owner Name");
+      if (!formData.full_name) missingFields.push("Nama Pemilik Usaha");
       if (!formData.email) missingFields.push("Email");
-      if (!formData.phone_number) missingFields.push("Phone Number");
-      if (!formData.institution) missingFields.push("Company Name");
-      if (!formData.major) missingFields.push("Business Type");
+      if (!formData.phone_number) missingFields.push("Nomor Telepon");
+      if (!formData.institution) missingFields.push("Nama Perusahaan P3MI");
+      if (!formData.major) missingFields.push("Bidang Usaha");
+    }
+
+    if (currentTab === "documents") {
+      // Check if critical documents are uploaded (just checking first few for now)
+      if (!documentUrls.ktp_photo_url && !editData?.ktp_photo_url) missingFields.push("Foto KTP");
+      if (!documentUrls.self_photo_url && !editData?.self_photo_url) missingFields.push("Foto Selfie");
     }
 
     if (currentTab === "loan") {
@@ -465,7 +479,7 @@ export default function P3MIBusinessLoanForm({
 
     if (missingFields.length > 0) {
       alert(
-        `Please fill in the following mandatory fields:\n\n${missingFields.join("\n")}`,
+        `Mohon lengkapi field mandatory berikut:\n\n${missingFields.join("\n")}`,
       );
       return false;
     }
@@ -474,6 +488,14 @@ export default function P3MIBusinessLoanForm({
   };
 
   const nextTab = () => {
+    // Prevent modification if already validated
+    if (editData && editData.status === "Validated") {
+      alert(
+        "Gagal memperbaruhi data. Data aplikasi anda saat ini sudah divalidasi dan sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.",
+      );
+      return;
+    }
+
     if (!validateCurrentTab()) {
       return;
     }
@@ -924,13 +946,7 @@ export default function P3MIBusinessLoanForm({
 
             <Button
               onClick={nextTab}
-              disabled={
-                isSubmitting ||
-                !formData.full_name ||
-                !formData.email ||
-                (currentTab === "loan" &&
-                  (!formData.loan_amount || !formData.tenor_months))
-              }
+              disabled={isSubmitting}
               className="bg-[#5680E9] hover:bg-[#5680E9]/90"
             >
               {currentIndex === tabs.length - 1

@@ -521,6 +521,14 @@ export default function LoanApplicationForm({
   };
 
   const handleSubmit = async () => {
+    // Prevent modification if already validated
+    if (editData && editData.status === "Validated") {
+      alert(
+        "Gagal memperbaruhi data. Data aplikasi anda saat ini sudah divalidasi dan sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -1149,7 +1157,7 @@ export default function LoanApplicationForm({
 
   // Define tabs based on whether this is KUR Wirausaha or not
   const tabs = isKurWirausaha
-    ? ["personal", "documents", "loan"] // Simplified 3-step flow for KUR Wirausaha
+    ? ["personal", "documents", "loan", "summary"] // Simplified 4-step flow for KUR Wirausaha
     : [
       "personal",
       "documents",
@@ -1179,6 +1187,15 @@ export default function LoanApplicationForm({
       if (!formData.nomor_sisko) missingFields.push("Nomor Sisko PMI");
     }
 
+    if (currentTab === "documents") {
+      if (!files.ktp && !editData?.ktp_photo_url) missingFields.push("KTP Photo");
+      if (!files.selfie && !editData?.self_photo_url) missingFields.push("Selfie Photo");
+    }
+
+    if (currentTab === "agent") {
+      if (!formData.assigned_agent_id) missingFields.push("P3MI Agent");
+    }
+
     if (currentTab === "loan") {
       if (!formData.loan_amount) missingFields.push("Loan Amount");
       if (!formData.tenor_months) missingFields.push("Tenor (Months)");
@@ -1190,9 +1207,15 @@ export default function LoanApplicationForm({
       }
     }
 
+    if (currentTab === "summary") {
+      if (!consentLoanApplication) missingFields.push("Consent for Loan Application");
+      if (!consentDataSharing) missingFields.push("Consent for Data Sharing");
+      if (!consentCreditCheck) missingFields.push("Consent for Credit Check");
+    }
+
     if (missingFields.length > 0) {
       alert(
-        `Please fill in the following mandatory fields:\n\n${missingFields.join("\n")}`,
+        `Mohon lengkapi field mandatory berikut:\n\n${missingFields.join("\n")}`,
       );
       return false;
     }
@@ -1201,12 +1224,20 @@ export default function LoanApplicationForm({
   };
 
   const nextTab = () => {
+    // Prevent modification if already validated
+    if (editData && editData.status === "Validated") {
+      alert(
+        "Gagal memperbaruhi data. Data aplikasi anda saat ini sudah divalidasi dan sedang di proses LJK pemberi pinjaman sehingga tidak dapat diubah lagi.",
+      );
+      return;
+    }
+
     // Validate current tab before proceeding
     if (!validateCurrentTab()) {
       return;
     }
 
-    // For KUR Wirausaha, simplified 3-step flow
+    // For KUR Wirausaha, simplified 4-step flow
     if (isKurWirausaha) {
       if (currentIndex < tabs.length - 1) {
         setCurrentTab(tabs[currentIndex + 1]);
@@ -1261,10 +1292,10 @@ export default function LoanApplicationForm({
                 <div key={index} className="flex items-center">
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium cursor-pointer transition-colors hover:bg-blue-500 hover:text-white ${index + 1 === currentIndex + 1
-                        ? "bg-blue-600 text-white"
-                        : index + 1 < currentIndex + 1
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-300 text-gray-600"
+                      ? "bg-blue-600 text-white"
+                      : index + 1 < currentIndex + 1
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-300 text-gray-600"
                       }`}
                     onClick={() => setCurrentTab(tabs[index])}
                     title={`Go to step ${index + 1}: ${step}`}
@@ -2923,17 +2954,7 @@ export default function LoanApplicationForm({
             {isKurWirausaha ? (
               <Button
                 onClick={nextTab}
-                disabled={
-                  isSubmitting ||
-                  !formData.full_name ||
-                  !formData.email ||
-                  (currentTab === "loan" &&
-                    (!formData.loan_amount || !formData.tenor_months)) ||
-                  (currentTab === "summary" &&
-                    (!consentLoanApplication ||
-                      !consentDataSharing ||
-                      !consentCreditCheck))
-                }
+                disabled={isSubmitting}
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >
                 {currentIndex === tabs.length - 1
@@ -2945,15 +2966,7 @@ export default function LoanApplicationForm({
             ) : currentIndex === tabs.length - 1 ? (
               <Button
                 onClick={handleSubmit}
-                disabled={
-                  isSubmitting ||
-                  !formData.submission_type ||
-                  !formData.full_name ||
-                  !formData.email ||
-                  !consentLoanApplication ||
-                  !consentDataSharing ||
-                  !consentCreditCheck
-                }
+                disabled={isSubmitting}
                 className="bg-[#5680E9] hover:bg-[#5680E9]/90"
               >
                 {isSubmitting
