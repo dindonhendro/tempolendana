@@ -477,9 +477,10 @@ export default function P3MIBusinessLoanForm({
     }
 
     if (currentTab === "documents") {
-      // Check if critical documents are uploaded (just checking first few for now)
-      if (!documentUrls.ktp_photo_url && !editData?.ktp_photo_url) missingFields.push("Foto KTP");
-      if (!documentUrls.self_photo_url && !editData?.self_photo_url) missingFields.push("Foto Selfie");
+      // Check if critical documents are uploaded
+      if (!files.surat_permohonan_kredit && !editData?.surat_permohonan_kredit_url) {
+        missingFields.push("Surat Permohonan Fasilitas Kredit");
+      }
     }
 
     if (currentTab === "loan") {

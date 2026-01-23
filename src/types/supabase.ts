@@ -1023,6 +1023,56 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          application_id: string | null
+          complaint_details: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          status: string
+          ticket_id: string
+          updated_at: string
+          user_id: string | null
+          whatsapp: string
+        }
+        Insert: {
+          application_id?: string | null
+          complaint_details: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          status?: string
+          ticket_id: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp: string
+        }
+        Update: {
+          application_id?: string | null
+          complaint_details?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_consent_logs: {
         Row: {
           consent_at: string
