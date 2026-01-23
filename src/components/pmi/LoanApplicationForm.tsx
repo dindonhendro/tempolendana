@@ -494,11 +494,13 @@ export default function LoanApplicationForm({
   const uploadFile = async (
     file: File,
     folder: string,
-  ): Promise<string | null> => {
+    userId: string,
+  ): Promise<{ url: string | null; error?: string }> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
+      // Organize files by user ID for better security and management
+      const filePath = `${userId}/${folder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("documents")
@@ -506,17 +508,21 @@ export default function LoanApplicationForm({
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        return null;
+        // Provide a clearer message for bucket errors
+        if (uploadError.message?.includes("Bucket not found")) {
+          return { url: null, error: "Cloud storage 'documents' bucket is missing. Please contact administrator (SQL migration needed)." };
+        }
+        return { url: null, error: uploadError.message };
       }
 
       const { data } = supabase.storage
         .from("documents")
         .getPublicUrl(filePath);
 
-      return data.publicUrl;
-    } catch (error) {
+      return { url: data.publicUrl };
+    } catch (error: any) {
       console.error("File upload failed:", error);
-      return null;
+      return { url: null, error: error.message || "Unknown error" };
     }
   };
 
@@ -665,31 +671,62 @@ export default function LoanApplicationForm({
 
       console.log("User authenticated:", user.id);
 
-      let ktpUrl = null;
-      let selfieUrl = null;
+      let ktpUrl = editData?.ktp_photo_url || null;
+      let selfieUrl = editData?.self_photo_url || null;
       const documentUrls: Record<string, string | null> = {};
+
+      // Preserve existing document URLs if editing
+      if (editData) {
+        const documentKeys = [
+          "dokumen_persetujuan_data_privacy",
+          "surat_permohonan_kredit",
+          "dokumen_kartu_keluarga",
+          "dokumen_paspor",
+          "dokumen_surat_nikah",
+          "pas_foto_3x4",
+          "dokumen_ktp_keluarga_penjamin",
+          "surat_pernyataan_ortu_wali",
+          "surat_izin_ortu_wali",
+          "dokumen_perjanjian_penempatan_pmi",
+          "dokumen_perjanjian_kerja",
+          "surat_keterangan_p3mi",
+          "info_slik_bank",
+          "dokumen_standing_instruction",
+          "dokumen_lain_1",
+          "dokumen_lain_2",
+          "tabel_angsuran_signed",
+        ];
+        documentKeys.forEach((key) => {
+          const urlKey = `${key}_url`;
+          if ((editData as any)[urlKey]) {
+            documentUrls[urlKey] = (editData as any)[urlKey];
+          }
+        });
+      }
 
       // Upload KTP file
       if (files.ktp) {
         setUploadStatus((prev) => ({ ...prev, ktp: "uploading" }));
-        ktpUrl = await uploadFile(files.ktp, "ktp-photos");
-        if (!ktpUrl) {
+        const result = await uploadFile(files.ktp, "ktp-photos", user.id);
+        if (!result.url) {
           setUploadStatus((prev) => ({ ...prev, ktp: "error" }));
-          alert("Failed to upload KTP photo. Please try again.");
+          alert(`Gagal mengunggah foto KTP: ${result.error || ""}. Silakan coba lagi.`);
           return;
         }
+        ktpUrl = result.url;
         setUploadStatus((prev) => ({ ...prev, ktp: "success" }));
       }
 
       // Upload selfie file
       if (files.selfie) {
         setUploadStatus((prev) => ({ ...prev, selfie: "uploading" }));
-        selfieUrl = await uploadFile(files.selfie, "self-photos");
-        if (!selfieUrl) {
+        const result = await uploadFile(files.selfie, "self-photos", user.id);
+        if (!result.url) {
           setUploadStatus((prev) => ({ ...prev, selfie: "error" }));
-          alert("Failed to upload selfie photo. Please try again.");
+          alert(`Gagal mengunggah foto selfie: ${result.error || ""}. Silakan coba lagi.`);
           return;
         }
+        selfieUrl = result.url;
         setUploadStatus((prev) => ({ ...prev, selfie: "success" }));
       }
 
@@ -718,15 +755,15 @@ export default function LoanApplicationForm({
         const file = files[docKey as keyof typeof files];
         if (file) {
           setUploadStatus((prev) => ({ ...prev, [docKey]: "uploading" }));
-          const url = await uploadFile(file, "document-other");
-          if (!url) {
+          const result = await uploadFile(file, "document-other", user.id);
+          if (!result.url) {
             setUploadStatus((prev) => ({ ...prev, [docKey]: "error" }));
             alert(
-              `Failed to upload ${docKey.replace(/_/g, " ")}. Please try again.`,
+              `Gagal mengunggah ${docKey.replace(/_/g, " ")}: ${result.error || ""}. Silakan coba lagi.`,
             );
             return;
           }
-          documentUrls[`${docKey}_url`] = url;
+          documentUrls[`${docKey}_url`] = result.url;
           setUploadStatus((prev) => ({ ...prev, [docKey]: "success" }));
         }
       }

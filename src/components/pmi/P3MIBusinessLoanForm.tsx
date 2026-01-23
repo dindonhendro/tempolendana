@@ -222,11 +222,13 @@ export default function P3MIBusinessLoanForm({
   const uploadFile = async (
     file: File,
     folder: string,
-  ): Promise<string | null> => {
+    userId: string,
+  ): Promise<{ url: string | null; error?: string }> => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
+      // Organize files by user ID for better security and management
+      const filePath = `${userId}/${folder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("documents")
@@ -234,17 +236,21 @@ export default function P3MIBusinessLoanForm({
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        return null;
+        // Provide a clearer message for bucket errors
+        if (uploadError.message?.includes("Bucket not found")) {
+          return { url: null, error: "Cloud storage 'documents' bucket is missing. Please contact administrator (SQL migration needed)." };
+        }
+        return { url: null, error: uploadError.message };
       }
 
       const { data } = supabase.storage
         .from("documents")
         .getPublicUrl(filePath);
 
-      return data.publicUrl;
-    } catch (error) {
+      return { url: data.publicUrl };
+    } catch (error: any) {
       console.error("File upload failed:", error);
-      return null;
+      return { url: null, error: error.message || "Unknown error" };
     }
   };
 
@@ -324,18 +330,28 @@ export default function P3MIBusinessLoanForm({
 
       const documentUrls: Record<string, string | null> = {};
 
+      // Preserve existing document URLs if editing
+      if (editData) {
+        documentList.forEach((doc) => {
+          const urlKey = `${doc.key}_url`;
+          if ((editData as any)[urlKey]) {
+            documentUrls[urlKey] = (editData as any)[urlKey];
+          }
+        });
+      }
+
       // Upload all documents
       for (const doc of documentList) {
         const file = files[doc.key];
         if (file) {
           setUploadStatus((prev) => ({ ...prev, [doc.key]: "uploading" }));
-          const url = await uploadFile(file, "p3mi-business-documents");
-          if (!url) {
+          const result = await uploadFile(file, "p3mi-business-documents", user.id);
+          if (!result.url) {
             setUploadStatus((prev) => ({ ...prev, [doc.key]: "error" }));
-            alert(`Failed to upload ${doc.label}. Please try again.`);
+            alert(`Gagal mengunggah ${doc.label}: ${result.error || ""}. Silakan coba lagi.`);
             return;
           }
-          documentUrls[`${doc.key}_url`] = url;
+          documentUrls[`${doc.key}_url`] = result.url;
           setUploadStatus((prev) => ({ ...prev, [doc.key]: "success" }));
         }
       }

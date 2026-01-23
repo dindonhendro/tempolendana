@@ -39,18 +39,35 @@ import {
   Phone,
   Mail,
   MapPin,
+  MessageSquare,
+  Ticket,
+  HelpCircle,
+  Headphones,
+  Loader2,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface LandingPageProps {
   onGetStarted?: () => void;
 }
 
-const LandingPage = ({ onGetStarted = () => {} }: LandingPageProps) => {
+const LandingPage = ({ onGetStarted = () => { } }: LandingPageProps) => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showLoanDialog, setShowLoanDialog] = useState(false);
   const [showAboutLendana, setShowAboutLendana] = useState(false);
   const [showBankList, setShowBankList] = useState(false);
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [showContactCS, setShowContactCS] = useState(false);
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [complaintTicket, setComplaintTicket] = useState<string | null>(null);
+  const [complaintFormData, setComplaintFormData] = useState({
+    fullName: "",
+    email: "",
+    whatsapp: "",
+    appId: "",
+    details: "",
+  });
   const [selectedProduct, setSelectedProduct] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [loanFormData, setLoanFormData] = useState({
@@ -470,11 +487,10 @@ Dikeluarkan per 17 Desember 2025 `;
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100"
-            : "bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100"
+          : "bg-transparent"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -865,6 +881,131 @@ Dikeluarkan per 17 Desember 2025 `;
         </div>
       </section>
 
+      {/* Bank Product Comparison Section (OJK Request) */}
+      <section id="perbandingan" className="py-24 px-4 bg-slate-50 relative">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4">
+              Bandingkan <span className="text-gradient-blue">Produk Bank</span>
+            </h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Transparansi informasi produk pinjaman resmi dari bank mitra kami
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* KUR-PMI Card */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="glass-card rounded-3xl p-8 border border-blue-100 shadow-xl bg-white"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider">
+                    Retail - PMI
+                  </span>
+                  <h3 className="text-2xl font-bold text-slate-900 mt-2">KUR-PMI</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500 uppercase font-bold tracking-tight">Bunga</p>
+                  <p className="text-2xl font-bold text-blue-600">6% <span className="text-sm font-normal text-slate-500">per tahun</span></p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-blue-500" />
+                  <span className="text-slate-700 font-medium">Bank BUMN (HIMBARA)</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-5 h-5 flex items-center justify-center font-bold text-blue-600">Rp</span>
+                  <span className="text-slate-700 font-medium">Plafon s/d 100 Juta</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-6 mb-8">
+                <p className="text-sm font-bold text-slate-900 mb-4 uppercase flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" /> Syarat Dokumen:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["KTP-el", "Paspor", "Perjanjian Kerja", "Sertifikat Pelatihan"].map((doc, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
+                      <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                      {doc}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={() => window.location.href = "/auth"}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
+              >
+                Ajukan Pinjaman
+              </Button>
+            </motion.div>
+
+            {/* P3MI Loan Card */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="glass-card rounded-3xl p-8 border border-indigo-100 shadow-xl bg-white"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full uppercase tracking-wider">
+                    Komersial - P3MI
+                  </span>
+                  <h3 className="text-2xl font-bold text-slate-900 mt-2">Modal Kerja P3MI</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-slate-500 uppercase font-bold tracking-tight">Bunga</p>
+                  <p className="text-2xl font-bold text-indigo-600">Kompetitif</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-indigo-500" />
+                  <span className="text-slate-700 font-medium">Bank BUMN & Bank Swasta</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="w-5 h-5 flex items-center justify-center font-bold text-indigo-600">Rp</span>
+                  <span className="text-slate-700 font-medium">Tergantung Modal Kerja</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-6 mb-8">
+                <p className="text-sm font-bold text-slate-900 mb-4 uppercase flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" /> Syarat Dokumen:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Izin SIP3MI", "Laporan Keuangan", "Legalitas AHU", "NIB"].map((doc, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
+                      <div className="w-1 h-1 bg-indigo-400 rounded-full" />
+                      {doc}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = "/auth/perusahaan"}
+                className="w-full border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 font-bold py-4 rounded-xl transition-all"
+              >
+                Konsultasi P3MI
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-24 px-4 bg-slate-50">
         <div className="max-w-7xl mx-auto">
@@ -1103,6 +1244,23 @@ Dikeluarkan per 17 Desember 2025 `;
                     0813.8111.1135
                   </a>
                 </div>
+                <div className="pt-4 space-y-3">
+                  <Button
+                    onClick={() => setShowContactCS(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 rounded-lg"
+                  >
+                    <Headphones className="w-4 h-4" />
+                    Hubungi Kami
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowComplaintForm(true)}
+                    className="w-full border-red-500 text-red-500 hover:bg-red-50 flex items-center justify-center gap-2 rounded-lg"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Keluhan Pelanggan
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -1283,6 +1441,199 @@ Dikeluarkan per 17 Desember 2025 `;
               </ul>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact CS Dialog */}
+      <Dialog open={showContactCS} onOpenChange={setShowContactCS}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Headphones className="text-blue-600" /> Hubungi Customer Service
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <p className="text-slate-600">
+              Tim CS kami siap membantu Anda setiap Senin - Jumat pukul 09:00 - 18:00 WIB.
+            </p>
+            <div className="space-y-4">
+              <a
+                href="https://wa.me/6281381111135"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-4 p-4 rounded-xl border border-blue-100 hover:bg-blue-50 transition-colors"
+              >
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="text-green-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">WhatsApp Chat</p>
+                  <p className="text-sm text-slate-500">Respon cepat dalam hitungan menit</p>
+                </div>
+              </a>
+              <a
+                href="mailto:cs@lendana.id"
+                className="flex items-center gap-4 p-4 rounded-xl border border-blue-100 hover:bg-blue-50 transition-colors"
+              >
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Mail className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">Email Support</p>
+                  <p className="text-sm text-slate-500">cs@lendana.id</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Customer Complaint Dialog (Ticketing System) */}
+      <Dialog open={showComplaintForm} onOpenChange={setShowComplaintForm}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Ticket className="text-red-500" /> Pusat Pengaduan Nasabah
+            </DialogTitle>
+          </DialogHeader>
+
+          {complaintTicket ? (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Keluhan Diterima</h3>
+              <p className="text-slate-600 mb-6">
+                Nomor Tiket Anda adalah:
+              </p>
+              <div className="inline-block px-8 py-4 bg-slate-900 text-white rounded-2xl text-2xl font-mono font-bold mb-8">
+                {complaintTicket}
+              </div>
+              <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                Simpan nomor tiket ini. Kami akan menghubungi Anda melalui email/WhatsApp dalam waktu 1x24 jam kerja.
+              </p>
+              <Button
+                onClick={() => {
+                  setComplaintTicket(null);
+                  setShowComplaintForm(false);
+                }}
+                className="mt-8 bg-blue-600 hover:bg-blue-700 px-8"
+              >
+                Tutup
+              </Button>
+            </div>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSubmittingTicket(true);
+
+                const ticketId = `TL-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+                try {
+                  const { error } = await supabase.from('support_tickets').insert({
+                    ticket_id: ticketId,
+                    full_name: complaintFormData.fullName,
+                    email: complaintFormData.email,
+                    whatsapp: complaintFormData.whatsapp,
+                    application_id: complaintFormData.appId,
+                    complaint_details: complaintFormData.details,
+                    status: 'Open'
+                  });
+
+                  if (error) throw error;
+                  setComplaintTicket(ticketId);
+                } catch (err: any) {
+                  console.error("Error submitting ticket:", err);
+                  alert("Gagal mengirim keluhan. Silakan coba lagi nanti.");
+                } finally {
+                  setIsSubmittingTicket(false);
+                }
+              }}
+              className="space-y-6 py-4"
+            >
+              <p className="text-sm text-slate-600">
+                Gunakan formulir ini jika Anda menghadapi kendala pada aplikasi pinjaman, status yang tidak jelas, atau masalah teknis lainnya.
+              </p>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-900">Nama Lengkap</label>
+                    <Input
+                      required
+                      value={complaintFormData.fullName}
+                      onChange={(e) => setComplaintFormData({ ...complaintFormData, fullName: e.target.value })}
+                      placeholder="Sesuai KTP"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-900">Email Aktif</label>
+                    <Input
+                      required
+                      type="email"
+                      value={complaintFormData.email}
+                      onChange={(e) => setComplaintFormData({ ...complaintFormData, email: e.target.value })}
+                      placeholder="email@anda.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-900">No. WhatsApp</label>
+                    <Input
+                      required
+                      value={complaintFormData.whatsapp}
+                      onChange={(e) => setComplaintFormData({ ...complaintFormData, whatsapp: e.target.value })}
+                      placeholder="0812..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-900">ID Aplikasi (Jika ada)</label>
+                    <Input
+                      value={complaintFormData.appId}
+                      onChange={(e) => setComplaintFormData({ ...complaintFormData, appId: e.target.value })}
+                      placeholder="Contoh: APP-12345"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-900">Deskripsi Keluhan</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={complaintFormData.details}
+                    onChange={(e) => setComplaintFormData({ ...complaintFormData, details: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Jelaskan kendala yang Anda alami secara detail..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={isSubmittingTicket}
+                  onClick={() => setShowComplaintForm(false)}
+                  className="flex-1"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingTicket}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold"
+                >
+                  {isSubmittingTicket ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : "Kirim Keluhan"}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

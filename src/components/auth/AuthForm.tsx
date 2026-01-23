@@ -435,6 +435,13 @@ export default function AuthForm({
                           <SelectItem value="perusahaan" disabled>
                             Perusahaan (P3MI Business) - Coming Soon
                           </SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="agent">Agent</SelectItem>
+                          <SelectItem value="checker_agent">Checker Agent</SelectItem>
+                          <SelectItem value="bank_staff">Bank Staff</SelectItem>
+                          <SelectItem value="insurance">Insurance Staff</SelectItem>
+                          <SelectItem value="collector">Collector Staff</SelectItem>
+                          <SelectItem value="validator">Validator</SelectItem>
                         </>
                       )}
                     </SelectContent>
