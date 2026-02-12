@@ -40,7 +40,7 @@ export default function AuthForm({
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(isWirausaha ? "wirausaha" : isPerusahaan ? "perusahaan" : "user");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -430,19 +430,7 @@ export default function AuthForm({
                           Perusahaan (P3MI Business)
                         </SelectItem>
                       ) : (
-                        <>
-                          <SelectItem value="user">User (PMI)</SelectItem>
-                          <SelectItem value="perusahaan" disabled>
-                            Perusahaan (P3MI Business) - Coming Soon
-                          </SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="agent">Agent</SelectItem>
-                          <SelectItem value="checker_agent">Checker Agent</SelectItem>
-                          <SelectItem value="bank_staff">Bank Staff</SelectItem>
-                          <SelectItem value="insurance">Insurance Staff</SelectItem>
-                          <SelectItem value="collector">Collector Staff</SelectItem>
-                          <SelectItem value="validator">Validator</SelectItem>
-                        </>
+                        <SelectItem value="user">User (PMI)</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
