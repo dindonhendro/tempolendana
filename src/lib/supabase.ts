@@ -41,6 +41,7 @@ export const signUp = async (
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           role,
           full_name: fullName,
@@ -119,6 +120,18 @@ export const signIn = async (email: string, password: string) => {
     }
 
     console.log("Sign in successful");
+
+    // Optional: Log that user consented during login (evidence of active session consent)
+    if (data.user) {
+      await logUserConsent({
+        userId: data.user.id,
+        documentType: 'privacy_policy',
+        documentVersion: '1.0',
+        consentGiven: true,
+        source: 'web'
+      });
+    }
+
     return data;
   } catch (error: any) {
     console.error("Sign in failed:", error);

@@ -24,9 +24,17 @@ const CollectorDashboard = lazy(
 const P3MIBusinessLoanForm = lazy(
   () => import("./components/pmi/P3MIBusinessLoanForm"),
 );
+const ConsentLogsAdmin = lazy(
+  () => import("./components/pmi/ConsentLogsAdmin"),
+);
+const AuditLogsAdmin = lazy(
+  () => import("./components/pmi/AuditLogsAdmin"),
+);
+
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
+import { Textarea } from "./components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import {
   Dialog,
@@ -51,8 +59,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select";
-import { supabase, getCurrentUser, signOut } from "./lib/supabase";
+import { supabase, getCurrentUser, signOut, signUp } from "./lib/supabase";
 import { User, Tables } from "./types/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+// Helper for admin user creation (doesn't persist session)
+const supabaseAdminClient = createClient(
+  import.meta.env.VITE_SUPABASE_URL || "",
+  import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || "",
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  }
+);
 import {
   LogOut,
   Building2,
@@ -63,6 +85,8 @@ import {
   Trash2,
   ArrowLeft,
   FileText,
+  ShieldCheck,
+  History,
 } from "lucide-react";
 
 function App() {
@@ -98,6 +122,7 @@ function App() {
   const [editingInsurance, setEditingInsurance] = useState<Tables<"insurance_companies"> | null>(null);
   const [editingCollector, setEditingCollector] = useState<Tables<"collector_companies"> | null>(null);
   const [editingApplication, setEditingApplication] = useState<Tables<"loan_applications"> | null>(null);
+  const [editingAgentStaff, setEditingAgentStaff] = useState<any | null>(null);
 
   // Form visibility state - keep consistent order
   const [showBankForm, setShowBankForm] = useState(false);
@@ -105,9 +130,11 @@ function App() {
   const [showBranchForm, setShowBranchForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [showStaffForm, setShowStaffForm] = useState(false);
+  const [editingBankStaff, setEditingBankStaff] = useState<any>(null);
   const [showInsuranceForm, setShowInsuranceForm] = useState(false);
   const [showCollectorForm, setShowCollectorForm] = useState(false);
   const [showApplicationEditDialog, setShowApplicationEditDialog] = useState(false);
+  const [showAgentStaffForm, setShowAgentStaffForm] = useState(false);
 
   // Search and system stats state
   const [searchTerm, setSearchTerm] = useState("");
@@ -294,7 +321,7 @@ function App() {
 
   const fetchBanks = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("banks")
         .select("*")
         .order("name");
@@ -307,7 +334,7 @@ function App() {
 
   const fetchAgentCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("agent_companies")
         .select("*")
         .order("name");
@@ -320,7 +347,7 @@ function App() {
 
   const fetchInsuranceCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("insurance_companies")
         .select("*")
         .order("name");
@@ -333,7 +360,7 @@ function App() {
 
   const fetchCollectorCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("collector_companies")
         .select("*")
         .order("name");
@@ -346,7 +373,7 @@ function App() {
 
   const fetchBankBranches = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("bank_branches")
         .select(
           `
@@ -364,7 +391,7 @@ function App() {
 
   const fetchBankProducts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("bank_products")
         .select(
           `
@@ -382,7 +409,7 @@ function App() {
 
   const fetchBankStaff = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdminClient
         .from("bank_staff")
         .select(
           `
@@ -397,6 +424,25 @@ function App() {
       setBankStaff(data || []);
     } catch (error) {
       console.error("Error fetching bank staff:", error);
+    }
+  };
+
+  const fetchAgentStaff = async () => {
+    try {
+      const { data, error } = await supabaseAdminClient
+        .from("agent_staff")
+        .select(
+          `
+          *,
+          users!inner(full_name, email),
+          agent_companies!inner(name, code)
+        `,
+        )
+        .order("position");
+      if (error) throw error;
+      setAgentStaff(data || []);
+    } catch (error) {
+      console.error("Error fetching agent staff:", error);
     }
   };
 
@@ -415,7 +461,7 @@ function App() {
   const handleAgentManagement = async () => {
     setActiveAdminSection("agents");
     setAdminLoading(true);
-    await fetchAgentCompanies();
+    await Promise.all([fetchAgentCompanies(), fetchAgentStaff()]);
     setAdminLoading(false);
   };
 
@@ -444,13 +490,13 @@ function App() {
 
     try {
       if (editingBank) {
-        const { error } = await supabase
+        const { error } = await supabaseAdminClient
           .from("banks")
           .update(bankData)
           .eq("id", editingBank.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("banks").insert([bankData]);
+        const { error } = await supabaseAdminClient.from("banks").insert([bankData]);
         if (error) throw error;
       }
 
@@ -544,7 +590,7 @@ function App() {
     if (!confirm("Are you sure you want to delete this bank?")) return;
 
     try {
-      const { error } = await supabase.from("banks").delete().eq("id", bankId);
+      const { error } = await supabaseAdminClient.from("banks").delete().eq("id", bankId);
       if (error) throw error;
       await fetchBanks();
     } catch (error) {
@@ -557,7 +603,7 @@ function App() {
     if (!confirm("Are you sure you want to delete this agent company?")) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdminClient
         .from("agent_companies")
         .delete()
         .eq("id", agentId);
@@ -566,6 +612,208 @@ function App() {
     } catch (error) {
       console.error("Error deleting agent company:", error);
       alert("Error deleting agent company. Please try again.");
+    }
+  };
+
+  const handleSaveBankStaff = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const fullName = formData.get("fullName") as string;
+    const bankId = formData.get("bank_id") as string;
+    const branchId = formData.get("branch_id") as string;
+    const position = formData.get("position") as string;
+
+    if (!email || !fullName || !bankId || !branchId || !position || (!editingBankStaff && !password)) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      setAdminLoading(true);
+      let userId = editingBankStaff?.user_id;
+
+      if (!editingBankStaff) {
+        // Create new auth user
+        const { data, error } = await supabaseAdminClient.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            role: "bank_staff",
+            full_name: fullName,
+            bank_id: bankId,
+            branch_id: branchId,
+          },
+        });
+        if (error) throw error;
+        userId = data.user.id;
+      } else if (password) {
+        // Update password if provided
+        const { error } = await supabaseAdminClient.auth.admin.updateUserById(userId, {
+          password,
+          user_metadata: {
+            role: "bank_staff",
+            full_name: fullName,
+            bank_id: bankId,
+            branch_id: branchId,
+          }
+        });
+        if (error) throw error;
+      }
+
+      // Sync to public.users
+      const { error: userError } = await supabaseAdminClient
+        .from("users")
+        .upsert({
+          id: userId,
+          email: email,
+          full_name: fullName,
+          role: "bank_staff",
+        });
+      if (userError) throw userError;
+
+      // Upsert to bank_staff
+      const staffData: any = {
+        user_id: userId,
+        bank_id: bankId,
+        branch_id: branchId,
+        position: position,
+      };
+
+      if (editingBankStaff) {
+        staffData.id = editingBankStaff.id;
+      }
+
+      const { error: staffError } = await supabaseAdminClient
+        .from("bank_staff")
+        .upsert(staffData);
+      if (staffError) throw staffError;
+
+      alert(editingBankStaff ? "Bank staff updated successfully!" : "Bank staff created successfully!");
+      setShowStaffForm(false);
+      setEditingBankStaff(null);
+      await fetchBankStaff();
+    } catch (error: any) {
+      console.error("Error saving bank staff:", error);
+      alert(`Error saving bank staff: ${error.message}`);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleDeleteBankStaff = async (staffId: string, userId: string) => {
+    if (!confirm("Are you sure you want to delete this bank staff? This will also remove their user account.")) return;
+
+    try {
+      setAdminLoading(true);
+
+      // Delete from bank_staff
+      const { error: staffError } = await supabaseAdminClient
+        .from("bank_staff")
+        .delete()
+        .eq("id", staffId);
+      if (staffError) throw staffError;
+
+      // Use the utility to delete user account
+      const { deleteUserAccount } = await import("./lib/supabase");
+      await deleteUserAccount(userId);
+
+      alert("Bank staff deleted successfully!");
+      await fetchBankStaff();
+    } catch (error: any) {
+      console.error("Error deleting bank staff:", error);
+      alert(`Error deleting bank staff: ${error.message}`);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleSaveAgentStaff = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const fullName = formData.get("fullName") as string;
+    const agentCompanyId = formData.get("agent_company_id") as string;
+
+    if (!email || !password || !fullName || !agentCompanyId) {
+      alert("All fields are required.");
+      return;
+    }
+
+    try {
+      setAdminLoading(true);
+      // Use the admin API to create user with confirmed email and metadata
+      const { data, error } = await supabaseAdminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: "agent",
+          full_name: fullName,
+          company_id: agentCompanyId,
+        },
+      });
+
+      if (error) throw error;
+
+      // Explicitly insert into public.users and agent_staff to bypass potential trigger issues
+      const { error: userError } = await supabaseAdminClient
+        .from("users")
+        .upsert({
+          id: data.user.id,
+          email: email,
+          full_name: fullName,
+          role: "agent",
+        });
+      if (userError) console.error("Error syncing to public.users:", userError);
+
+      const { error: staffError } = await supabaseAdminClient
+        .from("agent_staff")
+        .upsert({
+          user_id: data.user.id,
+          agent_company_id: agentCompanyId,
+          position: "Agent Staff",
+        });
+      if (staffError) console.error("Error creating agent_staff entry:", staffError);
+
+      alert("Agent staff created successfully!");
+      setShowAgentStaffForm(false);
+      await fetchAgentStaff();
+    } catch (error: any) {
+      console.error("Error creating agent staff:", error);
+      alert(`Error creating agent staff: ${error.message}`);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleDeleteAgentStaff = async (userId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this staff member? This will also remove their user account and all related data.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setAdminLoading(true);
+      const { deleteUserAccount } = await import("./lib/supabase");
+      await deleteUserAccount(userId);
+      await fetchAgentStaff();
+      alert("Staff member deleted successfully!");
+    } catch (error: any) {
+      console.error("Error deleting staff:", error);
+      alert(`Error deleting staff: ${error.message}`);
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -741,13 +989,13 @@ function App() {
 
     try {
       if (editingBranch) {
-        const { error } = await supabase
+        const { error } = await supabaseAdminClient
           .from("bank_branches")
           .update(branchData)
           .eq("id", editingBranch.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await supabaseAdminClient
           .from("bank_branches")
           .insert([branchData]);
         if (error) throw error;
@@ -774,17 +1022,18 @@ function App() {
       min_tenor: parseInt(formData.get("min_tenor") as string),
       max_tenor: parseInt(formData.get("max_tenor") as string),
       bank_id: formData.get("bank_id") as string,
+      product_description: (formData.get("product_description") as string)?.trim() || null,
     };
 
     try {
       if (editingProduct) {
-        const { error } = await supabase
+        const { error } = await supabaseAdminClient
           .from("bank_products")
           .update(productData)
           .eq("id", editingProduct.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await supabaseAdminClient
           .from("bank_products")
           .insert([productData]);
         if (error) throw error;
@@ -793,9 +1042,9 @@ function App() {
       await fetchBankProducts();
       setShowProductForm(false);
       setEditingProduct(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving product:", error);
-      alert("Error saving product. Please try again.");
+      alert(`Error saving product: ${error?.message || "Please try again."}`);
     }
   };
 
@@ -803,7 +1052,7 @@ function App() {
     if (!confirm("Are you sure you want to delete this branch?")) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdminClient
         .from("bank_branches")
         .delete()
         .eq("id", branchId);
@@ -819,7 +1068,7 @@ function App() {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdminClient
         .from("bank_products")
         .delete()
         .eq("id", productId);
@@ -894,6 +1143,11 @@ function App() {
     setActiveAdminSection("reports");
     await fetchSystemStats();
   };
+
+  const handleConsentLogs = () => {
+    setActiveAdminSection("consent");
+  };
+
 
   const handleApplicationManagement = async () => {
     setActiveAdminSection("applications");
@@ -1076,12 +1330,15 @@ function App() {
     }
   };
 
-  const getDashboardComponent = () => {
+  const getDashboardComponent = (forcedRole?: string) => {
     if (!user) return null;
 
-    console.log("Getting dashboard component for user role:", user.role);
+    // Use forcedRole if provided, otherwise check for admin bypass, then default to user.role
+    const effectiveRole = forcedRole || (user.email === "admin1@lendana.id" ? "admin" : user.role);
 
-    switch (user.role) {
+    console.log("Getting dashboard component for user role:", effectiveRole);
+
+    switch (effectiveRole) {
       case "user":
         return <UserDashboard userId={user.id} />;
       case "wirausaha":
@@ -1653,6 +1910,22 @@ function App() {
                                   />
                                 </div>
                               </div>
+                              <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                  <Label htmlFor="product_description">
+                                    Product Description
+                                  </Label>
+                                  <Textarea
+                                    id="product_description"
+                                    name="product_description"
+                                    defaultValue={
+                                      editingProduct?.product_description || ""
+                                    }
+                                    placeholder="Enter detailed description of the product..."
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
                               <div className="flex justify-end space-x-2">
                                 <Button
                                   type="button"
@@ -1749,14 +2022,139 @@ function App() {
                     </TabsContent>
 
                     <TabsContent value="staff" className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold">
                           Bank Staff ({bankStaff.length})
                         </h2>
-                        <div className="text-sm text-gray-600">
-                          Note: Bank staff are created when users register with
-                          the &quot;bank_staff&quot; role
-                        </div>
+                        <Dialog
+                          open={showStaffForm}
+                          onOpenChange={setShowStaffForm}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              onClick={() => {
+                                setEditingBankStaff(null);
+                                setShowStaffForm(true);
+                              }}
+                              className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>Add Bank Staff</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                {editingBankStaff
+                                  ? "Edit Bank Staff"
+                                  : "Add New Bank Staff"}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <form
+                              onSubmit={handleSaveBankStaff}
+                              className="space-y-4"
+                            >
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="fullName">Full Name</Label>
+                                  <Input
+                                    id="fullName"
+                                    name="fullName"
+                                    defaultValue={
+                                      editingBankStaff?.users?.full_name || ""
+                                    }
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="email">Email Address</Label>
+                                  <Input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    defaultValue={
+                                      editingBankStaff?.users?.email || ""
+                                    }
+                                    required
+                                    disabled={!!editingBankStaff}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="password">
+                                    Password {editingBankStaff && "(Optional)"}
+                                  </Label>
+                                  <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required={!editingBankStaff}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="position">Position</Label>
+                                  <Input
+                                    id="position"
+                                    name="position"
+                                    defaultValue={editingBankStaff?.position || ""}
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="bank_id">Bank</Label>
+                                  <select
+                                    id="bank_id"
+                                    name="bank_id"
+                                    className="w-full h-10 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5680E9]"
+                                    defaultValue={editingBankStaff?.bank_id || ""}
+                                    required
+                                  >
+                                    <option value="">Select Bank</option>
+                                    {banks.map((bank) => (
+                                      <option key={bank.id} value={bank.id}>
+                                        {bank.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <Label htmlFor="branch_id">Branch</Label>
+                                  <select
+                                    id="branch_id"
+                                    name="branch_id"
+                                    className="w-full h-10 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#5680E9]"
+                                    defaultValue={
+                                      editingBankStaff?.branch_id || ""
+                                    }
+                                    required
+                                  >
+                                    <option value="">Select Branch</option>
+                                    {bankBranches.map((branch) => (
+                                      <option key={branch.id} value={branch.id}>
+                                        {branch.name} (
+                                        {(branch as any).banks?.name})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex justify-end space-x-2 pt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setShowStaffForm(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                                >
+                                  {editingBankStaff ? "Update" : "Create"}
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                       <Card>
                         <CardContent>
@@ -1768,7 +2166,7 @@ function App() {
                                 <TableHead>Bank</TableHead>
                                 <TableHead>Branch</TableHead>
                                 <TableHead>Position</TableHead>
-                                <TableHead>Created</TableHead>
+                                <TableHead>Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1790,9 +2188,31 @@ function App() {
                                   </TableCell>
                                   <TableCell>{staff.position}</TableCell>
                                   <TableCell>
-                                    {new Date(
-                                      staff.created_at,
-                                    ).toLocaleDateString()}
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setEditingBankStaff(staff);
+                                          setShowStaffForm(true);
+                                        }}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleDeleteBankStaff(
+                                            staff.id,
+                                            staff.user_id,
+                                          )
+                                        }
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -1800,9 +2220,8 @@ function App() {
                           </Table>
                           {bankStaff.length === 0 && (
                             <div className="text-center py-8 text-gray-500">
-                              No bank staff found. Bank staff are automatically
-                              created when users register with the
-                              &quot;bank_staff&quot; role.
+                              No bank staff found. Click &quot;Add Bank Staff&quot;
+                              to create your first staff member.
                             </div>
                           )}
                         </CardContent>
@@ -2245,178 +2664,361 @@ function App() {
                       Agent Management
                     </h1>
                   </div>
-                  <Dialog open={showAgentForm} onOpenChange={setShowAgentForm}>
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={() => {
-                          setEditingAgent(null);
-                          setShowAgentForm(true);
-                        }}
-                        className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add Agent Company</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingAgent
-                            ? "Edit Agent Company"
-                            : "Add New Agent Company"}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleSaveAgent} className="space-y-4">
-                        <div>
-                          <Label htmlFor="name">Company Name</Label>
-                          <Input
-                            id="name"
-                            name="name"
-                            defaultValue={editingAgent?.name || ""}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="code">Company Code</Label>
-                          <Input
-                            id="code"
-                            name="code"
-                            defaultValue={editingAgent?.code || ""}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            defaultValue={editingAgent?.email || ""}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input
-                            id="phone"
-                            name="phone"
-                            defaultValue={editingAgent?.phone || ""}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="address">Address</Label>
-                          <Input
-                            id="address"
-                            name="address"
-                            defaultValue={editingAgent?.address || ""}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="license_number">License Number</Label>
-                          <Input
-                            id="license_number"
-                            name="license_number"
-                            defaultValue={editingAgent?.license_number || ""}
-                          />
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setShowAgentForm(false);
-                              setEditingAgent(null);
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
-                          >
-                            {editingAgent ? "Update" : "Create"}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
                 </div>
-
                 {adminLoading ? (
                   <div className="text-center py-8">
-                    <p>Loading agent companies...</p>
+                    <p>Loading agent data...</p>
                   </div>
                 ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>
-                        Agent Companies ({agentCompanies.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Company Name</TableHead>
-                            <TableHead>Code</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Phone</TableHead>
-                            <TableHead>License</TableHead>
-                            <TableHead>Created</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {agentCompanies.map((agent) => (
-                            <TableRow key={agent.id}>
-                              <TableCell className="font-medium">
-                                {agent.name}
-                              </TableCell>
-                              <TableCell>{agent.code}</TableCell>
-                              <TableCell>{agent.email || "-"}</TableCell>
-                              <TableCell>{agent.phone || "-"}</TableCell>
-                              <TableCell>
-                                {agent.license_number || "-"}
-                              </TableCell>
-                              <TableCell>
-                                {new Date(
-                                  agent.created_at,
-                                ).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setEditingAgent(agent);
-                                      setShowAgentForm(true);
-                                    }}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleDeleteAgent(agent.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                      {agentCompanies.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          No agent companies found. Click &quot;Add Agent
-                          Company&quot; to create your first agent company.
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <Tabs defaultValue="companies" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="companies">
+                        Agent Companies
+                      </TabsTrigger>
+                      <TabsTrigger value="staff">Agent Staff</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="companies" className="space-y-4">
+                      <div className="flex justify-between items-center py-4">
+                        <h2 className="text-xl font-semibold">
+                          Agent Companies ({agentCompanies.length})
+                        </h2>
+                        <Dialog
+                          open={showAgentForm}
+                          onOpenChange={setShowAgentForm}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              onClick={() => {
+                                setEditingAgent(null);
+                                setShowAgentForm(true);
+                              }}
+                              className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>Add Agent Company</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>
+                                {editingAgent
+                                  ? "Edit Agent Company"
+                                  : "Add New Agent Company"}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <form
+                              onSubmit={handleSaveAgent}
+                              className="space-y-4"
+                            >
+                              <div>
+                                <Label htmlFor="name">Company Name</Label>
+                                <Input
+                                  id="name"
+                                  name="name"
+                                  defaultValue={editingAgent?.name || ""}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="code">Company Code</Label>
+                                <Input
+                                  id="code"
+                                  name="code"
+                                  defaultValue={editingAgent?.code || ""}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  defaultValue={editingAgent?.email || ""}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="phone">Phone</Label>
+                                <Input
+                                  id="phone"
+                                  name="phone"
+                                  defaultValue={editingAgent?.phone || ""}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="address">Address</Label>
+                                <Input
+                                  id="address"
+                                  name="address"
+                                  defaultValue={editingAgent?.address || ""}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="license_number">
+                                  License Number
+                                </Label>
+                                <Input
+                                  id="license_number"
+                                  name="license_number"
+                                  defaultValue={
+                                    editingAgent?.license_number || ""
+                                  }
+                                />
+                              </div>
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setShowAgentForm(false);
+                                    setEditingAgent(null);
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                                >
+                                  {editingAgent ? "Update" : "Create"}
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <Card>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Company Name</TableHead>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Phone</TableHead>
+                                <TableHead>License</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {agentCompanies.map((agent) => (
+                                <TableRow key={agent.id}>
+                                  <TableCell className="font-medium">
+                                    {agent.name}
+                                  </TableCell>
+                                  <TableCell>{agent.code}</TableCell>
+                                  <TableCell>{agent.email || "-"}</TableCell>
+                                  <TableCell>{agent.phone || "-"}</TableCell>
+                                  <TableCell>
+                                    {agent.license_number || "-"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {new Date(
+                                      agent.created_at,
+                                    ).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setEditingAgent(agent);
+                                          setShowAgentForm(true);
+                                        }}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleDeleteAgent(agent.id)
+                                        }
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                          {agentCompanies.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              No agent companies found. Click &quot;Add Agent
+                              Company&quot; to create your first agent company.
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+
+                    <TabsContent value="staff" className="space-y-4">
+                      <div className="flex justify-between items-center py-4">
+                        <h2 className="text-xl font-semibold">
+                          Agent Staff ({agentStaff.length})
+                        </h2>
+                        <Dialog
+                          open={showAgentStaffForm}
+                          onOpenChange={setShowAgentStaffForm}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              onClick={() => {
+                                setEditingAgentStaff(null);
+                                setShowAgentStaffForm(true);
+                              }}
+                              className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] flex items-center space-x-2"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>Add Agent Staff</span>
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Add New Agent Staff</DialogTitle>
+                            </DialogHeader>
+                            <form
+                              onSubmit={handleSaveAgentStaff}
+                              className="space-y-4"
+                            >
+                              <div>
+                                <Label htmlFor="fullName">Full Name</Label>
+                                <Input
+                                  id="fullName"
+                                  name="fullName"
+                                  placeholder="Enter full name"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  placeholder="Enter email address"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="password">Password</Label>
+                                <Input
+                                  id="password"
+                                  name="password"
+                                  type="password"
+                                  placeholder="Enter password"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="agent_company_id">
+                                  Agent Company (P3MI)
+                                </Label>
+                                <Select
+                                  name="agent_company_id"
+                                  defaultValue=""
+                                  required
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a company" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {agentCompanies.map((company) => (
+                                      <SelectItem
+                                        key={company.id}
+                                        value={company.id}
+                                      >
+                                        {company.name} ({company.code})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => setShowAgentStaffForm(false)}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="bg-[#5680E9] text-white hover:bg-[#4a6bc7]"
+                                >
+                                  Create Staff
+                                </Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <Card>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Company</TableHead>
+                                <TableHead>Position</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {agentStaff.map((staff) => (
+                                <TableRow key={staff.id}>
+                                  <TableCell className="font-medium">
+                                    {(staff as any).users?.full_name ||
+                                      "Unknown"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(staff as any).users?.email || "Unknown"}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(staff as any).agent_companies?.name ||
+                                      "Unknown"}
+                                  </TableCell>
+                                  <TableCell>{staff.position}</TableCell>
+                                  <TableCell>
+                                    {new Date(
+                                      staff.created_at,
+                                    ).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleDeleteAgentStaff(staff.user_id)
+                                      }
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                          {agentStaff.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              No agent staff found. Click &quot;Add Agent
+                              Staff&quot; to create your first staff member.
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
                 )}
+
               </div>
             </div>
           );
@@ -2520,18 +3122,18 @@ function App() {
                                 <TableCell>
                                   <span
                                     className={`px-2 py-1 rounded-full text-xs font-medium ${application.status === "Bank Approved"
-                                        ? "bg-green-100 text-green-800"
+                                      ? "bg-green-100 text-green-800"
+                                      : application.status ===
+                                        "Bank Rejected" ||
+                                        application.status === "Rejected"
+                                        ? "bg-red-100 text-red-800"
                                         : application.status ===
-                                          "Bank Rejected" ||
-                                          application.status === "Rejected"
-                                          ? "bg-red-100 text-red-800"
-                                          : application.status ===
-                                            "Submitted" ||
-                                            application.status ===
-                                            "Checked" ||
-                                            application.status === "Validated"
-                                            ? "bg-blue-100 text-blue-800"
-                                            : "bg-gray-100 text-gray-800"
+                                          "Submitted" ||
+                                          application.status ===
+                                          "Checked" ||
+                                          application.status === "Validated"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : "bg-gray-100 text-gray-800"
                                       }`}
                                   >
                                     {application.status}
@@ -2889,12 +3491,12 @@ function App() {
                                 <TableCell>
                                   <span
                                     className={`px-2 py-1 rounded-full text-xs font-medium ${app.status === "Approved"
-                                        ? "bg-green-100 text-green-800"
-                                        : app.status === "Rejected"
-                                          ? "bg-red-100 text-red-800"
-                                          : app.status === "Pending"
-                                            ? "bg-yellow-100 text-yellow-800"
-                                            : "bg-gray-100 text-gray-800"
+                                      ? "bg-green-100 text-green-800"
+                                      : app.status === "Rejected"
+                                        ? "bg-red-100 text-red-800"
+                                        : app.status === "Pending"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-gray-100 text-gray-800"
                                       }`}
                                   >
                                     {app.status}
@@ -2929,6 +3531,22 @@ function App() {
           );
         }
 
+        if (activeAdminSection === "consent") {
+          return (
+            <Suspense fallback={<div>Loading component...</div>}>
+              <ConsentLogsAdmin onBack={() => setActiveAdminSection(null)} />
+            </Suspense>
+          );
+        }
+
+        if (activeAdminSection === "audit") {
+          return (
+            <Suspense fallback={<div>Loading...</div>}>
+              <AuditLogsAdmin onBack={() => setActiveAdminSection(null)} />
+            </Suspense>
+          );
+        }
+
         return (
           <div className="min-h-screen bg-white p-4">
             <div className="max-w-7xl mx-auto">
@@ -2944,8 +3562,8 @@ function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "banks"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -2967,8 +3585,8 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "agents"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -2990,8 +3608,8 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "insurance"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -3013,8 +3631,8 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "applications"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -3036,8 +3654,8 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "collector"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -3059,8 +3677,8 @@ function App() {
 
                 <div
                   className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "reports"
-                      ? "border-[#5680E9] bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex items-center mb-3">
@@ -3077,6 +3695,52 @@ function App() {
                     className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
                   >
                     View Reports
+                  </Button>
+                </div>
+
+                <div
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "consent"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
+                    }`}
+                >
+                  <div className="flex items-center mb-3">
+                    <ShieldCheck className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Persetujuan (Consent)
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    Lihat bukti persetujuan user (E-Consent)
+                  </p>
+                  <Button
+                    onClick={handleConsentLogs}
+                    className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
+                  >
+                    Lihat Bukti Consent
+                  </Button>
+                </div>
+
+                <div
+                  className={`bg-white border rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md ${activeAdminSection === "audit"
+                    ? "border-[#5680E9] bg-blue-50"
+                    : "border-gray-200"
+                    }`}
+                >
+                  <div className="flex items-center mb-3">
+                    <History className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Audit Trail (OJK)
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    Log audit aktivitas sistem dan perubahan data
+                  </p>
+                  <Button
+                    onClick={() => setActiveAdminSection("audit")}
+                    className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
+                  >
+                    Buka Audit Trail
                   </Button>
                 </div>
               </div>
@@ -3176,7 +3840,7 @@ function App() {
                 Welcome, {user.full_name || user.email}
               </span>
               <span className="px-2 py-1 bg-[#5680E9] text-white text-xs rounded-full capitalize">
-                {user.role.replace("_", " ")}
+                {user.email === "admin1@lendana.id" ? "admin" : user.role.replace("_", " ")}
               </span>
             </div>
             <Button
@@ -3198,13 +3862,21 @@ function App() {
           <Route
             path="/p3mi-business-loan"
             element={
-              user?.role === "perusahaan" ? (
+              user?.role === "perusahaan" || user?.email === "admin1@lendana.id" ? (
                 <P3MIBusinessLoanForm />
               ) : (
                 <Navigate to="/dashboard" replace />
               )
             }
           />
+
+          <Route path="/admin" element={getDashboardComponent("admin")} />
+          <Route path="/validator" element={getDashboardComponent("validator")} />
+          <Route path="/agent" element={getDashboardComponent("agent")} />
+          <Route path="/p3mi" element={getDashboardComponent("perusahaan")} />
+          <Route path="/bank" element={getDashboardComponent("bank_staff")} />
+          <Route path="/insurance" element={getDashboardComponent("insurance")} />
+          <Route path="/collector" element={getDashboardComponent("collector")} />
 
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -84,6 +84,29 @@ const LandingPage = ({ onGetStarted = () => { } }: LandingPageProps) => {
     cooperative: "",
     ktpFile: null as File | null,
   });
+  const [bankProducts, setBankProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchVisibleProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("bank_products")
+          .select(`
+            *,
+            banks (
+              name,
+              logo_url
+            )
+          `);
+        if (!error && data) {
+          setBankProducts(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch bank products", err);
+      }
+    };
+    fetchVisibleProducts();
+  }, []);
 
   // Handle scroll for navbar
   useEffect(() => {
@@ -127,99 +150,23 @@ const LandingPage = ({ onGetStarted = () => { } }: LandingPageProps) => {
     {
       name: "Bank BNI",
       fullName: "PT Bank Negara Indonesia (Persero) Tbk",
-      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
-      description: "Bank tertua di Indonesia yang didirikan pada tahun 1946",
+      logo: "https://upload.wikimedia.org/wikipedia/id/thumb/5/55/BNI_logo.svg/1200px-BNI_logo.svg.png",
+      description: "Bank Negara Indonesia (BNI) menyediakan berbagai pilihan KUR dengan bunga bersaing.",
     },
     {
       name: "Bank BRI",
       fullName: "PT Bank Rakyat Indonesia (Persero) Tbk",
-      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
-      description:
-        "Bank dengan fokus utama pada sektor mikro, kecil, dan menengah",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_Logo.svg/1200px-BRI_Logo.svg.png",
+      description: "Bank dengan fokus utama pada sektor mikro, kecil, dan menengah",
     },
     {
       name: "Bank BTN",
       fullName: "PT Bank Tabungan Negara (Persero) Tbk",
-      logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=200&q=80",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_Bank_BTN.svg/2560px-Logo_Bank_BTN.svg.png",
       description: "Bank yang mengkhususkan diri dalam pembiayaan perumahan",
     },
   ];
 
-  const bankProducts = {
-    "KUR Perumahan PMI": [
-      {
-        bank: "Bank Mandiri",
-        product: "KUR Perumahan Mandiri - Bunga 6% p.a",
-        maxAmount: "Rp 500 juta",
-      },
-      {
-        bank: "Bank BNI",
-        product: "KUR Perumahan BNI - Bunga 6% p.a",
-        maxAmount: "Rp 500 juta",
-      },
-      {
-        bank: "Bank BRI",
-        product: "KUR Perumahan BRI - Bunga 6% p.a",
-        maxAmount: "Rp 500 juta",
-      },
-      {
-        bank: "Bank BTN",
-        product: "KUR Perumahan BTN - Bunga 6% p.a",
-        maxAmount: "Rp 500 juta",
-      },
-    ],
-    "KUR Rumah Subsidi PMI": [
-      {
-        bank: "Bank Mandiri",
-        product: "KUR Subsidi Mandiri - Bunga 5% p.a",
-        maxAmount: "Rp 150 juta",
-      },
-      {
-        bank: "Bank BNI",
-        product: "KUR Subsidi BNI - Bunga 5% p.a",
-        maxAmount: "Rp 150 juta",
-      },
-      {
-        bank: "Bank BRI",
-        product: "KUR Subsidi BRI - Bunga 5% p.a",
-        maxAmount: "Rp 150 juta",
-      },
-      {
-        bank: "Bank BTN",
-        product: "KUR Subsidi BTN - Bunga 5% p.a",
-        maxAmount: "Rp 150 juta",
-      },
-    ],
-    "KUR Wirausaha PMI": [
-      {
-        bank: "Bank Mandiri",
-        product: "KUR Mikro Mandiri - Bunga 6% p.a",
-        maxAmount: "Rp 50 juta",
-      },
-      {
-        bank: "Bank BNI",
-        product: "KUR Mikro BNI - Bunga 6% p.a",
-        maxAmount: "Rp 50 juta",
-      },
-      {
-        bank: "Bank BRI",
-        product: "KUR Mikro BRI - Bunga 6% p.a",
-        maxAmount: "Rp 50 juta",
-      },
-      {
-        bank: "Bank Nano",
-        product: "KUR Mikro Nano - Bunga 6% p.a",
-        maxAmount: "Rp 25 juta",
-      },
-    ],
-    "Peternak Sapi PMI": [
-      {
-        bank: "Bank BPR",
-        product: "KUR Peternakan BPR - Bunga 6% p.a",
-        maxAmount: "Rp 75 juta",
-      },
-    ],
-  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -900,108 +847,70 @@ Dikeluarkan per 17 Desember 2025 `;
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* KUR-PMI Card */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="glass-card rounded-3xl p-8 border border-blue-100 shadow-xl bg-white"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider">
-                    Retail - PMI
-                  </span>
-                  <h3 className="text-2xl font-bold text-slate-900 mt-2">KUR-PMI</h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-500 uppercase font-bold tracking-tight">Bunga</p>
-                  <p className="text-2xl font-bold text-blue-600">6% <span className="text-sm font-normal text-slate-500">per tahun</span></p>
-                </div>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-blue-500" />
-                  <span className="text-slate-700 font-medium">Bank BUMN (HIMBARA)</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-5 h-5 flex items-center justify-center font-bold text-blue-600">Rp</span>
-                  <span className="text-slate-700 font-medium">Plafon s/d 100 Juta</span>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 rounded-2xl p-6 mb-8">
-                <p className="text-sm font-bold text-slate-900 mb-4 uppercase flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" /> Syarat Dokumen:
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {["KTP-el", "Paspor", "Perjanjian Kerja", "Sertifikat Pelatihan"].map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
-                      <div className="w-1 h-1 bg-blue-400 rounded-full" />
-                      {doc}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                onClick={() => window.location.href = "/auth"}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
+            {bankProducts.map((product) => (
+              <motion.div
+                key={product.id}
+                whileHover={{ scale: 1.02 }}
+                className="glass-card rounded-3xl p-8 border border-blue-100 shadow-xl bg-white flex flex-col"
               >
-                Ajukan Pinjaman
-              </Button>
-            </motion.div>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full text-center uppercase tracking-wider inline-block">
+                      {product.type === "KUR" ? "Retail - PMI" : `Komersial - ${product.type}`}
+                    </span>
+                    <h3 className="text-2xl font-bold text-slate-900 mt-2">{product.name}</h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500 uppercase font-bold tracking-tight">Bunga</p>
+                    <p className="text-xl font-bold text-blue-600">{product.interest_rate}% <br /><span className="text-sm font-normal text-slate-500">per tahun</span></p>
+                  </div>
+                </div>
 
-            {/* P3MI Loan Card */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="glass-card rounded-3xl p-8 border border-indigo-100 shadow-xl bg-white"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full uppercase tracking-wider">
-                    Komersial - P3MI
-                  </span>
-                  <h3 className="text-2xl font-bold text-slate-900 mt-2">Modal Kerja P3MI</h3>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-3">
+                    {product.banks?.logo_url ? (
+                      <div className="w-10 h-10 bg-white rounded-lg border border-slate-100 p-1 flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
+                        <img
+                          src={product.banks.logo_url}
+                          alt={product.banks.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-6 h-6 text-blue-500" />
+                      </div>
+                    )}
+                    <span className="text-slate-700 font-bold text-lg">{product.banks?.name || "Bank Mitra"}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="w-5 h-5 flex items-center justify-center font-bold text-blue-600 flex-shrink-0">Rp</span>
+                    <span className="text-slate-700 font-medium hidden sm:inline">
+                      Plafon {product.min_amount?.toLocaleString("id-ID")} - {product.max_amount?.toLocaleString("id-ID")}
+                    </span>
+                    <span className="text-slate-700 font-medium sm:hidden line-clamp-2">
+                      {product.min_amount?.toLocaleString("id-ID")} - {product.max_amount?.toLocaleString("id-ID")}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-500 uppercase font-bold tracking-tight">Bunga</p>
-                  <p className="text-2xl font-bold text-indigo-600">Kompetitif</p>
-                </div>
-              </div>
 
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-indigo-500" />
-                  <span className="text-slate-700 font-medium">Bank BUMN & Bank Swasta</span>
+                <div className="bg-slate-50 rounded-2xl p-6 mb-8 flex-grow">
+                  <p className="text-sm font-bold text-slate-900 mb-2 uppercase flex items-center gap-2">
+                    Detail Produk
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {product.product_description || "Tidak ada deksripsi lebih lanjut tentang produk ini."}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-5 h-5 flex items-center justify-center font-bold text-indigo-600">Rp</span>
-                  <span className="text-slate-700 font-medium">Tergantung Modal Kerja</span>
-                </div>
-              </div>
 
-              <div className="bg-slate-50 rounded-2xl p-6 mb-8">
-                <p className="text-sm font-bold text-slate-900 mb-4 uppercase flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" /> Syarat Dokumen:
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {["Izin SIP3MI", "Laporan Keuangan", "Legalitas AHU", "NIB"].map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
-                      <div className="w-1 h-1 bg-indigo-400 rounded-full" />
-                      {doc}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => window.location.href = "/auth/perusahaan"}
-                className="w-full border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 font-bold py-4 rounded-xl transition-all"
-              >
-                Konsultasi P3MI
-              </Button>
-            </motion.div>
+                <Button
+                  onClick={() => window.location.href = (product.type === "Business Loan" || product.type === "P3MI") ? "/auth/perusahaan" : "/auth"}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all mt-auto"
+                >
+                  Ajukan Pinjaman
+                </Button>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -1536,7 +1445,7 @@ Dikeluarkan per 17 Desember 2025 `;
                     full_name: complaintFormData.fullName,
                     email: complaintFormData.email,
                     whatsapp: complaintFormData.whatsapp,
-                    application_id: complaintFormData.appId,
+                    application_id: complaintFormData.appId || null,
                     complaint_details: complaintFormData.details,
                     status: 'Open'
                   });

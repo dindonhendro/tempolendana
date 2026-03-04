@@ -806,6 +806,9 @@ export type Database = {
           telp_pasangan: string | null
           telp_pemberi_kerja: string | null
           tenor_months: number | null
+          bank_id: string | null
+          bank_product_id: string | null
+          bank_branch_id: string | null
           transaction_id: string | null
           updated_at: string
           user_id: string | null
@@ -870,6 +873,9 @@ export type Database = {
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null
           tenor_months?: number | null
+          bank_id?: string | null
+          bank_product_id?: string | null
+          bank_branch_id?: string | null
           transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -934,6 +940,9 @@ export type Database = {
           telp_pasangan?: string | null
           telp_pemberi_kerja?: string | null
           tenor_months?: number | null
+          bank_id?: string | null
+          bank_product_id?: string | null
+          bank_branch_id?: string | null
           transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1212,6 +1221,9 @@ export type Database = {
           status: string | null
           submission_type: string | null
           tenor_months: number | null
+          bank_id: string | null
+          bank_product_id: string | null
+          bank_branch_id: string | null
           transaction_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -1234,6 +1246,9 @@ export type Database = {
           status?: string | null
           submission_type?: string | null
           tenor_months?: number | null
+          bank_id?: string | null
+          bank_product_id?: string | null
+          bank_branch_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1256,6 +1271,9 @@ export type Database = {
           status?: string | null
           submission_type?: string | null
           tenor_months?: number | null
+          bank_id?: string | null
+          bank_product_id?: string | null
+          bank_branch_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null

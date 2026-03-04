@@ -248,7 +248,7 @@ export default function BankStaffDashboard({
 
       if (appError) {
         console.error("Error updating application:", appError);
-        alert("Error updating application. Please try again.");
+        alert(`Error updating application: ${appError.message || JSON.stringify(appError)}`);
         return;
       }
 
@@ -274,9 +274,9 @@ export default function BankStaffDashboard({
       fetchApplications();
       setSelectedApplication(null);
       setComments("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error:", error);
-      alert("Error updating application. Please try again.");
+      alert(`Error updating application: ${error?.message || JSON.stringify(error)}`);
     } finally {
       setProcessing(null);
     }

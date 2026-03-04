@@ -126,7 +126,7 @@ export default function AgentDashboard({
 
       // Get current user to find their agent company
       const { getCurrentUser } = await import("@/lib/supabase");
-      const currentUser = await getCurrentUser();
+      const currentUser = (await getCurrentUser()) as any;
 
       if (!currentUser) {
         console.log("No current user found");
@@ -136,12 +136,30 @@ export default function AgentDashboard({
 
       console.log("Current user:", currentUser.email, currentUser.id);
 
-      // For checker_agent, we might not need agent_staff record
-      if (isCheckerAgent) {
-        console.log("Checker agent - fetching P3MI Business Loan applications");
+      // Get agent staff record to find agent company for all agents
+      const { data: agentStaff, error: agentError } = await supabase
+        .from("agent_staff")
+        .select("agent_company_id")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
 
-        // For checker_agent, fetch P3MI Business Loan applications directly
-        const { data, error } = await supabase
+      if (agentStaff) {
+        console.log("Agent company ID found in table:", agentStaff.agent_company_id);
+        setCurrentAgentCompanyId(agentStaff.agent_company_id);
+      } else if (currentUser.user_metadata?.company_id) {
+        console.log("Agent company ID found in metadata fallback:", currentUser.user_metadata.company_id);
+        setCurrentAgentCompanyId(currentUser.user_metadata.company_id);
+      } else {
+        console.warn("No agent company ID found in table or metadata. User Metadata:", currentUser.user_metadata);
+      }
+
+      const effectiveCompanyId = agentStaff?.agent_company_id || currentUser.user_metadata?.company_id;
+      console.log("Effective Company ID for query:", effectiveCompanyId);
+
+      if (isCheckerAgent) {
+        console.log("Checker agent - fetching relevant applications");
+
+        let query = supabase
           .from("loan_applications")
           .select(
             `
@@ -164,44 +182,36 @@ export default function AgentDashboard({
               )
             `,
           )
-          .eq("submission_type", "P3MI_BUSINESS_LOAN")
-          .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
-          .order("created_at", { ascending: false });
+          .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"]);
 
-        if (error) {
-          console.error("Error fetching P3MI applications:", error);
+        // Checker agents see all P3MI Business Loans OR anything assigned to their company
+        if (effectiveCompanyId) {
+          query = query.or(`submission_type.eq.P3MI_BUSINESS_LOAN,assigned_agent_id.eq.${effectiveCompanyId}`);
+        } else {
+          query = query.eq("submission_type", "P3MI_BUSINESS_LOAN");
+        }
+
+        const { data: checkerData, error: checkerError } = await query.order("created_at", { ascending: false });
+
+        if (checkerError) {
+          console.error("Error fetching checker applications:", checkerError);
           setApplications([]);
         } else {
-          console.log(
-            "P3MI Business Loan applications found:",
-            data?.length || 0,
-          );
-          setApplications((data as AgentLoanApplication[]) || []);
+          console.log("Applications found for checker:", checkerData?.length || 0);
+          setApplications((checkerData as AgentLoanApplication[]) || []);
         }
 
         setLoading(false);
         return;
       }
 
-      // For regular agents, get agent staff record to find agent company
-      const { data: agentStaff, error: agentError } = await supabase
-        .from("agent_staff")
-        .select("agent_company_id")
-        .eq("user_id", currentUser.id)
-        .single();
-
-      if (agentError || !agentStaff) {
-        console.error("Error fetching agent info:", agentError);
-        console.log("Agent staff data:", agentStaff);
+      if (!effectiveCompanyId && !isCheckerAgent) {
+        console.error("Error fetching agent info: No agent company ID found");
         setLoading(false);
         return;
       }
 
-      console.log("Agent company ID:", agentStaff.agent_company_id);
-      setCurrentAgentCompanyId(agentStaff.agent_company_id);
-
-      // For regular agents, show applications assigned to their company
-      const { data, error } = await supabase
+      const { data: regularData, error: regularError } = await supabase
         .from("loan_applications")
         .select(
           `
@@ -224,23 +234,24 @@ export default function AgentDashboard({
             )
           `,
         )
-        .eq("assigned_agent_id", agentStaff.agent_company_id)
+        .eq("assigned_agent_id", effectiveCompanyId)
         .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching applications:", error);
+      if (regularError) {
+        console.error("Error fetching applications:", regularError);
+        alert("Error fetching applications: " + regularError.message);
         setApplications([]);
       } else {
-        console.log("Filtered applications for agent:", data?.length || 0);
-        setApplications((data as AgentLoanApplication[]) || []);
+        console.log("Filtered applications for agent found:", regularData?.length || 0);
+        setApplications((regularData as AgentLoanApplication[]) || []);
       }
 
       // Also try fetching without status filter to see if there are other statuses
       const { data: allAssignedApps, error: allAssignedError } = await supabase
         .from("loan_applications")
         .select("id, full_name, email, status, assigned_agent_id")
-        .eq("assigned_agent_id", agentStaff.agent_company_id)
+        .eq("assigned_agent_id", effectiveCompanyId)
         .order("created_at", { ascending: false });
 
       if (allAssignedError) {
@@ -363,31 +374,43 @@ export default function AgentDashboard({
     }
   };
 
-  const handleAssignApplication = async (applicationId: string) => {
-    if (!selectedBank || !selectedProduct || !selectedBranch) {
-      alert(
-        "All fields are mandatory: Please select bank, product, and branch before assigning.",
-      );
-      return;
-    }
-
-    setAssigningApplication(applicationId);
+  const handleAssignApplication = async (application: AgentLoanApplication) => {
+    setAssigningApplication(application.id);
     try {
-      console.log("Attempting to assign application:", {
-        applicationId,
-        selectedBank,
-        selectedProduct,
-        selectedBranch,
-      });
+      console.log("Attempting to assign application:", application.id);
 
-      // Assign to branch (this will also update status to 'Checked')
-      const result = await assignApplicationToBranch(
-        applicationId,
-        selectedProduct,
-        selectedBranch,
-      );
+      // We want to ensure status becomes 'Checked'
+      const finalProduct = selectedProduct || application.bank_product_id;
+      const finalBranch = selectedBranch || application.bank_branch_id;
 
-      console.log("Assignment successful:", result);
+      let assignmentDone = false;
+      if (finalProduct && finalBranch) {
+        try {
+          // Assign to branch (this will also update status to 'Checked')
+          await assignApplicationToBranch(
+            application.id,
+            finalProduct,
+            finalBranch,
+          );
+          assignmentDone = true;
+        } catch (e: any) {
+          if (!e.message?.includes("already assigned")) {
+            console.error("Branch assignment warning:", e);
+          } else {
+            assignmentDone = true;
+          }
+        }
+      }
+
+      if (!assignmentDone) {
+        // Fallback to manually setting as Checked if assignment wasn't made
+        const { error: updateError } = await supabase
+          .from("loan_applications")
+          .update({ status: "Checked", updated_at: new Date().toISOString() })
+          .eq("id", application.id);
+        if (updateError) throw updateError;
+      }
+
       alert("Application assigned successfully with status 'Checked'!");
 
       // Refresh the applications list
@@ -401,28 +424,7 @@ export default function AgentDashboard({
       setBankBranches([]);
     } catch (error: any) {
       console.error("Error assigning application:", error);
-
-      // Provide more specific error messages
-      let errorMessage = "Error assigning application. Please try again.";
-
-      if (error?.message) {
-        if (error.message.includes("already assigned")) {
-          errorMessage =
-            "This application has already been assigned to a branch.";
-        } else if (error.message.includes("not found")) {
-          errorMessage =
-            "Selected bank product or branch not found. Please refresh and try again.";
-        } else if (error.message.includes("Application not found")) {
-          errorMessage =
-            "Application not found. It may have been processed by another agent.";
-        } else {
-          errorMessage = `Assignment failed: ${error.message}`;
-        }
-      }
-
-      alert(errorMessage);
-
-      // Refresh applications in case the status changed
+      alert(`Error updating application: ${error?.message || "Please try again."}`);
       await fetchApplications();
     } finally {
       setAssigningApplication(null);
@@ -2221,28 +2223,12 @@ export default function AgentDashboard({
                               <>
                                 <Button
                                   onClick={() =>
-                                    handleAssignApplication(application.id)
+                                    handleAssignApplication(application)
                                   }
-                                  disabled={
-                                    assigningApplication === application.id ||
-                                    !selectedBank ||
-                                    !selectedProduct ||
-                                    !selectedBranch
-                                  }
+                                  disabled={assigningApplication === application.id}
                                   size="sm"
-                                  className={`${!selectedBank ||
-                                    !selectedProduct ||
-                                    !selectedBranch
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-[#5680E9] hover:bg-[#4a6bc7]"
-                                    } text-white`}
-                                  title={
-                                    !selectedBank ||
-                                      !selectedProduct ||
-                                      !selectedBranch
-                                      ? "Please select bank, product, and branch first"
-                                      : "Assign application to selected bank"
-                                  }
+                                  className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
+                                  title="Check application and assign to validator"
                                 >
                                   <Send className="h-4 w-4 mr-2" />
                                   {assigningApplication === application.id

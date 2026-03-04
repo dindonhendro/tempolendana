@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, CheckCircle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Database, Tables } from "@/types/supabase";
+import { logUserConsent } from "@/lib/consentLogger";
 
 type LoanApplicationInsert =
   Database["public"]["Tables"]["loan_applications"]["Insert"];
@@ -367,6 +368,15 @@ export default function P3MIBusinessLoanForm({
         assigned_agent_id: "e558e9a3-0438-4e8c-b09f-bad255f5d715", // Default agent for P3MI Business Loan
         submission_type: "P3MI_BUSINESS_LOAN",
       };
+
+      // Record evidence of consent for this application (OJK Requirement)
+      await logUserConsent({
+        userId: user.id,
+        documentType: 'data_processing',
+        documentVersion: '1.0',
+        consentGiven: true,
+        source: 'web'
+      });
 
       console.log("Final data to be submitted:", {
         submission_type: finalData.submission_type,

@@ -58,15 +58,15 @@ export default function LoanApplicationForm({
     submittedAt: string;
   } | null>(null);
   const [banks, setBanks] = useState<Tables<"banks">[]>([]);
-  const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>(
-    [],
-  );
+  const [bankProducts, setBankProducts] = useState<Tables<"bank_products">[]>([]);
+  const [bankBranches, setBankBranches] = useState<Tables<"bank_branches">[]>([]);
+
   const [selectedBankId, setSelectedBankId] = useState<string>("");
-  const [selectedBankProductId, setSelectedBankProductId] =
-    useState<string>("");
+  const [selectedBankProductId, setSelectedBankProductId] = useState<string>("");
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+
   const [selectedProductType, setSelectedProductType] = useState<string>("");
-  const [selectedProductDescription, setSelectedProductDescription] =
-    useState<string>("");
+  const [selectedProductDescription, setSelectedProductDescription] = useState<string>("");
   const [uploadStatus, setUploadStatus] = useState<{
     ktp: "idle" | "uploading" | "success" | "error";
     selfie: "idle" | "uploading" | "success" | "error";
@@ -151,6 +151,9 @@ export default function LoanApplicationForm({
         bunga_bank: editData.bunga_bank || 6,
         grace_period: editData.grace_period || null,
         negara_penempatan: editData.negara_penempatan || "",
+        bank_id: editData.bank_id || null,
+        bank_product_id: editData.bank_product_id || null,
+        bank_branch_id: editData.bank_branch_id || null,
         assigned_agent_id: isKurWirausaha
           ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
           : editData.assigned_agent_id || preSelectedAgentId || "",
@@ -184,6 +187,9 @@ export default function LoanApplicationForm({
         bunga_bank: 6,
         grace_period: null,
         negara_penempatan: "",
+        bank_id: null,
+        bank_product_id: null,
+        bank_branch_id: null,
         assigned_agent_id: isKurWirausaha
           ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
           : preSelectedAgentId || "",
@@ -328,19 +334,23 @@ export default function LoanApplicationForm({
 
   // Add useEffect to load bank products when bank or submission type changes
   useEffect(() => {
-    if (selectedBankId && (formData.submission_type || isKurWirausaha)) {
-      const submissionType = isKurWirausaha
-        ? "KUR_WIRAUSAHA_PMI"
-        : formData.submission_type;
-      console.log("Loading bank products for:", {
-        selectedBankId,
-        submissionType,
-      });
-      loadBankProducts(selectedBankId, submissionType);
+    if (selectedBankId) {
+      loadBankProducts(selectedBankId);
+      loadBankBranches(selectedBankId);
     } else {
       setBankProducts([]);
+      setBankBranches([]);
     }
-  }, [selectedBankId, formData.submission_type, isKurWirausaha]);
+  }, [selectedBankId]);
+
+  // Set initial selected values if editing
+  useEffect(() => {
+    if (editData) {
+      if (editData.bank_id) setSelectedBankId(editData.bank_id);
+      if (editData.bank_product_id) setSelectedBankProductId(editData.bank_product_id);
+      if (editData.bank_branch_id) setSelectedBranchId(editData.bank_branch_id);
+    }
+  }, [editData]);
 
   // Add function to load cost component data
   const loadCostComponentData = async (loanApplicationId: string) => {
@@ -412,31 +422,36 @@ export default function LoanApplicationForm({
     }
   };
 
-  const loadBankProducts = async (bankId: string, submissionType?: string) => {
+  const loadBankBranches = async (bankId: string) => {
+    try {
+      const { data } = await supabase
+        .from("bank_branches")
+        .select("*")
+        .eq("bank_id", bankId)
+        .order("name");
+      setBankBranches(data || []);
+    } catch (error) {
+      console.error("Error loading bank branches:", error);
+      setBankBranches([]);
+    }
+  };
+
+  const loadBankProducts = async (bankId: string) => {
     try {
       let query = supabase
         .from("bank_products")
         .select("*")
         .eq("bank_id", bankId);
 
-      // Filter by submission type if provided
-      if (submissionType) {
-        const typeMapping: Record<string, string> = {
-          PMI: "pmi placement",
-          KUR_PERUMAHAN_PMI: "kur rumah",
-          RUMAH_SUBSIDI_PMI: "subsidi rumah",
-          KUR_WIRAUSAHA_PMI: "wirausaha",
-          PETERNAK_SAPI_PMI: "peternak",
-        };
-
-        const productType = typeMapping[submissionType];
-        if (productType) {
-          query = query.eq("type", productType);
-        }
-      }
-
       const { data } = await query.order("name");
       setBankProducts(data || []);
+
+      if (editData?.bank_product_id && data) {
+        const product = data.find(p => p.id === editData.bank_product_id);
+        if (product?.product_description) {
+          setSelectedProductDescription(product.product_description);
+        }
+      }
     } catch (error) {
       console.error("Error loading bank products:", error);
       setBankProducts([]);
@@ -789,6 +804,10 @@ export default function LoanApplicationForm({
         // Convert empty date strings to null
         birth_date: formData.birth_date || null,
         tanggal_keberangkatan: formData.tanggal_keberangkatan || null,
+        // Include bank selection
+        bank_id: selectedBankId || null,
+        bank_product_id: selectedBankProductId || null,
+        bank_branch_id: selectedBranchId || null,
       };
 
       console.log("Final data to be submitted:", {
@@ -801,6 +820,9 @@ export default function LoanApplicationForm({
         tenor_months: finalData.tenor_months,
         status: finalData.status,
         assigned_agent_id: finalData.assigned_agent_id,
+        bank_id: selectedBankId || null,
+        bank_product_id: selectedBankProductId || null,
+        bank_branch_id: selectedBranchId || null,
         ktp_photo_url: ktpUrl ? "[FILE_UPLOADED]" : null,
         self_photo_url: selfieUrl ? "[FILE_UPLOADED]" : null,
         document_count: Object.keys(documentUrls).length,
@@ -1234,6 +1256,9 @@ export default function LoanApplicationForm({
     }
 
     if (currentTab === "loan") {
+      if (!formData.submission_type) missingFields.push("Jenis Aplikasi");
+      if (!selectedBankId) missingFields.push("Pilih Bank");
+      if (!selectedBankProductId) missingFields.push("Pilih Produk Bank");
       if (!formData.loan_amount) missingFields.push("Loan Amount");
       if (!formData.tenor_months) missingFields.push("Tenor (Months)");
       if (
@@ -2407,7 +2432,9 @@ export default function LoanApplicationForm({
                         // Reset bank selection when submission type changes
                         setSelectedBankId("");
                         setSelectedBankProductId("");
+                        setSelectedBranchId("");
                         setBankProducts([]);
+                        setBankBranches([]);
                       }}
                       required
                     >
@@ -2433,12 +2460,120 @@ export default function LoanApplicationForm({
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">
-                      Pilih jenis aplikasi terlebih dahulu untuk melihat produk
-                      bank yang sesuai
+                      Pilih jenis aplikasi terlebih dahulu untuk melengkapi data pinjaman
                     </p>
                   </>
                 )}
               </div>
+
+              {/* Move Bank Selection Here at TOP */}
+              {(formData.submission_type || isKurWirausaha) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg bg-blue-50/50 mb-6">
+                  <div className="md:col-span-2">
+                    <h4 className="font-semibold text-blue-800 mb-2 border-b pb-2">Informasi Produk Bank</h4>
+                  </div>
+                  <div>
+                    <Label htmlFor="bank_selection">Select Bank *</Label>
+                    <Select
+                      value={selectedBankId}
+                      onValueChange={(value) => {
+                        setSelectedBankId(value);
+                        setSelectedBankProductId(""); // Reset product selection when bank changes
+                        setSelectedBranchId("");
+                      }}
+                      required
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Choose a bank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banks.map((bank) => (
+                          <SelectItem key={bank.id} value={bank.id}>
+                            {bank.name} ({bank.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedBankId && (
+                    <div>
+                      <Label htmlFor="bank_branch">Select Branch (Optional)</Label>
+                      <Select
+                        value={selectedBranchId}
+                        onValueChange={(value) => {
+                          setSelectedBranchId(value);
+                        }}
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Semua Cabang / KCP terdekat" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bankBranches.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name} ({branch.city})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {bankBranches.length === 0 && (
+                        <p className="text-xs text-gray-500 mt-1">Belum ada data cabang untuk bank ini.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedBankId && (
+                    <div className="md:col-span-2">
+                      <Label htmlFor="bank_product">Select Bank Product *</Label>
+                      <Select
+                        value={selectedBankProductId}
+                        onValueChange={(value) => {
+                          setSelectedBankProductId(value);
+                          // Find and set the product description
+                          const selectedProduct = bankProducts.find(
+                            (p) => p.id === value,
+                          );
+                          setSelectedProductDescription(
+                            selectedProduct?.product_description || "",
+                          );
+                        }}
+                        required
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Choose a product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bankProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} ({product.type} -{" "}
+                              {product.interest_rate}% - Rp{" "}
+                              {product.min_amount.toLocaleString()} - Rp{" "}
+                              {product.max_amount.toLocaleString()})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {bankProducts.length === 0 && (
+                        <p className="text-sm text-red-500 mt-1">
+                          Tidak ada produk yang tersedia untuk bank ini.
+                        </p>
+                      )}
+
+                      {/* Product Description Display */}
+                      {selectedProductDescription && (
+                        <div className="mt-4 p-4 bg-white rounded-lg border border-blue-200">
+                          <h4 className="font-semibold text-blue-800 mb-2">
+                            Deskripsi Produk
+                          </h4>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {selectedProductDescription}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -2537,84 +2672,7 @@ export default function LoanApplicationForm({
                 </div>
               </div>
 
-              {(formData.submission_type || isKurWirausaha) && (
-                <div>
-                  <Label htmlFor="bank_selection">Select Bank</Label>
-                  <Select
-                    value={selectedBankId}
-                    onValueChange={(value) => {
-                      setSelectedBankId(value);
-                      setSelectedBankProductId(""); // Reset product selection when bank changes
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a bank" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {banks.map((bank) => (
-                        <SelectItem key={bank.id} value={bank.id}>
-                          {bank.name} ({bank.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
-              {selectedBankId &&
-                (formData.submission_type || isKurWirausaha) && (
-                  <div>
-                    <Label htmlFor="bank_product">Select Bank Product</Label>
-                    <Select
-                      value={selectedBankProductId}
-                      onValueChange={(value) => {
-                        setSelectedBankProductId(value);
-                        // Find and set the product description
-                        const selectedProduct = bankProducts.find(
-                          (p) => p.id === value,
-                        );
-                        setSelectedProductDescription(
-                          selectedProduct?.product_description || "",
-                        );
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bankProducts.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} ({product.type} -{" "}
-                            {product.interest_rate}% - Rp{" "}
-                            {product.min_amount.toLocaleString()} - Rp{" "}
-                            {product.max_amount.toLocaleString()})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {bankProducts.length === 0 && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Tidak ada produk{" "}
-                        {isKurWirausaha
-                          ? "KUR_WIRAUSAHA_PMI"
-                          : formData.submission_type}{" "}
-                        yang tersedia untuk bank ini.
-                      </p>
-                    )}
-
-                    {/* Product Description Display */}
-                    {selectedProductDescription && (
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <h4 className="font-semibold text-blue-800 mb-2">
-                          Deskripsi Produk
-                        </h4>
-                        <p className="text-sm text-blue-700 whitespace-pre-wrap">
-                          {selectedProductDescription}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
             </TabsContent>
 
             <TabsContent value="komponen-biaya" className="space-y-6 mt-6">

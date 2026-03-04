@@ -14,11 +14,18 @@ interface ConsentLogData {
 // Function to get IP address (client-side)
 async function getClientIpAddress(): Promise<string | null> {
   try {
-    const response = await fetch('https://api.ipify.org?format=json');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+    const response = await fetch('https://api.ipify.org?format=json', {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
     const data = await response.json();
     return data.ip;
   } catch (error) {
-    console.error('Failed to get IP address:', error);
+    console.warn('Failed to get IP address (timeout or error):', error);
     return null;
   }
 }
@@ -29,25 +36,28 @@ export async function logUserConsent(data: ConsentLogData): Promise<{ success: b
     const ipAddress = await getClientIpAddress();
 
     const logEntry = {
-      user_id: data.userId,
+      user_id: (data.userId && data.userId.trim() !== "") ? data.userId : null,
       document_type: data.documentType,
       document_version: data.documentVersion || '1.0',
       consent_given: data.consentGiven,
       consent_at: new Date().toISOString(),
       ip_address: ipAddress,
-      user_agent: navigator.userAgent,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server/Unknown',
       source: data.source || 'web',
     };
+
+    console.log("Saving consent log:", logEntry);
 
     const { error } = await supabase
       .from('user_consent_logs')
       .insert(logEntry);
 
     if (error) {
-      console.error('Failed to log consent:', error);
+      console.error('Failed to log consent to database:', error);
       return { success: false, error: error.message };
     }
 
+    console.log("Consent log saved successfully");
     return { success: true };
   } catch (error: any) {
     console.error('Error in logUserConsent:', error);
