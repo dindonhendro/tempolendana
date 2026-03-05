@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
@@ -12,6 +13,7 @@ import {
   Trash2,
   User,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -59,6 +61,8 @@ export default function UserDashboard({
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [testingDatabase, setTestingDatabase] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -191,6 +195,29 @@ export default function UserDashboard({
       alert(`Database test error: ${error.message}`);
     } finally {
       setTestingDatabase(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      alert("Password minimal 6 karakter!");
+      return;
+    }
+
+    try {
+      setIsResetting(true);
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+      alert("Password berhasil diperbarui!");
+      setNewPassword("");
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      alert(`Gagal memperbarui password: ${error.message}`);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -411,6 +438,35 @@ export default function UserDashboard({
                             currentUser.created_at,
                           ).toLocaleDateString()}
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                        <Lock className="h-5 w-5" />
+                        <span>Ganti Password</span>
+                      </h3>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-700 mb-4">
+                          Ingin mengganti password Anda? Masukkan password baru
+                          di bawah ini.
+                        </p>
+                        <div className="flex flex-col md:flex-row gap-3">
+                          <Input
+                            type="password"
+                            placeholder="Password Baru"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="bg-white max-w-sm"
+                          />
+                          <Button
+                            onClick={handleUpdatePassword}
+                            disabled={isResetting || !newPassword}
+                            className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
+                          >
+                            {isResetting ? "Memperbarui..." : "Update Password"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
 

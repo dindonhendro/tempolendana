@@ -164,6 +164,8 @@ export default function AgentDashboard({
           .select(
             `
               *,
+              banks(name),
+              bank_products(name),
               branch_applications(
                 id,
                 bank_reviews(
@@ -216,6 +218,8 @@ export default function AgentDashboard({
         .select(
           `
             *,
+            banks(name),
+            bank_products(name),
             branch_applications(
               id,
               bank_reviews(
@@ -278,11 +282,17 @@ export default function AgentDashboard({
 
     if (searchTerm) {
       filtered = filtered.filter(
-        (app) =>
-          app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          app.phone_number.includes(searchTerm) ||
-          app.work_location.toLowerCase().includes(searchTerm.toLowerCase()),
+        (app) => {
+          const search = searchTerm.toLowerCase();
+          return (
+            app.full_name?.toLowerCase().includes(search) ||
+            app.email?.toLowerCase().includes(search) ||
+            app.phone_number?.includes(search) ||
+            (app as any).banks?.name?.toLowerCase().includes(search) ||
+            (app as any).bank_products?.name?.toLowerCase().includes(search) ||
+            app.negara_penempatan?.toLowerCase().includes(search)
+          );
+        }
       );
     }
 
@@ -1925,163 +1935,7 @@ export default function AgentDashboard({
           </CardContent>
         </Card>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-[#5680E9]">
-              Assign Applications to Bank
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label>Select Bank *</Label>
-                <Select
-                  value={selectedBank}
-                  onValueChange={handleBankChange}
-                  required
-                >
-                  <SelectTrigger
-                    className={!selectedBank ? "border-red-300" : ""}
-                  >
-                    <SelectValue placeholder="Choose a bank (required)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {banks.map((bank) => (
-                      <SelectItem key={bank.id} value={bank.id}>
-                        {bank.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!selectedBank && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Bank selection is required
-                  </p>
-                )}
-              </div>
 
-              <div>
-                <Label>Select Product *</Label>
-                <Select
-                  value={selectedProduct}
-                  onValueChange={setSelectedProduct}
-                  disabled={!selectedBank}
-                  required
-                >
-                  <SelectTrigger
-                    className={
-                      selectedBank && !selectedProduct ? "border-red-300" : ""
-                    }
-                  >
-                    <SelectValue placeholder="Choose a product (required)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankProducts.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name} - {product.interest_rate}% (Rp{" "}
-                        {product.min_amount?.toLocaleString()} - Rp{" "}
-                        {product.max_amount?.toLocaleString()})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedBank && !selectedProduct && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Product selection is required
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label>Select Branch *</Label>
-                <Select
-                  value={selectedBranch}
-                  onValueChange={setSelectedBranch}
-                  disabled={!selectedBank}
-                  required
-                >
-                  <SelectTrigger
-                    className={
-                      selectedBank && !selectedBranch ? "border-red-300" : ""
-                    }
-                  >
-                    <SelectValue placeholder="Choose a branch (required)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankBranches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name} - {branch.city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedBank && !selectedBranch && (
-                  <p className="text-sm text-red-500 mt-1">
-                    Branch selection is required
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {selectedBank && selectedProduct && selectedBranch && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  Ready to assign applications to:{" "}
-                  <strong>
-                    {banks.find((b) => b.id === selectedBank)?.name}
-                  </strong>{" "}
-                  -
-                  <strong>
-                    {bankProducts.find((p) => p.id === selectedProduct)?.name}
-                  </strong>{" "}
-                  -
-                  <strong>
-                    {bankBranches.find((b) => b.id === selectedBranch)?.name}
-                  </strong>
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Insurance Company Assignment Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-purple-600">
-              Assign Applications to Insurance Company
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-w-md">
-              <Label>Select Insurance Company</Label>
-              <Select
-                value={selectedInsuranceCompany}
-                onValueChange={setSelectedInsuranceCompany}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an insurance company" />
-                </SelectTrigger>
-                <SelectContent>
-                  {insuranceCompanies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedInsuranceCompany && (
-                <div className="mt-3 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-700">
-                    Ready to assign applications to:{" "}
-                    <strong>
-                      {insuranceCompanies.find((c) => c.id === selectedInsuranceCompany)?.name}
-                    </strong>
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
@@ -2142,10 +1996,18 @@ export default function AgentDashboard({
                               {application.phone_number}
                             </div>
                             <div>
+                              <span className="font-medium">Bank:</span>{" "}
+                              {(application as any).banks?.name || "-"}
+                            </div>
+                            <div>
+                              <span className="font-medium">Product:</span>{" "}
+                              {(application as any).bank_products?.name || "-"}
+                            </div>
+                            <div>
                               <span className="font-medium">
-                                Work Location:
+                                Destination Country:
                               </span>{" "}
-                              {application.work_location}
+                              {application.negara_penempatan || "-"}
                             </div>
                             <div>
                               <span className="font-medium">Loan Amount:</span>{" "}
@@ -2221,6 +2083,8 @@ export default function AgentDashboard({
                           {(application.status === "Submitted" ||
                             application.status === "Checked") && (
                               <>
+
+
                                 <Button
                                   onClick={() =>
                                     handleAssignApplication(application)
@@ -2234,31 +2098,6 @@ export default function AgentDashboard({
                                   {assigningApplication === application.id
                                     ? "Assigning..."
                                     : "Assign to Bank"}
-                                </Button>
-
-                                <Button
-                                  onClick={() =>
-                                    handleAssignToInsurance(application.id)
-                                  }
-                                  disabled={
-                                    assigningToInsurance === application.id ||
-                                    !selectedInsuranceCompany
-                                  }
-                                  size="sm"
-                                  className={`${!selectedInsuranceCompany
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-purple-600 hover:bg-purple-700"
-                                    } text-white`}
-                                  title={
-                                    !selectedInsuranceCompany
-                                      ? "Please select an insurance company first"
-                                      : "Assign application to selected insurance company"
-                                  }
-                                >
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  {assigningToInsurance === application.id
-                                    ? "Assigning..."
-                                    : "Assign to Insurance"}
                                 </Button>
 
                                 <Button

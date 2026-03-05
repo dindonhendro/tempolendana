@@ -1911,6 +1911,20 @@ export default function LoanApplicationForm({
                           : formData.submission_type || "-"}
                       </p>
                       <p>
+                        <span className="font-medium">Bank:</span>{" "}
+                        {banks.find((b) => b.id === selectedBankId)?.name || "-"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Bank Branch:</span>{" "}
+                        {bankBranches.find((b) => b.id === selectedBranchId)
+                          ?.name || "Semua Cabang / KCP terdekat"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Bank Product:</span>{" "}
+                        {bankProducts.find((p) => p.id === selectedBankProductId)
+                          ?.name || "-"}
+                      </p>
+                      <p>
                         <span className="font-medium">
                           Country of Placement:
                         </span>{" "}

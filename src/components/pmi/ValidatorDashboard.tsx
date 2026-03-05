@@ -66,7 +66,7 @@ export default function ValidatorDashboard({
   const [selectedApplicationForCollector, setSelectedApplicationForCollector] =
     useState<LoanApplication | null>(null);
   const [selectedCollectorCompany, setSelectedCollectorCompany] = useState("");
-  
+
   // Immutability dialog state
   const [showImmutabilityDialog, setShowImmutabilityDialog] = useState(false);
   const [validationResult, setValidationResult] = useState<{
@@ -92,7 +92,11 @@ export default function ValidatorDashboard({
     try {
       const { data, error } = await supabase
         .from("loan_applications")
-        .select("*")
+        .select(`
+          *,
+          banks(name),
+          bank_products(name)
+        `)
         .eq("status", "Checked")
         .order("created_at", { ascending: false });
 
@@ -130,13 +134,21 @@ export default function ValidatorDashboard({
     let filtered = applications;
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (app) =>
-          app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          app.phone_number.includes(searchTerm) ||
-          app.work_location.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      filtered = filtered.filter((app) => {
+        const searchTermLower = searchTerm.toLowerCase();
+
+        // Basic info search
+        if (app.full_name?.toLowerCase().includes(searchTermLower)) return true;
+        if (app.email?.toLowerCase().includes(searchTermLower)) return true;
+        if (app.phone_number?.includes(searchTerm)) return true;
+
+        // New fields search
+        if ((app as any).banks?.name?.toLowerCase().includes(searchTermLower)) return true;
+        if ((app as any).bank_products?.name?.toLowerCase().includes(searchTermLower)) return true;
+        if (app.negara_penempatan?.toLowerCase().includes(searchTermLower)) return true;
+
+        return false;
+      });
     }
 
     setFilteredApplications(filtered);
@@ -181,7 +193,7 @@ export default function ValidatorDashboard({
             'compute_loan_application_hash',
             { p_loan_application_id: applicationId }
           );
-          
+
           if (hashError) {
             console.error("Error computing hash:", hashError);
           } else {
@@ -191,7 +203,7 @@ export default function ValidatorDashboard({
               .update({ data_hash: hashData })
               .eq('id', applicationId);
           }
-          
+
           // Get application details for dialog
           const application = applications.find(app => app.id === applicationId);
           if (application) {
@@ -208,7 +220,7 @@ export default function ValidatorDashboard({
         } else {
           alert(`Application rejected successfully!`);
         }
-        
+
         fetchApplications();
         setSelectedApplication(null);
         setComments("");
@@ -236,8 +248,8 @@ export default function ValidatorDashboard({
         .maybeSingle();
 
       if (checkError) {
-        console.error("Error checking existing assignment:", checkError);
-        alert("Error checking existing assignment. Please try again.");
+        console.error("Detailed error checking existing insurance assignment:", checkError);
+        alert(`Error checking existing insurance assignment: ${checkError.message || "Unknown error"}. Details: ${JSON.stringify(checkError)}`);
         return;
       }
 
@@ -255,8 +267,8 @@ export default function ValidatorDashboard({
       });
 
       if (error) {
-        console.error("Error creating insurance assignment:", error);
-        alert("Error assigning insurance company. Please try again.");
+        console.error("Detailed error creating insurance assignment:", error);
+        alert(`Error assigning insurance company: ${error.message || "Unknown error"}`);
         return;
       }
 
@@ -285,8 +297,8 @@ export default function ValidatorDashboard({
         .maybeSingle();
 
       if (checkError) {
-        console.error("Error checking existing assignment:", checkError);
-        alert("Error checking existing assignment. Please try again.");
+        console.error("Detailed error checking existing collector assignment:", checkError);
+        alert(`Error checking existing collector assignment: ${checkError.message || "Unknown error"}. Details: ${JSON.stringify(checkError)}`);
         return;
       }
 
@@ -304,8 +316,8 @@ export default function ValidatorDashboard({
       });
 
       if (error) {
-        console.error("Error creating collector assignment:", error);
-        alert("Error assigning collector company. Please try again.");
+        console.error("Detailed error creating collector assignment:", error);
+        alert(`Error assigning collector company: ${error.message || "Unknown error"}`);
         return;
       }
 
@@ -624,14 +636,14 @@ export default function ValidatorDashboard({
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                             <div>
-                              <span className="font-medium">Email:</span>{" "}
-                              {application.email}
+                              <span className="font-medium">Bank / Product:</span>{" "}
+                              {(application as any).banks?.name || "-"} / {(application as any).bank_products?.name || "-"}
                             </div>
                             <div>
                               <span className="font-medium">
-                                Work Location:
+                                Destination:
                               </span>{" "}
-                              {application.work_location}
+                              {application.negara_penempatan || "-"}
                             </div>
                             <div>
                               <span className="font-medium">Institution:</span>{" "}
@@ -843,7 +855,7 @@ export default function ValidatorDashboard({
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {/* Immutability Confirmation Dialog */}
       {validationResult && (
         <ImmutabilityConfirmationDialog

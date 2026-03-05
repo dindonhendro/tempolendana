@@ -970,8 +970,7 @@ Dikeluarkan per 17 Desember 2025 `;
               viewport={{ once: true }}
             >
               <Card
-                className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:-translate-y-1 cursor-pointer"
-                onClick={() => setShowBankList(true)}
+                className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white hover:-translate-y-1"
               >
                 <CardContent className="p-8 text-center">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-600/30">
@@ -981,12 +980,8 @@ Dikeluarkan per 17 Desember 2025 `;
                     Bank Terpercaya
                   </h3>
                   <p className="text-slate-600 leading-relaxed mb-4">
-                    Disalurkan melalui bank-bank BUMN terpercaya di Indonesia
+                    Disalurkan melalui bank-bank penyalur KUR di Indonesia
                   </p>
-                  <span className="inline-flex items-center text-sm text-blue-600 font-medium hover:text-blue-700">
-                    Lihat daftar bank
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </span>
                 </CardContent>
               </Card>
             </motion.div>
@@ -1084,6 +1079,33 @@ Dikeluarkan per 17 Desember 2025 `;
                           </span>
                           , KUR-PMI menjadi solusi pembiayaan yang sangat
                           terjangkau.
+                        </p>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="proses-pinjaman"
+                    className="border-none mt-4"
+                  >
+                    <AccordionTrigger className="px-8 py-6 text-left hover:no-underline hover:bg-blue-100/50 transition-colors">
+                      <div className="flex items-center text-xl font-semibold text-slate-900">
+                        <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center mr-4">
+                          <TrendingUp className="text-white w-6 h-6" />
+                        </span>
+                        Proses Pinjaman
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-8 pb-8">
+                      <div className="pl-14">
+                        <img
+                          src="/images/proses pinjaman.png"
+                          alt="Proses Pengajuan Pinjaman KUR PMI"
+                          className="w-full h-auto rounded-xl shadow-md border border-slate-200"
+                        />
+                        <p className="mt-4 text-slate-600 text-sm italic text-center">
+                          Alur proses pengajuan pinjaman mulai dari pelatihan
+                          hingga pencairan.
                         </p>
                       </div>
                     </AccordionContent>

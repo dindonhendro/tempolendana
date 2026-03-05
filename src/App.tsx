@@ -1185,7 +1185,9 @@ function App() {
             `
             *,
             users(full_name, email),
-            agent_companies(name, code)
+            agent_companies(name, code),
+            banks(name),
+            bank_products(name)
           `,
           )
           .order("created_at", { ascending: false });
@@ -1240,8 +1242,14 @@ function App() {
         // Search by NIK KTP
         if (app.nik_ktp?.toLowerCase().includes(searchTerm)) return true;
 
-        // Search by work location
-        if (app.work_location?.toLowerCase().includes(searchTerm)) return true;
+        // Search by bank name
+        if ((app as any).banks?.name?.toLowerCase().includes(searchTerm)) return true;
+
+        // Search by bank product name
+        if ((app as any).bank_products?.name?.toLowerCase().includes(searchTerm)) return true;
+
+        // Search by destination country
+        if (app.negara_penempatan?.toLowerCase().includes(searchTerm)) return true;
 
         return false;
       });
@@ -3085,10 +3093,11 @@ function App() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Applicant</TableHead>
+                              <TableHead>Bank / Product</TableHead>
+                              <TableHead>Destination</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Phone</TableHead>
                               <TableHead>Loan Amount</TableHead>
-                              <TableHead>Tenor</TableHead>
                               <TableHead>Status</TableHead>
                               <TableHead>Agent</TableHead>
                               <TableHead>Submitted</TableHead>
@@ -3102,6 +3111,17 @@ function App() {
                                   {application.full_name}
                                 </TableCell>
                                 <TableCell>
+                                  <div className="text-sm font-medium">
+                                    {(application as any).banks?.name || "-"}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {(application as any).bank_products?.name || "-"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {application.negara_penempatan || "-"}
+                                </TableCell>
+                                <TableCell>
                                   {application.email ||
                                     (application as any).users?.email ||
                                     "-"}
@@ -3112,11 +3132,6 @@ function App() {
                                 <TableCell>
                                   {application.loan_amount
                                     ? `Rp ${application.loan_amount.toLocaleString()}`
-                                    : "-"}
-                                </TableCell>
-                                <TableCell>
-                                  {application.tenor_months
-                                    ? `${application.tenor_months} months`
                                     : "-"}
                                 </TableCell>
                                 <TableCell>
