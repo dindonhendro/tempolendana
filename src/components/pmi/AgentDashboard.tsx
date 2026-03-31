@@ -200,7 +200,7 @@ export default function AgentDashboard({
           setApplications([]);
         } else {
           console.log("Applications found for checker:", checkerData?.length || 0);
-          setApplications((checkerData as AgentLoanApplication[]) || []);
+          setApplications((checkerData as unknown as AgentLoanApplication[]) || []);
         }
 
         setLoading(false);
@@ -248,7 +248,7 @@ export default function AgentDashboard({
         setApplications([]);
       } else {
         console.log("Filtered applications for agent found:", regularData?.length || 0);
-        setApplications((regularData as AgentLoanApplication[]) || []);
+        setApplications((regularData as unknown as AgentLoanApplication[]) || []);
       }
 
       // Also try fetching without status filter to see if there are other statuses

@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useState, lazy } from "react";
 import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
 import { useIdleTimeout } from "./hooks/useIdleTimeout";
+import { useSessionTimeout } from "./hooks/useSessionTimeout"; // Import the new hook
 
 // Lazy load components for better performance
 const Home = lazy(() => import("./components/home"));
@@ -96,6 +97,9 @@ function App() {
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+
+  // Initialize session timeout hook
+  useSessionTimeout(!!user && authInitialized);
 
   // Admin section state
   const [activeAdminSection, setActiveAdminSection] = useState<string | null>(null);
