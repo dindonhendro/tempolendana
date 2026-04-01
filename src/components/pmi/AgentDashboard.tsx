@@ -110,6 +110,10 @@ export default function AgentDashboard({
     useState<any>(null);
   const [loadingBankProduct, setLoadingBankProduct] = useState(false);
 
+  // NIK KTP Decryption states
+  const [decryptedNiks, setDecryptedNiks] = useState<Record<string, string>>({});
+  const [decryptingNiks, setDecryptingNiks] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     fetchApplications();
     fetchBanks();
@@ -846,6 +850,20 @@ export default function AgentDashboard({
     }
   };
 
+  const handleDecryptNik = async (applicationId: string) => {
+    setDecryptingNiks(prev => ({ ...prev, [applicationId]: true }));
+    try {
+      const { data, error } = await supabase.rpc("get_decrypted_nik" as any, { p_loan_id: applicationId });
+      if (error) throw error;
+      setDecryptedNiks(prev => ({ ...prev, [applicationId]: data as string }));
+    } catch (error: any) {
+      console.error("Error decrypting NIK:", error);
+      alert(`Error decrypting NIK: ${error.message}`);
+    } finally {
+      setDecryptingNiks(prev => ({ ...prev, [applicationId]: false }));
+    }
+  };
+
   // Fetch bank product information when application is selected
   React.useEffect(() => {
     if (selectedApplication) {
@@ -1481,8 +1499,18 @@ export default function AgentDashboard({
                     <p className="font-medium">{selectedApplication.email}</p>
                   </div>
                   <div>
-                    <Label>NIK KTP</Label>
-                    <p className="font-medium">{selectedApplication.nik_ktp}</p>
+                    <Label className="flex items-center gap-2">
+                      NIK KTP
+                      {!decryptedNiks[selectedApplication.id] && (
+                        <Button type="button" variant="ghost" size="sm" className="h-5 p-0 px-2 text-xs text-[#5680E9]" onClick={() => handleDecryptNik(selectedApplication.id)} disabled={decryptingNiks[selectedApplication.id]}>
+                          <Shield className="w-3 h-3 mr-1" />
+                          {decryptingNiks[selectedApplication.id] ? "Decrypting..." : "Lihat NIK Asli"}
+                        </Button>
+                      )}
+                    </Label>
+                    <p className="font-medium">
+                      {decryptedNiks[selectedApplication.id] ? decryptedNiks[selectedApplication.id] : "••••••••••••••••"}
+                    </p>
                   </div>
                   <div>
                     <Label>Last Education</Label>
@@ -2012,6 +2040,25 @@ export default function AgentDashboard({
                             <div>
                               <span className="font-medium">Loan Amount:</span>{" "}
                               Rp {application.loan_amount?.toLocaleString()}
+                            </div>
+                            <div className="md:col-span-2">
+                              <span className="font-medium">NIK KTP:</span>{" "}
+                              <span className="inline-flex items-center gap-2">
+                                {decryptedNiks[application.id] ? decryptedNiks[application.id] : "••••••••••••••••"}
+                                {!decryptedNiks[application.id] && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 p-0 px-2 text-xs text-[#5680E9]"
+                                    onClick={() => handleDecryptNik(application.id)}
+                                    disabled={decryptingNiks[application.id]}
+                                  >
+                                    <Shield className="w-3 h-3 mr-1" />
+                                    {decryptingNiks[application.id] ? "Decrypting..." : "Lihat NIK Asli"}
+                                  </Button>
+                                )}
+                              </span>
                             </div>
                           </div>
                           <div className="mt-2 text-sm text-gray-500">

@@ -1,0 +1,65 @@
+﻿diff --git a/src/components/pmi/AgentDashboard.tsx b/src/components/pmi/AgentDashboard.tsx
+index 3b9da86..20e738b 100644
+--- a/src/components/pmi/AgentDashboard.tsx
++++ b/src/components/pmi/AgentDashboard.tsx
+@@ -110,6 +110,10 @@ export default function AgentDashboard({
+     useState<any>(null);
+   const [loadingBankProduct, setLoadingBankProduct] = useState(false);
+ 
++  // NIK KTP Decryption states
++  const [decryptedNik, setDecryptedNik] = useState<string | null>(null);
++  const [isDecryptingNik, setIsDecryptingNik] = useState(false);
++
+   useEffect(() => {
+     fetchApplications();
+     fetchBanks();
+@@ -846,6 +850,20 @@ export default function AgentDashboard({
+     }
+   };
+ 
++  const handleDecryptNik = async (applicationId: string) => {
++    setIsDecryptingNik(true);
++    try {
++      const { data, error } = await supabase.rpc("get_decrypted_nik" as any, { p_loan_id: applicationId });
++      if (error) throw error;
++      setDecryptedNik(data as string);
++    } catch (error: any) {
++      console.error("Error decrypting NIK:", error);
++      alert(`Error decrypting NIK: ${error.message}`);
++    } finally {
++      setIsDecryptingNik(false);
++    }
++  };
++
+   // Fetch bank product information when application is selected
+   React.useEffect(() => {
+     if (selectedApplication) {
+@@ -1411,6 +1429,7 @@ export default function AgentDashboard({
+             onClick={() => {
+               setSelectedApplication(null);
+               setApplicationBankProduct(null);
++              setDecryptedNik(null);
+             }}
+             className="mb-4"
+           >
+@@ -1481,8 +1500,18 @@ export default function AgentDashboard({
+                     <p className="font-medium">{selectedApplication.email}</p>
+                   </div>
+                   <div>
+-                    <Label>NIK KTP</Label>
+-                    <p className="font-medium">{selectedApplication.nik_ktp}</p>
++                    <Label className="flex items-center gap-2">
++                      NIK KTP
++                      {!decryptedNik && (
++                        <Button type="button" variant="ghost" size="sm" className="h-5 p-0 px-2 text-xs text-[#5680E9]" onClick={() => handleDecryptNik(selectedApplication.id)} disabled={isDecryptingNik}>
++                          <Shield className="w-3 h-3 mr-1" />
++                          {isDecryptingNik ? "Decrypting..." : "Lihat NIK Asli"}
++                        </Button>
++                      )}
++                    </Label>
++                    <p className="font-medium">
++                      {decryptedNik ? decryptedNik : "ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"}
++                    </p>
+                   </div>
+                   <div>
+                     <Label>Last Education</Label>
