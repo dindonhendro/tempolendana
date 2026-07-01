@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Script Deployment ke Server Self-Hosted (Zero Downtime)
-# Struktur: /var/www/kurpmi/releases/{timestamp} -> /var/www/kurpmi/current
 
 set -e # Hentikan script jika ada error
 
