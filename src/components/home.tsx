@@ -248,7 +248,7 @@ export default function Home() {
                 All rights reserved.
               </p>
               <p className="text-gray-400 text-sm mt-1">
-                Registered with OJK: S-27/3/MS.72/2019
+                Registered with OJK: S-38/IK.012/2024
               </p>
             </div>
           </div>

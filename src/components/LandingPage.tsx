@@ -144,25 +144,25 @@ const LandingPage = ({ onGetStarted = () => { } }: LandingPageProps) => {
     {
       name: "Bank Mandiri",
       fullName: "PT Bank Mandiri (Persero) Tbk",
-      logo: "/images/Bank_Mandiri_logo_2016.svg",
+      logo: "/banks/mandiri.png",
       description: "Bank terbesar di Indonesia dengan jaringan cabang terluas",
     },
     {
       name: "Bank BNI",
       fullName: "PT Bank Negara Indonesia (Persero) Tbk",
-      logo: "https://upload.wikimedia.org/wikipedia/id/thumb/5/55/BNI_logo.svg/1200px-BNI_logo.svg.png",
+      logo: "/banks/bni.png",
       description: "Bank Negara Indonesia (BNI) menyediakan berbagai pilihan KUR dengan bunga bersaing.",
     },
     {
       name: "Bank BRI",
       fullName: "PT Bank Rakyat Indonesia (Persero) Tbk",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_Logo.svg/1200px-BRI_Logo.svg.png",
+      logo: "/banks/bri.png",
       description: "Bank dengan fokus utama pada sektor mikro, kecil, dan menengah",
     },
     {
       name: "Bank BTN",
       fullName: "PT Bank Tabungan Negara (Persero) Tbk",
-      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_Bank_BTN.svg/2560px-Logo_Bank_BTN.svg.png",
+      logo: "/banks/btn.png",
       description: "Bank yang mengkhususkan diri dalam pembiayaan perumahan",
     },
   ];
@@ -534,7 +534,7 @@ Dikeluarkan per 17 Desember 2025 `;
               <motion.div variants={fadeInUp} className="mb-6">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-blue-100 text-blue-600 text-sm font-medium shadow-sm">
                   <Sparkles className="w-4 h-4" />
-                  Terdaftar di OJK • S-27/3/MS.72/2019
+                  Terdaftar di OJK • S-38/IK.012/2024
                 </span>
               </motion.div>
 
@@ -1135,7 +1135,7 @@ Dikeluarkan per 17 Desember 2025 `;
               <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg inline-flex">
                 <Shield className="w-5 h-5 text-green-400" />
                 <span className="text-sm text-slate-300">
-                  Terdaftar OJK: S-27/3/MS.72/2019
+                  Terdaftar OJK: S-38/IK.012/2024
                 </span>
               </div>
             </div>
@@ -1224,6 +1224,12 @@ Dikeluarkan per 17 Desember 2025 `;
           <div className="border-t border-slate-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-slate-500">
+                <button
+                  onClick={() => setShowAboutLendana(true)}
+                  className="hover:text-blue-400 transition-colors"
+                >
+                  Profil
+                </button>
                 <Dialog
                   open={showPrivacyPolicy}
                   onOpenChange={setShowPrivacyPolicy}
@@ -1263,43 +1269,27 @@ Dikeluarkan per 17 Desember 2025 `;
 
       {/* About Lendana Dialog */}
       <Dialog open={showAboutLendana} onOpenChange={setShowAboutLendana}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gradient-blue">
-              Tentang Lendana
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-blue-600">
+              <Building2 className="w-6 h-6 text-blue-600" />
+              Profil Lendana
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-4 space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold text-blue-600 mb-3">
-                Platform Penyelenggara Agregasi Produk dan Layanan Jasa Keuangan
-              </h3>
-              <div className="space-y-4 text-slate-700 leading-relaxed">
-                <p>
-                  PT. Lendana Digitalindo Nusantara, merupakan perusahaan
-                  bergerak dibidang Financial Technology (Fintech) yang telah
-                  tercatat di Otoritas Jasa Keuangan (OJK) nomor
-                  S-27/3/MS.72/2019.
-                </p>
-                <p>
-                  LENDANA membantu Lembaga Jasa Keuangan untuk menyalurkan
-                  pembiayaan ke sektor produktif diantarnya untuk calon Pekerja
-                  Migran Indonesia, Petani dan Nelayan, UMKM secara digital
-                  mudah, cepat dan terpercaya.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold text-blue-600 mb-3">
-                Misi Kami
-              </h3>
-              <p className="text-slate-700 leading-relaxed">
-                Lendana akan fokus membantu Lembaga Keuangan penyalur Kredit
-                Usaha Rakyat (KUR) yang diharapkan menjadi solusi pembiayaan
-                yang mudah dan suku bunga rendah.
-              </p>
-            </div>
+          <div className="mt-4 space-y-6 text-slate-700 leading-relaxed text-sm">
+            <p>
+              PT Lendana Digitalindo Nusantara (Lendana) merupakan Perusahaan yang bergerak dibidang
+              Inovasi Teknologi Sektor Keuangan (ITSK) dan telah terdaftar di Otoritas Jasa Keuangan (OJK) dengan 
+              nomor S-38/IK.012/2024 sebagai Penyelenggara Agregasi Jasa Keuangan (PAJK).
+            </p>
+            <p>
+              Lendana telah bekerjasama dengan Lembaga Jasa Keuangan Penyalur KUR Penempatan PMI sehingga
+              dapat membantu calon PMI untuk mendapat akses pembiayaan tanpa jaminan dengan tingkat bunga yang rendah.
+            </p>
+            <p>
+              Syarat dan Ketentuan atas pengajuan Pinjaman melalui platform Lendana ini akan mengikuti ketetapan dan 
+              ketentuan yang telah diatur oleh LJK sebagai pemilik produk dan layanan masing-masing.
+            </p>
           </div>
         </DialogContent>
       </Dialog>

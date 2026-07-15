@@ -11,7 +11,7 @@ interface AboutSectionProps {
 
 const AboutSection = ({
   title = "About Lendana",
-  ojkRegistration = "S-27/3/MS.72/2019",
+  ojkRegistration = "S-38/IK.012/2024",
   ojkRegulation = "No. 03 Tahun 2024",
   description = [
     "PT. Lendana Digitalindo Nusantara, merupakan perusahaan bergerak dibidang Financial Technology (Fintech) yang telah tercatat di Otoritas Jasa Keuangan (OJK).",

@@ -65,7 +65,7 @@ const HeroSection = ({
                 </h3>
                 <p className="text-white/80">
                   Terdaftar di Otoritas Jasa Keuangan (OJK) dengan nomor
-                  S-27/3/MS.72/2019
+                  S-38/IK.012/2024
                 </p>
                 <div className="pt-4 flex justify-center">
                   <div className="flex space-x-2">

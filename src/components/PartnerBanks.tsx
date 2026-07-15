@@ -54,37 +54,37 @@ const PartnerBanks = ({ banks = defaultBanks }: PartnerBanksProps) => {
 const defaultBanks: PartnerBank[] = [
   {
     name: "Bank BNI",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/bni.png",
     description:
       "Partnering with BNI to provide accessible financial solutions for all Indonesians.",
   },
   {
     name: "Bank Mandiri",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/mandiri.png",
     description:
       "Working with Mandiri to support Indonesian Migrant Workers and SMEs.",
   },
   {
     name: "Bank BRI",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/bri.png",
     description:
       "Collaborating with BRI to provide KUR financing for farmers and fishermen.",
   },
   {
     name: "Bank BTN",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/btn.png",
     description:
       "Partnering with BTN to offer housing credit solutions for all Indonesians.",
   },
   {
     name: "Bank Nano",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/nano.png",
     description:
       "Leveraging digital banking with Bank Nano for faster financial access.",
   },
   {
     name: "BPR Network",
-    logo: "https://images.unsplash.com/photo-1614028674026-a65e31bfd27c?w=400&q=80",
+    logo: "/banks/bpr.png",
     description:
       "Working with multiple BPR banks to serve local communities across Indonesia.",
   },

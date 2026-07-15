@@ -1455,14 +1455,17 @@ function App() {
                               </div>
                               <div>
                                 <Label htmlFor="logo_url">
-                                  Logo URL (Optional)
+                                  Logo Path (e.g. /banks/mandiri.png)
                                 </Label>
                                 <Input
                                   id="logo_url"
                                   name="logo_url"
-                                  type="url"
+                                  placeholder="/banks/logo.png"
                                   defaultValue={editingBank?.logo_url || ""}
                                 />
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                  Upload images to public/banks/ folder and enter the path here.
+                                </p>
                               </div>
                               <div className="flex justify-end space-x-2">
                                 <Button
@@ -1507,11 +1510,16 @@ function App() {
                                   <TableCell>{bank.code}</TableCell>
                                   <TableCell>
                                     {bank.logo_url ? (
-                                      <img
-                                        src={bank.logo_url}
-                                        alt={bank.name}
-                                        className="h-8 w-8 object-contain"
-                                      />
+                                      <div className="h-8 w-8 bg-gray-50 rounded border flex items-center justify-center overflow-hidden">
+                                        <img
+                                          src={bank.logo_url}
+                                          alt={bank.name}
+                                          className="max-h-full max-w-full object-contain"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/32?text=?';
+                                          }}
+                                        />
+                                      </div>
                                     ) : (
                                       <span className="text-gray-400">
                                         No logo
