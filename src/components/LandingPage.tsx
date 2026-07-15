@@ -1279,7 +1279,7 @@ Dikeluarkan per 17 Desember 2025 `;
           <div className="mt-4 space-y-6 text-slate-700 leading-relaxed text-sm">
             <p>
               PT Lendana Digitalindo Nusantara (Lendana) merupakan Perusahaan yang bergerak dibidang
-              Inovasi Teknologi Sektor Keuangan (ITSK) dan telah terdaftar di Otoritas Jasa Keuangan (OJK) dengan 
+              Inovasi Teknologi Sektor Keuangan (ITSK) dan telah terdaftar di Otoritas Jasa Keuangan (OJK) dengan
               nomor S-38/IK.012/2024 sebagai Penyelenggara Agregasi Jasa Keuangan (PAJK).
             </p>
             <p>
@@ -1287,8 +1287,11 @@ Dikeluarkan per 17 Desember 2025 `;
               dapat membantu calon PMI untuk mendapat akses pembiayaan tanpa jaminan dengan tingkat bunga yang rendah.
             </p>
             <p>
-              Syarat dan Ketentuan atas pengajuan Pinjaman melalui platform Lendana ini akan mengikuti ketetapan dan 
+              Syarat dan Ketentuan atas pengajuan Pinjaman melalui platform Lendana ini akan mengikuti ketetapan dan
               ketentuan yang telah diatur oleh LJK sebagai pemilik produk dan layanan masing-masing.
+              Produk dan/atau layanan jasa keuangan yang ditawarkan bukan produk dan/atau layanan jasa keuangan yang
+              diterbitkan oleh PAJK dan PAJK tidak bertanggung jawab atas tuntutan dan resiko terkait produk dan/atau
+              layanan LJK dan/atau pihak yang melakukan kegiatan di sector jasa keuangan
             </p>
           </div>
         </DialogContent>
