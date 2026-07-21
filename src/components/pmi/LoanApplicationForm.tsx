@@ -1241,7 +1241,11 @@ export default function LoanApplicationForm({
       if (!formData.birth_date) missingFields.push("Birth Date");
       if (!formData.phone_number) missingFields.push("Phone Number");
       if (!formData.email) missingFields.push("Email");
-      if (!formData.nik_ktp) missingFields.push("NIK KTP");
+      if (!formData.nik_ktp) {
+        missingFields.push("NIK KTP");
+      } else if (formData.nik_ktp.length !== 16) {
+        missingFields.push("NIK KTP (Harus tepat 16 digit)");
+      }
       if (!formData.last_education) missingFields.push("Last Education");
       if (!formData.nomor_sisko) missingFields.push("Nomor Sisko PMI");
     }
@@ -1437,7 +1441,12 @@ export default function LoanApplicationForm({
                     id="nik_ktp"
                     name="nik_ktp"
                     value={formData.nik_ktp || ""}
-                    onChange={handleInputChangeEvent}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, ""); // Allow only digits
+                      handleInputChange("nik_ktp", val);
+                    }}
+                    maxLength={16}
+                    placeholder="Masukkan 16 digit NIK"
                     required
                     className="mt-1"
                   />
