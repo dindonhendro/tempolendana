@@ -543,7 +543,7 @@ Dikeluarkan per 17 Desember 2025 `;
                 variants={fadeInUp}
                 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight"
               >
-                Pembiayaan <span className="text-gradient-blue">KUR PMI</span>
+                Pembiayaan <span className="text-gradient-blue"> PMI</span>
                 <br />
                 untuk Masa Depan Cerah
               </motion.h1>
@@ -593,7 +593,7 @@ Dikeluarkan per 17 Desember 2025 `;
                     variant="outline"
                     className="border-2 border-slate-300 bg-white/60 backdrop-blur-sm text-slate-700 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 font-semibold text-lg px-10 py-7 h-auto rounded-xl transition-all duration-300"
                   >
-                    Tentang Lendana
+                    Profil Lendana
                   </Button>
                 </motion.div>
               </motion.div>
@@ -1278,13 +1278,11 @@ Dikeluarkan per 17 Desember 2025 `;
           </DialogHeader>
           <div className="mt-4 space-y-6 text-slate-700 leading-relaxed text-sm">
             <p>
-              PT Lendana Digitalindo Nusantara (Lendana) merupakan Perusahaan yang bergerak dibidang
-              Inovasi Teknologi Sektor Keuangan (ITSK) dan telah terdaftar di Otoritas Jasa Keuangan (OJK) dengan
-              nomor S-38/IK.012/2024 sebagai Penyelenggara Agregasi Jasa Keuangan (PAJK).
+              PT. LENDANA DIGITALINDO NUSANTARA (Lendana) merupakan Perusahaan yang bergerak dibidang Inovasi Teknologi Sektor Keuangan (ITSK) yang telah terdaftar di Otoritas Jasa Keuangan (OJK) dengan Nomor S-595/IK.01/2024 sebagai PENYELENGGARA AGREGASI JASA KEUANGAN (PAJK) sesuai dengan POJK No. 3 Tahun 2024 dan POJK No. 4 Tahun 2025.
             </p>
             <p>
-              Lendana telah bekerjasama dengan Lembaga Jasa Keuangan Penyalur KUR Penempatan PMI sehingga
-              dapat membantu calon PMI untuk mendapat akses pembiayaan tanpa jaminan dengan tingkat bunga yang rendah.
+              LENDANA telah bekerjasama dengan Lembaga Jasa Bank Himbara, Bank Swasta dan Peer_to_Peer Lending sehingga dapat membantu calon Pekerja Migran Indonesia dapat mengakses pembiayaan untuk keperluan biaya penempatan PMI secara lebih mudah dan cepat.
+              Lendana juga telah bekerjasama dengan Lembaga Pelatihan Kerja (LPK) dan Perusahaan Penempatan Pekerja Migran Indonesia (P3MI) yang telah berizin resmi sehingga calon PMI yang mengakses pembiayaan merupakan calon Pekerja Migran Indonesia yang legal.
             </p>
             <p>
               Syarat dan Ketentuan atas pengajuan Pinjaman melalui platform Lendana ini akan mengikuti ketetapan dan
