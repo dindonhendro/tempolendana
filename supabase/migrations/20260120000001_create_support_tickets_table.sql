@@ -1,6 +1,14 @@
 -- ----------------------------------------------------------------------------
 -- CREATE SUPPORT TICKETS TABLE (OJK Request)
 -- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS public.support_tickets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   ticket_id TEXT UNIQUE NOT NULL,

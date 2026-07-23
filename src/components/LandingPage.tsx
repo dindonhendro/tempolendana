@@ -1426,7 +1426,7 @@ Dikeluarkan per 17 Desember 2025 `;
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Keluhan Diterima</h3>
               <p className="text-slate-600 mb-6">
-                Nomor Tiket Anda adalah:
+                data sudah diterima. Nomor Tiket Anda adalah:
               </p>
               <div className="inline-block px-8 py-4 bg-slate-900 text-white rounded-2xl text-2xl font-mono font-bold mb-8">
                 {complaintTicket}
@@ -1464,6 +1464,7 @@ Dikeluarkan per 17 Desember 2025 `;
                   });
 
                   if (error) throw error;
+                  alert("data sudah diterima");
                   setComplaintTicket(ticketId);
                 } catch (err: any) {
                   console.error("Error submitting ticket:", err);
