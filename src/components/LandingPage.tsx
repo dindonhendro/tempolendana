@@ -1379,6 +1379,7 @@ Dikeluarkan per 17 Desember 2025 `;
               Tim CS kami siap membantu Anda setiap Senin - Jumat pukul 09:00 - 18:00 WIB.
             </p>
             <div className="space-y-4">
+              {/* 
               <a
                 href="https://wa.me/6281381111135"
                 target="_blank"
@@ -1393,6 +1394,7 @@ Dikeluarkan per 17 Desember 2025 `;
                   <p className="text-sm text-slate-500">Respon cepat dalam hitungan menit</p>
                 </div>
               </a>
+              */}
               <a
                 href="mailto:cs@lendana.id"
                 className="flex items-center gap-4 p-4 rounded-xl border border-blue-100 hover:bg-blue-50 transition-colors"
