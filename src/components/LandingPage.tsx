@@ -1135,7 +1135,7 @@ Dikeluarkan per 17 Desember 2025 `;
               <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg inline-flex">
                 <Shield className="w-5 h-5 text-green-400" />
                 <span className="text-sm text-slate-300">
-                  Terdaftar OJK: S-38/IK.012/2024
+                  Terdaftar OJK: S-595/IK.01/2024
                 </span>
               </div>
             </div>
@@ -1169,10 +1169,10 @@ Dikeluarkan per 17 Desember 2025 `;
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-slate-500" />
                   <a
-                    href="tel:081381111135"
+                    href="tel:0818871505"
                     className="text-slate-400 hover:text-blue-400 transition-colors text-sm"
                   >
-                    0813.8111.1135
+                    0818.8715.05
                   </a>
                 </div>
                 <div className="pt-4 space-y-3">
@@ -1381,7 +1381,7 @@ Dikeluarkan per 17 Desember 2025 `;
             <div className="space-y-4">
               {/* 
               <a
-                href="https://wa.me/6281381111135"
+                href="https://wa.me/62818871505"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-4 p-4 rounded-xl border border-blue-100 hover:bg-blue-50 transition-colors"

@@ -188,17 +188,34 @@ export const getCurrentUser = async (): Promise<User | null> => {
         .single();
 
       if (error) {
-        console.error("Error fetching user profile:", error);
-        // Return minimal user object from auth data
-        console.log("Returning minimal user object from auth data");
-        return {
+        console.warn("User profile not found in public.users, attempting to auto-create profile...");
+        const fallbackProfile = {
           id: user.id,
           email: user.email || "",
           full_name: user.user_metadata?.full_name || user.email || "",
           role: user.user_metadata?.role || "user",
           created_at: user.created_at || new Date().toISOString(),
           updated_at: user.updated_at || new Date().toISOString(),
-        } as User;
+        };
+
+        try {
+          const { data: newProfile, error: insertError } = await supabase
+            .from("users")
+            .insert([fallbackProfile])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error("Failed to auto-create user profile in public.users:", insertError);
+            return fallbackProfile as User;
+          }
+
+          console.log("Successfully auto-created user profile in public.users:", newProfile);
+          return newProfile;
+        } catch (insertCatchError) {
+          console.error("Catch error during auto-creating user profile:", insertCatchError);
+          return fallbackProfile as User;
+        }
       }
 
       console.log("User profile loaded:", profile?.email);

@@ -62,7 +62,7 @@ export default function P3MIBusinessLoanForm({
         grace_period: editData.grace_period || null,
         status: editData.status || "Submitted",
         submission_type: editData.submission_type || "P3MI_BUSINESS_LOAN",
-        assigned_agent_id: editData.assigned_agent_id || "e558e9a3-0438-4e8c-b09f-bad255f5d715",
+        assigned_agent_id: editData.assigned_agent_id || "00000000-0000-0000-0000-000000000001",
       }
       : {
         full_name: "",
@@ -81,7 +81,7 @@ export default function P3MIBusinessLoanForm({
         grace_period: null,
         status: "Submitted",
         submission_type: "P3MI_BUSINESS_LOAN",
-        assigned_agent_id: "e558e9a3-0438-4e8c-b09f-bad255f5d715",
+        assigned_agent_id: "00000000-0000-0000-0000-000000000001",
       },
   );
 
@@ -365,7 +365,7 @@ export default function P3MIBusinessLoanForm({
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         // P3MI Business Loan goes directly to Lendana for verification
-        assigned_agent_id: "e558e9a3-0438-4e8c-b09f-bad255f5d715", // Default agent for P3MI Business Loan
+        assigned_agent_id: "00000000-0000-0000-0000-000000000001", // Default agent for P3MI Business Loan
         submission_type: "P3MI_BUSINESS_LOAN",
       };
 

@@ -7,6 +7,12 @@ interface UseIdleTimeoutProps {
 
 export const useIdleTimeout = ({ onIdle, idleTime = 600000 }: UseIdleTimeoutProps) => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onIdleRef = useRef(onIdle);
+
+  // Keep onIdleRef updated with the latest callback
+  useEffect(() => {
+    onIdleRef.current = onIdle;
+  }, [onIdle]);
 
   const resetTimer = () => {
     // Clear existing timeout
@@ -16,19 +22,20 @@ export const useIdleTimeout = ({ onIdle, idleTime = 600000 }: UseIdleTimeoutProp
 
     // Set new timeout
     timeoutRef.current = setTimeout(() => {
-      onIdle();
+      onIdleRef.current();
     }, idleTime);
   };
 
   useEffect(() => {
-    // Events that indicate user activity
+    // Events that indicate user activity (using capture phase to intercept stopped propagation)
     const events = [
       'mousedown',
       'mousemove',
-      'keypress',
+      'keydown',
       'scroll',
       'touchstart',
       'click',
+      'input',
     ];
 
     // Reset timer on any user activity
@@ -36,9 +43,9 @@ export const useIdleTimeout = ({ onIdle, idleTime = 600000 }: UseIdleTimeoutProp
       resetTimer();
     };
 
-    // Add event listeners
+    // Add event listeners in capture phase
     events.forEach((event) => {
-      window.addEventListener(event, handleActivity);
+      window.addEventListener(event, handleActivity, { capture: true, passive: true });
     });
 
     // Initialize timer
@@ -50,8 +57,8 @@ export const useIdleTimeout = ({ onIdle, idleTime = 600000 }: UseIdleTimeoutProp
         clearTimeout(timeoutRef.current);
       }
       events.forEach((event) => {
-        window.removeEventListener(event, handleActivity);
+        window.removeEventListener(event, handleActivity, { capture: true });
       });
     };
-  }, [idleTime, onIdle]);
+  }, [idleTime]);
 };

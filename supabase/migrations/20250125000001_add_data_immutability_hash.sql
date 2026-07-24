@@ -96,7 +96,7 @@ DECLARE
     col_name TEXT;
     old_val TEXT;
     new_val TEXT;
-    excluded_columns TEXT[] := ARRAY['updated_at', 'data_hash', 'status'];
+    excluded_columns TEXT[] := ARRAY['updated_at', 'data_hash', 'status', 'bank_approved_at'];
 BEGIN
     -- Only prevent changes when status is 'Validated' (immutable state)
     IF OLD.status = 'Validated' AND OLD.data_hash IS NOT NULL THEN

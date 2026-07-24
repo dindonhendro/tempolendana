@@ -155,7 +155,7 @@ export default function LoanApplicationForm({
         bank_product_id: editData.bank_product_id || null,
         bank_branch_id: editData.bank_branch_id || null,
         assigned_agent_id: isKurWirausaha
-          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+          ? "00000000-0000-0000-0000-000000000001"
           : editData.assigned_agent_id || preSelectedAgentId || "",
         status: editData.status || "Submitted",
         submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
@@ -191,7 +191,7 @@ export default function LoanApplicationForm({
         bank_product_id: null,
         bank_branch_id: null,
         assigned_agent_id: isKurWirausaha
-          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
+          ? "00000000-0000-0000-0000-000000000001"
           : preSelectedAgentId || "",
         status: "Submitted",
         submission_type: isKurWirausaha ? "KUR_WIRAUSAHA_PMI" : "PMI",
@@ -795,8 +795,8 @@ export default function LoanApplicationForm({
         updated_at: new Date().toISOString(),
         // For KUR Wirausaha, bypass agent and set special agent ID or null
         assigned_agent_id: isKurWirausaha
-          ? "e558e9a3-0438-4e8c-b09f-bad255f5d715"
-          : formData.assigned_agent_id,
+          ? "00000000-0000-0000-0000-000000000001"
+          : formData.assigned_agent_id || null,
         // Set submission type if not already set
         submission_type:
           formData.submission_type ||

@@ -175,7 +175,7 @@ function App() {
       try {
         console.log("Starting auth initialization...");
 
-        // Set a timeout to prevent infinite loading
+        // Set a timeout to prevent infinite loading (increased to 10 seconds to avoid premature logout on slow connections)
         timeoutId = setTimeout(() => {
           if (isMounted && loading) {
             console.warn("Auth initialization timeout - proceeding without auth");
@@ -184,7 +184,7 @@ function App() {
             setAuthInitialized(true);
             setAuthError(null);
           }
-        }, 2000); // Reduced to 2 seconds
+        }, 10000); // 10 seconds
 
         try {
           const currentUser = await getCurrentUser();
