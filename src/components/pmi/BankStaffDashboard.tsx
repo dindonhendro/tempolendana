@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Search, Eye, MessageSquare } from "lucide-react";
+import { CheckCircle, XCircle, Search, Eye, MessageSquare, Download } from "lucide-react";
 import { supabase, getCurrentUserId } from "@/lib/supabase";
 import {
   LoanApplication,
@@ -282,6 +282,117 @@ export default function BankStaffDashboard({
     }
   };
 
+  const downloadHistoryCSV = async () => {
+    try {
+      if (!currentStaffId) {
+        alert("Staff information not loaded yet.");
+        return;
+      }
+
+      // Get staff info to find their branch/bank
+      const { data: staffInfo, error: staffError } = await supabase
+        .from("bank_staff")
+        .select("branch_id, bank_id")
+        .eq("id", currentStaffId)
+        .single();
+
+      if (staffError || !staffInfo) {
+        alert("Error fetching staff info for download");
+        return;
+      }
+
+      let query = supabase
+        .from("loan_applications")
+        .select(`
+          *,
+          branch_applications!inner(
+            *,
+            bank_products(*)
+          )
+        `);
+
+      if (staffInfo.branch_id) {
+        query = query.eq("branch_applications.branch_id", staffInfo.branch_id);
+      } else if (staffInfo.bank_id) {
+        const { data: branches } = await supabase
+          .from("bank_branches")
+          .select("id")
+          .eq("bank_id", staffInfo.bank_id);
+        
+        const branchIds = (branches || []).map(b => b.id);
+        if (branchIds.length > 0) {
+          query = query.in("branch_applications.branch_id", branchIds);
+        } else {
+          alert("No branches found for your bank.");
+          return;
+        }
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching history for CSV:", error);
+        alert(`Error fetching history: ${error.message}`);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert("No application history found to download.");
+        return;
+      }
+
+      // Build CSV content
+      const headers = [
+        "No",
+        "Nama Lengkap",
+        "Email",
+        "No. Telepon",
+        "NIK KTP",
+        "Tipe Pengajuan",
+        "Jumlah Pinjaman (Rp)",
+        "Tenor (Bulan)",
+        "Produk Bank",
+        "Status",
+        "Tanggal Pengajuan"
+      ];
+
+      const rows = data.map((app: any, index: number) => {
+        const branchApp = app.branch_applications?.[0];
+        const productName = branchApp?.bank_products?.name || "-";
+        const formattedDate = app.created_at ? new Date(app.created_at).toLocaleDateString("id-ID") : "-";
+        
+        return [
+          index + 1,
+          `"${app.full_name || ""}"`,
+          `"${app.email || ""}"`,
+          `"${app.phone_number || ""}"`,
+          `"${app.nik_ktp || ""}"`,
+          `"${app.submission_type || ""}"`,
+          app.loan_amount || 0,
+          app.tenor_months || 0,
+          `"${productName}"`,
+          `"${app.status || ""}"`,
+          `"${formattedDate}"`
+        ].join(",");
+      });
+
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Histori_Aplikasi_Bank_${new Date().toISOString().split("T")[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (e: any) {
+      console.error("Error generating CSV:", e);
+      alert(`Error generating CSV: ${e.message || e}`);
+    }
+  };
+
   if (selectedApplication) {
     const branchApp = selectedApplication.branch_applications[0];
 
@@ -529,13 +640,22 @@ export default function BankStaffDashboard({
   return (
     <div className="min-h-screen bg-white p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#5680E9] mb-2">
-            Bank Staff Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Review and approve loan applications validated by Lendana
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-[#5680E9] mb-2">
+              Bank Staff Dashboard
+            </h1>
+            <p className="text-gray-600">
+              Review and approve loan applications validated by Lendana
+            </p>
+          </div>
+          <Button
+            onClick={downloadHistoryCSV}
+            className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download History CSV
+          </Button>
         </div>
 
         <Card className="mb-6">
