@@ -1017,15 +1017,16 @@ export default function LoanApplicationForm({
       paymentDate.setMonth(startDate.getMonth() + month - 1);
 
       if (month <= gracePeriod) {
-        // Grace period - no payment (completely free)
+        // Grace period - pay interest only, principal is 0
+        const interestPayment = remainingBalance * monthlyRate;
         installments.push({
           month,
           date: paymentDate.toLocaleDateString("id-ID"),
           principal: 0,
-          interest: 0,
-          totalPayment: 0,
+          interest: interestPayment,
+          totalPayment: interestPayment,
           remainingBalance,
-          type: "Grace Period (Gratis)",
+          type: "Grace Period (Bayar Bunga)",
         });
       } else {
         // Regular payment period
@@ -1343,7 +1344,7 @@ export default function LoanApplicationForm({
               ? "Formulir KUR Wirausaha PMI"
               : editData
                 ? "Edit PMI Loan Application"
-                : "PMI Loan Application Form"}
+                : "Form Aplikasi Pinjaman PMI"}
           </CardTitle>
           {isKurWirausaha && (
             <p className="text-center text-gray-600 mt-2">
@@ -2467,18 +2468,6 @@ export default function LoanApplicationForm({
                       <SelectContent>
                         <SelectItem value="PMI">
                           KUR PMI (Pekerja Migran Indonesia)
-                        </SelectItem>
-                        <SelectItem value="KUR_PERUMAHAN_PMI">
-                          KUR Perumahan PMI
-                        </SelectItem>
-                        <SelectItem value="RUMAH_SUBSIDI_PMI">
-                          Rumah Subsidi PMI
-                        </SelectItem>
-                        <SelectItem value="KUR_WIRAUSAHA_PMI">
-                          KUR Wirausaha PMI
-                        </SelectItem>
-                        <SelectItem value="PETERNAK_SAPI_PMI">
-                          Peternak Sapi PMI
                         </SelectItem>
                       </SelectContent>
                     </Select>

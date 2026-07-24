@@ -676,6 +676,7 @@ export default function ValidatorDashboard({
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Validate
                           </Button>
+                          {/* 
                           <Button
                             onClick={() => {
                               setSelectedApplicationForInsurance(application);
@@ -688,6 +689,7 @@ export default function ValidatorDashboard({
                             <Shield className="h-4 w-4 mr-2" />
                             Assign Insurance
                           </Button>
+                          */}
                           <Button
                             onClick={() => {
                               setSelectedApplicationForCollector(application);

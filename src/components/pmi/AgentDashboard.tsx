@@ -43,6 +43,7 @@ import {
   assignApplicationToBranch,
   processBulkApplications,
   parseCSVContent,
+  getInsuranceCompanies,
 } from "@/lib/supabase";
 import { LoanApplication, BranchApplication, Tables } from "@/types/supabase";
 import LoanApplicationForm from "./LoanApplicationForm";
@@ -96,6 +97,8 @@ export default function AgentDashboard({
   const [insuranceCompanies, setInsuranceCompanies] = useState<any[]>([]);
   const [selectedInsuranceCompany, setSelectedInsuranceCompany] = useState<string>("");
   const [assigningToInsurance, setAssigningToInsurance] = useState<string | null>(null);
+  const [showInsuranceDialog, setShowInsuranceDialog] = useState(false);
+  const [selectedAppForInsurance, setSelectedAppForInsurance] = useState<AgentLoanApplication | null>(null);
 
   // Bulk upload states
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -188,7 +191,7 @@ export default function AgentDashboard({
               )
             `,
           )
-          .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"]);
+          .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected", "Bank Approved", "Insurance Assigned"]);
 
         // Checker agents see all P3MI Business Loans OR anything assigned to their company
         if (effectiveCompanyId) {
@@ -243,7 +246,7 @@ export default function AgentDashboard({
           `,
         )
         .eq("assigned_agent_id", effectiveCompanyId)
-        .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected"])
+        .in("status", ["Submitted", "Checked", "Rejected", "Bank Rejected", "Bank Approved", "Insurance Assigned"])
         .order("created_at", { ascending: false });
 
       if (regularError) {
@@ -340,7 +343,7 @@ export default function AgentDashboard({
         .insert({
           loan_application_id: applicationId,
           insurance_company_id: selectedInsuranceCompany,
-          status: "Pending",
+          status: "Assigned",
         });
 
       if (error) throw error;
@@ -425,7 +428,7 @@ export default function AgentDashboard({
         if (updateError) throw updateError;
       }
 
-      alert("Application assigned successfully with status 'Checked'!");
+      alert("Application approved successfully with status 'Checked'!");
 
       // Refresh the applications list
       await fetchApplications();
@@ -2130,39 +2133,58 @@ export default function AgentDashboard({
                           {(application.status === "Submitted" ||
                             application.status === "Checked") && (
                               <>
+                                 <Button
+                                   onClick={() =>
+                                     handleAssignApplication(application)
+                                   }
+                                   disabled={assigningApplication === application.id}
+                                   size="sm"
+                                   className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
+                                   title="Approve application"
+                                 >
+                                   <Send className="h-4 w-4 mr-2" />
+                                   {assigningApplication === application.id
+                                     ? "Approving..."
+                                     : "APPROVE"}
+                                 </Button>
 
+                                 <Button
+                                   onClick={() =>
+                                     handleApplicationAction(
+                                       application.id,
+                                       "reject",
+                                     )
+                                   }
+                                   disabled={processing === application.id}
+                                   size="sm"
+                                   variant="destructive"
+                                 >
+                                   <XCircle className="h-4 w-4 mr-2" />
+                                   Reject
+                                 </Button>
+                               </>
+                             )}
 
-                                <Button
-                                  onClick={() =>
-                                    handleAssignApplication(application)
-                                  }
-                                  disabled={assigningApplication === application.id}
-                                  size="sm"
-                                  className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
-                                  title="Check application and assign to validator"
-                                >
-                                  <Send className="h-4 w-4 mr-2" />
-                                  {assigningApplication === application.id
-                                    ? "Assigning..."
-                                    : "Assign to Bank"}
-                                </Button>
+                           {application.status === "Bank Approved" && (
+                             <Button
+                               onClick={() => {
+                                 setSelectedAppForInsurance(application);
+                                 setShowInsuranceDialog(true);
+                               }}
+                               size="sm"
+                               className="bg-green-600 hover:bg-green-700 text-white"
+                               title="Assign this application to an insurance company"
+                             >
+                               <Shield className="h-4 w-4 mr-2" />
+                               Assign Insurance
+                             </Button>
+                           )}
 
-                                <Button
-                                  onClick={() =>
-                                    handleApplicationAction(
-                                      application.id,
-                                      "reject",
-                                    )
-                                  }
-                                  disabled={processing === application.id}
-                                  size="sm"
-                                  variant="destructive"
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Reject
-                                </Button>
-                              </>
-                            )}
+                           {application.status === "Insurance Assigned" && (
+                             <span className="text-sm text-green-600 font-medium px-2 py-1 bg-green-50 rounded">
+                               Insurance Assigned
+                             </span>
+                           )}
 
                           {(application.status === "Rejected" ||
                             application.status === "Bank Rejected") && (
@@ -2179,6 +2201,79 @@ export default function AgentDashboard({
             )}
           </CardContent>
         </Card>
+
+        {/* Insurance Assignment Dialog */}
+        <Dialog
+          open={showInsuranceDialog}
+          onOpenChange={setShowInsuranceDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Insurance Company</DialogTitle>
+            </DialogHeader>
+            {selectedAppForInsurance && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Applicant</Label>
+                  <p className="font-medium text-slate-900">
+                    {selectedAppForInsurance.full_name}
+                  </p>
+                </div>
+                <div>
+                  <Label>Loan Amount</Label>
+                  <p className="font-medium text-slate-900">
+                    Rp {selectedAppForInsurance.loan_amount?.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="insuranceCompany">
+                    Select Insurance Company
+                  </Label>
+                  <Select
+                    value={selectedInsuranceCompany}
+                    onValueChange={setSelectedInsuranceCompany}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose an insurance company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {insuranceCompanies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name} ({company.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowInsuranceDialog(false);
+                      setSelectedAppForInsurance(null);
+                      setSelectedInsuranceCompany("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      if (selectedAppForInsurance) {
+                        await handleAssignToInsurance(selectedAppForInsurance.id);
+                        setShowInsuranceDialog(false);
+                        setSelectedAppForInsurance(null);
+                      }
+                    }}
+                    disabled={!selectedInsuranceCompany || assigningToInsurance !== null}
+                    className="bg-[#5680E9] hover:bg-[#4a6bc7] text-white"
+                  >
+                    {assigningToInsurance ? "Assigning..." : "Assign Insurance"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
