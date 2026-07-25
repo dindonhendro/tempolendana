@@ -88,6 +88,7 @@ import {
   FileText,
   ShieldCheck,
   History,
+  Database,
 } from "lucide-react";
 
 function App() {
@@ -101,9 +102,9 @@ function App() {
   // Initialize session timeout hook
   useSessionTimeout(!!user && authInitialized);
 
-  // Admin section state
   const [activeAdminSection, setActiveAdminSection] = useState<string | null>(null);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [backingUp, setBackingUp] = useState(false);
 
   // Data state - keep consistent order
   const [banks, setBanks] = useState<Tables<"banks">[]>([]);
@@ -1150,6 +1151,35 @@ function App() {
 
   const handleConsentLogs = () => {
     setActiveAdminSection("consent");
+  };
+
+  const triggerCloudBackup = async () => {
+    setBackingUp(true);
+    try {
+      console.log("Triggering Supabase Edge Function database backup...");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Sesi Anda telah berakhir. Silakan login kembali.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('backup-database', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      console.log("Backup response:", data);
+      alert(`Sukses! File backup "${data.fileName}" (${(data.size_bytes / 1024).toFixed(2)} KB) berhasil dibuat di storage bucket 'backups'.`);
+    } catch (error: any) {
+      console.error("Backup error:", error);
+      alert(`Terjadi kesalahan saat membackup database: ${error.message || JSON.stringify(error)}`);
+    } finally {
+      setBackingUp(false);
+    }
   };
 
 
@@ -3768,6 +3798,28 @@ function App() {
                     className="bg-[#5680E9] text-white hover:bg-[#4a6bc7] transition-colors duration-200"
                   >
                     Buka Audit Trail
+                  </Button>
+                </div>
+
+                <div
+                  className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm transition-all duration-200 hover:shadow-md"
+                >
+                  <div className="flex items-center mb-3">
+                    <Database className="h-6 w-6 text-[#5680E9] mr-2" />
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Database Backup
+                    </h3>
+                  </div>
+                  <p className="text-gray-600 mb-4">
+                    Pencadangan database manual ke Supabase Storage (Privat)
+                  </p>
+                  <Button
+                    onClick={triggerCloudBackup}
+                    disabled={backingUp}
+                    className="bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <Database className="h-4 w-4" />
+                    {backingUp ? "Membackup..." : "Backup ke Cloud"}
                   </Button>
                 </div>
               </div>
