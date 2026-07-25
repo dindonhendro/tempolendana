@@ -22,6 +22,7 @@ const InsuranceDashboard = lazy(
 const CollectorDashboard = lazy(
   () => import("./components/pmi/CollectorDashboard"),
 );
+const CSDashboard = lazy(() => import("./components/pmi/CSDashboard"));
 const P3MIBusinessLoanForm = lazy(
   () => import("./components/pmi/P3MIBusinessLoanForm"),
 );
@@ -1400,6 +1401,8 @@ function App() {
         return <InsuranceDashboard staffId={user.id} />;
       case "collector":
         return <CollectorDashboard staffId={user.id} />;
+      case "cs":
+        return <CSDashboard currentUser={user} onSignOut={signOut} />;
       case "admin":
         if (activeAdminSection === "banks") {
           return (
@@ -3956,6 +3959,7 @@ function App() {
           <Route path="/bank" element={getDashboardComponent("bank_staff")} />
           <Route path="/insurance" element={getDashboardComponent("insurance")} />
           <Route path="/collector" element={getDashboardComponent("collector")} />
+          <Route path="/cs" element={getDashboardComponent("cs")} />
 
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

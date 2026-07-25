@@ -1045,6 +1045,9 @@ export type Database = {
           updated_at: string
           user_id: string | null
           whatsapp: string
+          response_details: string | null
+          responded_at: string | null
+          responded_by: string | null
         }
         Insert: {
           application_id?: string | null
@@ -1058,6 +1061,9 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           whatsapp: string
+          response_details?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
         }
         Update: {
           application_id?: string | null
@@ -1071,6 +1077,9 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           whatsapp?: string
+          response_details?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
         }
         Relationships: [
           {
