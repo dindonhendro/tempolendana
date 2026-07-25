@@ -336,27 +336,39 @@ export default function ValidatorDashboard({
   };
 
   if (editingApplication) {
-    if (editingApplication.submission_type === "P3MI_BUSINESS_LOAN") {
-      return (
-        <P3MIBusinessLoanForm
-          editData={editingApplication}
-          onCancel={() => setEditingApplication(null)}
-          onSuccess={() => {
-            setEditingApplication(null);
-            fetchApplications();
-          }}
-        />
-      );
-    }
+    const isP3MIBusinessLoan =
+      editingApplication.submission_type === "P3MI_BUSINESS_LOAN";
     return (
-      <LoanApplicationForm
-        editData={editingApplication}
-        onCancel={() => setEditingApplication(null)}
-        onSuccess={() => {
-          setEditingApplication(null);
-          fetchApplications();
-        }}
-      />
+      <div className="min-h-screen bg-white">
+        <div className="p-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditingApplication(null);
+            }}
+            className="mb-4"
+          >
+            ← Back to Validator Dashboard
+          </Button>
+        </div>
+        {isP3MIBusinessLoan ? (
+          <P3MIBusinessLoanForm
+            editData={editingApplication}
+            onSubmit={() => {
+              setEditingApplication(null);
+              fetchApplications();
+            }}
+          />
+        ) : (
+          <LoanApplicationForm
+            editData={editingApplication}
+            onSubmit={() => {
+              setEditingApplication(null);
+              fetchApplications();
+            }}
+          />
+        )}
+      </div>
     );
   }
 

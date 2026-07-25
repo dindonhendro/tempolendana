@@ -1328,6 +1328,7 @@ export type Database = {
       }
     }
     Functions: {
+      delete_own_user: { Args: never; Returns: undefined }
       compute_hash_from_record: {
         Args: {
           p_record: Database["public"]["Tables"]["loan_applications"]["Row"]
