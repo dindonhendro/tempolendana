@@ -2148,6 +2148,21 @@ export default function AgentDashboard({
                                      : "APPROVE"}
                                  </Button>
 
+                                 {application.status === "Submitted" && (
+                                   <Button
+                                     onClick={() => {
+                                       setSelectedAppForInsurance(application);
+                                       setShowInsuranceDialog(true);
+                                     }}
+                                     size="sm"
+                                     className="bg-green-600 hover:bg-green-700 text-white"
+                                     title="Assign this application to an insurance company"
+                                   >
+                                     <Shield className="h-4 w-4 mr-2" />
+                                     Assign Insurance
+                                   </Button>
+                                 )}
+
                                  <Button
                                    onClick={() =>
                                      handleApplicationAction(

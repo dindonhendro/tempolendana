@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Shield,
   Users,
+  Edit,
 } from "lucide-react";
 import {
   supabase,
@@ -34,6 +35,8 @@ import {
 } from "@/lib/supabase";
 import { LoanApplication, Tables } from "@/types/supabase";
 import ImmutabilityConfirmationDialog from "@/components/pmi/ImmutabilityConfirmationDialog";
+import LoanApplicationForm from "./LoanApplicationForm";
+import P3MIBusinessLoanForm from "./P3MIBusinessLoanForm";
 
 interface ValidatorDashboardProps {
   validatorId?: string;
@@ -63,6 +66,7 @@ export default function ValidatorDashboard({
     Tables<"collector_companies">[]
   >([]);
   const [showCollectorDialog, setShowCollectorDialog] = useState(false);
+  const [editingApplication, setEditingApplication] = useState<LoanApplication | null>(null);
   const [selectedApplicationForCollector, setSelectedApplicationForCollector] =
     useState<LoanApplication | null>(null);
   const [selectedCollectorCompany, setSelectedCollectorCompany] = useState("");
@@ -330,6 +334,31 @@ export default function ValidatorDashboard({
       alert("Error assigning collector company. Please try again.");
     }
   };
+
+  if (editingApplication) {
+    if (editingApplication.submission_type === "P3MI_BUSINESS_LOAN") {
+      return (
+        <P3MIBusinessLoanForm
+          editData={editingApplication}
+          onCancel={() => setEditingApplication(null)}
+          onSuccess={() => {
+            setEditingApplication(null);
+            fetchApplications();
+          }}
+        />
+      );
+    }
+    return (
+      <LoanApplicationForm
+        editData={editingApplication}
+        onCancel={() => setEditingApplication(null)}
+        onSuccess={() => {
+          setEditingApplication(null);
+          fetchApplications();
+        }}
+      />
+    );
+  }
 
   if (selectedApplication) {
     return (
@@ -676,20 +705,16 @@ export default function ValidatorDashboard({
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Validate
                           </Button>
-                          {/* 
                           <Button
-                            onClick={() => {
-                              setSelectedApplicationForInsurance(application);
-                              setShowInsuranceDialog(true);
-                            }}
+                            onClick={() => setEditingApplication(application)}
                             disabled={processing === application.id}
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            variant="outline"
+                            className="border-[#5680E9] text-[#5680E9] hover:bg-blue-50"
                           >
-                            <Shield className="h-4 w-4 mr-2" />
-                            Assign Insurance
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
                           </Button>
-                          */}
                           <Button
                             onClick={() => {
                               setSelectedApplicationForCollector(application);
