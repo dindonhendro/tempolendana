@@ -1881,30 +1881,6 @@ export default function AgentDashboard({
           </p>
         </div>
 
-        {/* Debug Information */}
-        <Card className="mb-6 border-yellow-200 bg-yellow-50">
-          <CardHeader>
-            <CardTitle className="text-yellow-800">Debug Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-yellow-700">
-              <p>
-                This debug section will help identify why applications might not
-                be showing up.
-              </p>
-              <p className="mt-2">
-                Check the browser console (F12) for detailed logs about:
-              </p>
-              <ul className="list-disc list-inside mt-1 space-y-1">
-                <li>Current user information</li>
-                <li>Agent company ID</li>
-                <li>All applications in database</li>
-                <li>Applications assigned to this agent</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
