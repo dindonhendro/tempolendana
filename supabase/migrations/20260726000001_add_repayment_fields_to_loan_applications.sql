@@ -6,6 +6,25 @@ ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS repaid_at TIMESTAM
 ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
 ALTER TABLE public.loan_applications ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
 
+-- 1.1 Update status check constraint to allow 'Completed', 'Disbursed', 'Active', 'Overdue'
+ALTER TABLE public.loan_applications DROP CONSTRAINT IF EXISTS loan_applications_status_check;
+ALTER TABLE public.loan_applications ADD CONSTRAINT loan_applications_status_check CHECK (
+  status IN (
+    'Submitted', 
+    'Under Review', 
+    'Checked', 
+    'Validated', 
+    'Bank Approved', 
+    'Bank Rejected', 
+    'Rejected',
+    'Insured',
+    'Disbursed',
+    'Active',
+    'Overdue',
+    'Completed'
+  )
+);
+
 COMMENT ON COLUMN public.loan_applications.repaid_at IS 'Tanggal pelunasan pinjaman secara penuh.';
 COMMENT ON COLUMN public.loan_applications.is_archived IS 'Flag apakah data pengisian nasabah sudah dianonimkan setelah melewati batas retensi 3 bulan.';
 COMMENT ON COLUMN public.loan_applications.archived_at IS 'Tanggal dilakukannya pengarsipan/anonimisasi.';
