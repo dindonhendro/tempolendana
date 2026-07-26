@@ -816,6 +816,9 @@ export type Database = {
           validated_by_lendana_at: string | null
           work_experience: string | null
           work_location: string | null
+          repaid_at: string | null
+          is_archived: boolean | null
+          archived_at: string | null
         }
         Insert: {
           address_domicile?: string | null
@@ -883,6 +886,9 @@ export type Database = {
           validated_by_lendana_at?: string | null
           work_experience?: string | null
           work_location?: string | null
+          repaid_at?: string | null
+          is_archived?: boolean | null
+          archived_at?: string | null
         }
         Update: {
           address_domicile?: string | null
@@ -950,6 +956,9 @@ export type Database = {
           validated_by_lendana_at?: string | null
           work_experience?: string | null
           work_location?: string | null
+          repaid_at?: string | null
+          is_archived?: boolean | null
+          archived_at?: string | null
         }
         Relationships: [
           {

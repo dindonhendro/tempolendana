@@ -36,6 +36,7 @@ export default function BankStaffDashboard({
   const [processing, setProcessing] = useState<string | null>(null);
   const [comments, setComments] = useState("");
   const [currentStaffId, setCurrentStaffId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"pending" | "active">("pending");
 
   useEffect(() => {
     initializeStaff();
@@ -49,7 +50,7 @@ export default function BankStaffDashboard({
 
   useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm]);
+  }, [applications, searchTerm, activeTab]);
 
   const initializeStaff = async () => {
     try {
@@ -132,7 +133,7 @@ export default function BankStaffDashboard({
             )
           `,
           )
-          .eq("status", "Validated")
+          .in("status", ["Validated", "Bank Approved", "Disbursed", "Active", "Completed"])
           .order("created_at", { ascending: false });
 
         console.log("All validated applications query result:", {
@@ -172,7 +173,7 @@ export default function BankStaffDashboard({
           )
         `,
         )
-        .eq("status", "Validated")
+        .in("status", ["Validated", "Bank Approved", "Disbursed", "Active", "Completed"])
         .eq("branch_applications.branch_id", staffInfo.branch_id)
         .order("created_at", { ascending: false });
 
@@ -197,6 +198,14 @@ export default function BankStaffDashboard({
 
   const filterApplications = () => {
     let filtered = applications;
+
+    if (activeTab === "pending") {
+      filtered = filtered.filter((app) => app.status === "Validated");
+    } else {
+      filtered = filtered.filter((app) =>
+        ["Bank Approved", "Disbursed", "Active", "Completed"].includes(app.status)
+      );
+    }
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -277,6 +286,34 @@ export default function BankStaffDashboard({
     } catch (error: any) {
       console.error("Error:", error);
       alert(`Error updating application: ${error?.message || JSON.stringify(error)}`);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleMarkAsCompleted = async (applicationId: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin menandai pinjaman ini sebagai Lunas (Completed)?")) {
+      return;
+    }
+
+    setProcessing(applicationId);
+    try {
+      const { error } = await supabase
+        .from("loan_applications")
+        .update({
+          status: "Completed",
+          repaid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", applicationId);
+
+      if (error) throw error;
+
+      alert("Pinjaman berhasil ditandai sebagai Lunas (Completed)!");
+      fetchApplications();
+    } catch (error: any) {
+      console.error("Error completing application:", error);
+      alert(`Gagal melunasi pinjaman: ${error.message || JSON.stringify(error)}`);
     } finally {
       setProcessing(null);
     }
@@ -594,42 +631,44 @@ export default function BankStaffDashboard({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-center space-x-4 pt-6 border-t">
-                <Button
-                  onClick={() =>
-                    handleApplicationAction(
-                      selectedApplication.id,
-                      branchApp.id,
-                      "approve",
-                    )
-                  }
-                  disabled={processing === selectedApplication.id}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  {processing === selectedApplication.id
-                    ? "Processing..."
-                    : "Approve Loan"}
-                </Button>
-                <Button
-                  onClick={() =>
-                    handleApplicationAction(
-                      selectedApplication.id,
-                      branchApp.id,
-                      "reject",
-                    )
-                  }
-                  disabled={
-                    processing === selectedApplication.id || !comments.trim()
-                  }
-                  variant="destructive"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  {processing === selectedApplication.id
-                    ? "Processing..."
-                    : "Reject Loan"}
-                </Button>
-              </div>
+              {selectedApplication.status === "Validated" && (
+                <div className="flex justify-center space-x-4 pt-6 border-t">
+                  <Button
+                    onClick={() =>
+                      handleApplicationAction(
+                        selectedApplication.id,
+                        branchApp.id,
+                        "approve",
+                      )
+                    }
+                    disabled={processing === selectedApplication.id}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {processing === selectedApplication.id
+                      ? "Processing..."
+                      : "Approve Loan"}
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handleApplicationAction(
+                        selectedApplication.id,
+                        branchApp.id,
+                        "reject",
+                      )
+                    }
+                    disabled={
+                      processing === selectedApplication.id || !comments.trim()
+                    }
+                    variant="destructive"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    {processing === selectedApplication.id
+                      ? "Processing..."
+                      : "Reject Loan"}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -658,6 +697,30 @@ export default function BankStaffDashboard({
           </Button>
         </div>
 
+        {/* Tab Switcher */}
+        <div className="flex bg-gray-100 p-1.5 rounded-lg space-x-1 mb-6 self-start max-w-md shadow-inner">
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
+              activeTab === "pending"
+                ? "bg-white text-[#5680E9] shadow"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Persetujuan Kredit ({applications.filter(app => app.status === "Validated").length})
+          </button>
+          <button
+            onClick={() => setActiveTab("active")}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
+              activeTab === "active"
+                ? "bg-white text-[#5680E9] shadow"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Histori & Pelunasan ({applications.filter(app => ["Bank Approved", "Disbursed", "Active", "Completed"].includes(app.status)).length})
+          </button>
+        </div>
+
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Application Filters</CardTitle>
@@ -684,7 +747,9 @@ export default function BankStaffDashboard({
         <Card>
           <CardHeader>
             <CardTitle>
-              Applications for Bank Review ({filteredApplications.length})
+              {activeTab === "pending"
+                ? `Applications for Bank Review (${filteredApplications.length})`
+                : `Active & Completed Loans (${filteredApplications.length})`}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -695,11 +760,15 @@ export default function BankStaffDashboard({
             ) : filteredApplications.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">
-                  No applications pending bank review
+                  {activeTab === "pending"
+                    ? "No applications pending bank review"
+                    : "No active or completed loans found"}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   {currentStaffId
-                    ? "Applications will appear here once they are validated by Lendana and assigned to your branch."
+                    ? activeTab === "pending"
+                      ? "Applications will appear here once they are validated by Lendana and assigned to your branch."
+                      : "Loans will appear here once they are approved by your branch staff."
                     : "Unable to load staff information. Please contact administrator."}
                 </p>
                 <div className="mt-4 text-xs text-gray-400">
@@ -770,34 +839,61 @@ export default function BankStaffDashboard({
                               <Eye className="h-4 w-4 mr-2" />
                               Review
                             </Button>
-                            <Button
-                              onClick={() => {
-                                const branchApp =
-                                  application.branch_applications[0];
-                                handleApplicationAction(
-                                  application.id,
-                                  branchApp.id,
-                                  "approve",
-                                );
-                              }}
-                              disabled={processing === application.id}
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                setSelectedApplication(application)
-                              }
-                              disabled={processing === application.id}
-                              size="sm"
-                              variant="destructive"
-                            >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Reject
-                            </Button>
+                            {activeTab === "pending" ? (
+                              <>
+                                <Button
+                                  onClick={() => {
+                                    const branchApp =
+                                      application.branch_applications[0];
+                                    handleApplicationAction(
+                                      application.id,
+                                      branchApp.id,
+                                      "approve",
+                                    );
+                                  }}
+                                  disabled={processing === application.id}
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setSelectedApplication(application)
+                                  }
+                                  disabled={processing === application.id}
+                                  size="sm"
+                                  variant="destructive"
+                                >
+                                  <MessageSquare className="h-4 w-4 mr-2" />
+                                  Reject
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                {application.status !== "Completed" ? (
+                                  <Button
+                                    onClick={() => handleMarkAsCompleted(application.id)}
+                                    disabled={processing === application.id}
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Tandai Lunas
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    disabled
+                                    size="sm"
+                                    className="bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                                    Lunas
+                                  </Button>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardContent>

@@ -260,21 +260,33 @@ Platform digital terintegrasi yang:
 | System settings | ✅ |
 | Audit logs | ✅ |
 
+#### 11. Customer Service (CS)
+**Role Code:** `cs`
+
+| Permission | Akses |
+|------------|-------|
+| Melihat tiket bantuan | ✅ |
+| Mengupdate & menanggapi tiket bantuan | ✅ |
+| Mengakses log persetujuan (consent) | ❌ (Hanya untuk audit, disembunyikan di UI) |
+| Melihat profil pelanggan | ❌ (Hanya untuk audit, disembunyikan di UI) |
+| Konfigurasi sistem | ❌ |
+
 ### 5.3 Access Matrix
 
-| Feature | User | Wirausaha | Perusahaan | Agent | Checker | Validator | Bank Staff | Insurance | Collector | Admin |
-|---------|------|-----------|------------|-------|---------|-----------|------------|-----------|-----------|-------|
-| Dashboard | Own | Own | Company | Assigned | Review | All | Bank | Insurance | Collection | All |
-| Apply Loan | ✅ | ✅ | ✅ | For User | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Upload Docs | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Review Apps | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Approve/Reject | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| Disburse | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| Issue Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Collection | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| User Mgmt | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Bank Mgmt | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Reports | Own | Own | Company | Assigned | Review | All | Bank | Insurance | Collection | All |
+| Feature | User | Wirausaha | Perusahaan | Agent | Checker | Validator | Bank Staff | Insurance | Collector | Admin | CS |
+|---------|------|-----------|------------|-------|---------|-----------|------------|-----------|-----------|-------|----|
+| Dashboard | Own | Own | Company | Assigned | Review | All | Bank | Insurance | Collection | All | CS |
+| Apply Loan | ✅ | ✅ | ✅ | For User | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Upload Docs | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Review Apps | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Approve/Reject | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Disburse | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Issue Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| Collection | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| Support Tickets | Read/Create | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | Read/Update |
+| User Mgmt | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Bank Mgmt | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Reports | Own | Own | Company | Assigned | Review | All | Bank | Insurance | Collection | All | ❌ |
 
 ---
 
@@ -340,6 +352,21 @@ Platform digital terintegrasi yang:
 | Disbursement Reports | Laporan pencairan | P1 |
 | Collection Reports | Laporan penagihan | P2 |
 | User Access Matrix | Audit akses user | P1 |
+
+### 6.7 Kepatuhan & Audit Regulasi OJK (Compliance)
+
+| Fitur | Deskripsi | Priority |
+|-------|-----------|----------|
+| Data Immutability (Integrity) | Penguncian kriptografi SHA-256 pada aplikasi berstatus 'Validated' guna mencegah manipulasi data pasca-persetujuan (kecuali kolom yang dikecualikan seperti bank_approved_at). | P0 (Wajib OJK) |
+| E-Consent Logs | Pencatatan detail persetujuan persyarat hukum lengkap dengan alamat IP, browser user agent, dan timestamp demi bukti forensik audit. | P0 (Wajib OJK) |
+| User Directory & Support History | Dasbor Customer Service untuk mengelola tiket pengaduan pelanggan secara terpusat lengkap dengan riwayat balasan respon. | P1 |
+
+### 6.8 Disaster Recovery Center (DRC) & Pencadangan Data
+
+| Fitur | Deskripsi | Priority |
+|-------|-----------|----------|
+| Cloud Database Backup | Ekspor data terstruktur dari 17 tabel inti database ke dalam penyimpanan terenkripsi (Supabase Storage Bucket 'backups') via Edge Function. | P0 (Wajib OJK) |
+| DRC Database Restoration | Prosedur pemulihan bertahap berdasarkan dependensi relasional (Foreign Key) menggunakan mekanisme UPSERT. | P0 (Wajib OJK) |
 
 ---
 
@@ -807,6 +834,50 @@ CREATE TABLE bank_products (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- User Consent Logs (OJK Compliance)
+CREATE TABLE user_consent_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  document_type TEXT NOT NULL,
+  document_version TEXT DEFAULT '1.0',
+  consent_given BOOLEAN NOT NULL DEFAULT false,
+  consent_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ip_address INET,
+  user_agent TEXT,
+  source TEXT DEFAULT 'web'
+);
+
+-- Support Tickets (Complaints Management)
+CREATE TABLE support_tickets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id TEXT UNIQUE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  whatsapp TEXT NOT NULL,
+  application_id TEXT,
+  complaint_details TEXT NOT NULL,
+  response_details TEXT,
+  responded_at TIMESTAMP WITH TIME ZONE,
+  responded_by UUID REFERENCES users(id),
+  status TEXT NOT NULL DEFAULT 'Open',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Audit Logs
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id),
+  action TEXT NOT NULL,
+  table_name TEXT NOT NULL,
+  record_id TEXT,
+  old_data JSONB,
+  new_data JSONB,
+  ip_address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
 ```
 
 ### 9.3 API Endpoints
@@ -824,16 +895,17 @@ CREATE TABLE bank_products (
 | `/products` | GET | List products |
 | `/users` | GET | List users (admin) |
 
-### 9.4 Security Requirements
+### 9.4 Security & Compliance Requirements
 
 | Requirement | Implementation |
 |-------------|----------------|
-| Authentication | Supabase Auth with JWT |
-| Authorization | Row Level Security (RLS) |
-| Session Management | Auto logout after 10 min idle |
-| Data Encryption | HTTPS, encryption at rest |
-| Password Policy | Min 8 chars, hashed with bcrypt |
-| Audit Trail | IP logging, timestamp tracking |
+| Authentication | Supabase Auth with JWT (JSON Web Tokens) |
+| Authorization | Row Level Security (RLS) policies on PostgreSQL schema |
+| Session Management | Inactivity timeout auto-logout after 10 minutes (listening in capture phase to prevent click-modal interception bypass) |
+| Data Encryption (Rest) | pg_sodium AES-256 encryption on sensitive columns (NIK KTP) and storage bucket encryption |
+| Data Integrity | Cryptographic hash (SHA-256) computed from loan data, saved in `data_hash`, protected via `prevent_immutable_loan_update` trigger on 'Validated' applications |
+| Password Policy | Minimum 8 characters, securely hashed with bcrypt |
+| Audit Trail | Real-time IP address logging, timestamp tracking, `audit_logs` tracking admin modifications, and `user_consent_logs` for legal agreement audits |
 
 ---
 
