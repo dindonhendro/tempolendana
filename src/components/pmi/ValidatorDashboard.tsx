@@ -27,6 +27,9 @@ import {
   Shield,
   Users,
   Edit,
+  Building2,
+  QrCode,
+  Sparkles,
 } from "lucide-react";
 import {
   supabase,
@@ -37,6 +40,13 @@ import { LoanApplication, Tables } from "@/types/supabase";
 import ImmutabilityConfirmationDialog from "@/components/pmi/ImmutabilityConfirmationDialog";
 import LoanApplicationForm from "./LoanApplicationForm";
 import P3MIBusinessLoanForm from "./P3MIBusinessLoanForm";
+import HiBankHandoffModal from "./HiBankHandoffModal";
+import HiBankEkycSimulatorModal from "./HiBankEkycSimulatorModal";
+import {
+  initiateHiTalangReferral,
+  getHiBankReferral,
+  HiBankReferralData,
+} from "@/lib/hibankService";
 
 interface ValidatorDashboardProps {
   validatorId?: string;
@@ -81,6 +91,34 @@ export default function ValidatorDashboard({
     applicantName: string;
     submissionType: string;
   } | null>(null);
+
+  // HiBank Handoff & Simulator state
+  const [activeHandoffReferral, setActiveHandoffReferral] = useState<HiBankReferralData | null>(null);
+  const [showHandoffModal, setShowHandoffModal] = useState(false);
+  const [showSimulatorModal, setShowSimulatorModal] = useState(false);
+  const [isInitiatingHiBank, setIsInitiatingHiBank] = useState<string | null>(null);
+
+  const handleOpenHiBankHandoff = async (application: any) => {
+    try {
+      setIsInitiatingHiBank(application.id);
+      const referral = await initiateHiTalangReferral(application);
+      setActiveHandoffReferral(referral);
+      setShowHandoffModal(true);
+    } catch (e) {
+      console.error("Error initiating HiBank handoff", e);
+    } finally {
+      setIsInitiatingHiBank(null);
+    }
+  };
+
+  const handleRefreshHiBankStatus = () => {
+    if (activeHandoffReferral) {
+      const updated = getHiBankReferral(activeHandoffReferral.applicationId);
+      if (updated) {
+        setActiveHandoffReferral({ ...updated });
+      }
+    }
+  };
 
   useEffect(() => {
     fetchApplications();
@@ -659,100 +697,127 @@ export default function ValidatorDashboard({
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredApplications.map((application) => (
-                  <Card
-                    key={application.id}
-                    className="border-l-4 border-l-orange-500"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-semibold text-lg">
-                              {application.full_name}
-                            </h3>
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-                              {application.status}
-                            </span>
+                {filteredApplications.map((application) => {
+                  const hibankRef = getHiBankReferral(application.id);
+                  return (
+                    <Card
+                      key={application.id}
+                      className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-lg text-slate-900">
+                                {application.full_name}
+                              </h3>
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                {application.status}
+                              </span>
+                              {hibankRef && (
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 ${
+                                  hibankRef.status === "EKYC_COMPLETED"
+                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                                    : hibankRef.status === "EXPIRED"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-blue-100 text-blue-700 border border-blue-300"
+                                }`}>
+                                  <Building2 className="h-3 w-3" />
+                                  {hibankRef.status === "EKYC_COMPLETED"
+                                    ? "eKYC HiBank Berhasil"
+                                    : hibankRef.status === "EXPIRED"
+                                    ? "Sesi HiBank Kedaluwarsa"
+                                    : "Menunggu eKYC HiBank"}
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium text-slate-500">Bank / Product:</span>{" "}
+                                <span className="font-medium text-slate-800">
+                                  {(application as any).banks?.name || "-"} / {(application as any).bank_products?.name || "HiTalang"}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-slate-500">Destination:</span>{" "}
+                                <span className="font-medium text-slate-800">{application.negara_penempatan || "-"}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-slate-500">Institution:</span>{" "}
+                                <span className="font-medium text-slate-800">{application.institution}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-slate-500">Loan Amount:</span>{" "}
+                                <span className="font-semibold text-emerald-600">
+                                  Rp {application.loan_amount?.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-500">
+                              Submitted: {new Date(application.created_at).toLocaleDateString("id-ID")}
+                            </div>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div>
-                              <span className="font-medium">Bank / Product:</span>{" "}
-                              {(application as any).banks?.name || "-"} / {(application as any).bank_products?.name || "-"}
-                            </div>
-                            <div>
-                              <span className="font-medium">
-                                Destination:
-                              </span>{" "}
-                              {application.negara_penempatan || "-"}
-                            </div>
-                            <div>
-                              <span className="font-medium">Institution:</span>{" "}
-                              {application.institution}
-                            </div>
-                            <div>
-                              <span className="font-medium">Loan Amount:</span>{" "}
-                              Rp {application.loan_amount?.toLocaleString()}
-                            </div>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-500">
-                            Submitted:{" "}
-                            {new Date(
-                              application.created_at,
-                            ).toLocaleDateString()}
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              onClick={() => handleOpenHiBankHandoff(application)}
+                              disabled={isInitiatingHiBank === application.id}
+                              size="sm"
+                              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-sm"
+                            >
+                              <Building2 className="h-4 w-4 mr-1.5" />
+                              {hibankRef ? "HiBank Hub" : "Kirim ke HiBank"}
+                            </Button>
+                            <Button
+                              onClick={() =>
+                                handleApplicationAction(
+                                  application.id,
+                                  "validate",
+                                )
+                              }
+                              disabled={processing === application.id}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Validate
+                            </Button>
+                            <Button
+                              onClick={() => setEditingApplication(application)}
+                              disabled={processing === application.id}
+                              size="sm"
+                              variant="outline"
+                              className="border-[#5680E9] text-[#5680E9] hover:bg-blue-50"
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedApplicationForCollector(application);
+                                setShowCollectorDialog(true);
+                              }}
+                              disabled={processing === application.id}
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <Users className="h-4 w-4 mr-2" />
+                              Collector
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedApplication(application)}
+                              disabled={processing === application.id}
+                              size="sm"
+                              variant="destructive"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            onClick={() =>
-                              handleApplicationAction(
-                                application.id,
-                                "validate",
-                              )
-                            }
-                            disabled={processing === application.id}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Validate
-                          </Button>
-                          <Button
-                            onClick={() => setEditingApplication(application)}
-                            disabled={processing === application.id}
-                            size="sm"
-                            variant="outline"
-                            className="border-[#5680E9] text-[#5680E9] hover:bg-blue-50"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setSelectedApplicationForCollector(application);
-                              setShowCollectorDialog(true);
-                            }}
-                            disabled={processing === application.id}
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                          >
-                            <Users className="h-4 w-4 mr-2" />
-                            Assign Collector
-                          </Button>
-                          <Button
-                            onClick={() => setSelectedApplication(application)}
-                            disabled={processing === application.id}
-                            size="sm"
-                            variant="destructive"
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Reject
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -908,6 +973,26 @@ export default function ValidatorDashboard({
           submissionType={validationResult.submissionType}
         />
       )}
+
+      {/* HiBank Validator Handoff Hub Modal */}
+      <HiBankHandoffModal
+        isOpen={showHandoffModal}
+        onClose={() => setShowHandoffModal(false)}
+        referralData={activeHandoffReferral}
+        onOpenSimulator={() => setShowSimulatorModal(true)}
+        onRefreshStatus={handleRefreshHiBankStatus}
+      />
+
+      {/* HiBank Mobile eKYC Simulator Modal */}
+      <HiBankEkycSimulatorModal
+        isOpen={showSimulatorModal}
+        onClose={() => setShowSimulatorModal(false)}
+        referralData={activeHandoffReferral}
+        onEkycCompleted={() => {
+          handleRefreshHiBankStatus();
+          fetchApplications();
+        }}
+      />
     </div>
   );
 }
