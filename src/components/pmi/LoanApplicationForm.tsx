@@ -1627,10 +1627,15 @@ export default function LoanApplicationForm({
 
             <TabsContent value="installment" className="space-y-6 mt-6">
               <div className="bg-white p-6 rounded-lg border">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-[#5680E9]">
-                    Tabel Angsuran Bulanan KUR PMI
-                  </h3>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#5680E9]">
+                      Tabel Angsuran Bulanan KUR PMI
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Tabel angsuran ini hanya proyeksi, keputusan akhir tabel angsuran sesuai akad kredit dengan mitra LJK
+                    </p>
+                  </div>
                   <div className="flex space-x-2">
                     <Button
                       type="button"
